@@ -16,10 +16,14 @@ import scala.collection.mutable.ListBuffer
 trait Base extends GoTokenParsers with PackratParsers with FancyParsers with MessageHandling {
   override val lexical = new GoLexical
   type Tokens = GoLexical
-  type P[+T]  = Parser       [OrError[PerhapsMsg[T]]]
-  type PP[+T] = PackratParser[OrError[PerhapsMsg[T]]]
-  type P_     = Parser       [OrError[PerhapsMsg[Any]]]
-  type PP_    = PackratParser[OrError[PerhapsMsg[Any]]]
+  type PE[+T]  = Parser       [OrError[T]]
+  type PPE[+T] = PackratParser[OrError[T]]
+  type P[+T]   = Parser       [T]
+  type PP[+T]  = Parser       [T]
+  type P_      = Parser       [Any]
+  type PP_     = PackratParser[Any]
+  
+  implicit def string2Fancy(str: String) = new FancyParserOps(str)
   
   
   lazy val identList: P[List[String]] =  "identifier list" $

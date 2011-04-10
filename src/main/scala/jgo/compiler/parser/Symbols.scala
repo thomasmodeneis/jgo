@@ -27,7 +27,7 @@ trait Symbols extends Base {
   lazy val symbol: P[Symbol] =                        "symbol" $
     ident ^^ { str => symbols.get(str) match {
       case Some(s) => s
-      case None    => WithMsg(Error("Symbol not found: `" + str +"'"), BadSymbol)
+      case None    => throw new NoSuchElementException("symbol not found; apologies for the poor error handling")
     }}
   
   //not fully supported.

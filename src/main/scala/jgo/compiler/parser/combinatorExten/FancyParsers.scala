@@ -25,7 +25,6 @@ trait FancyParsers extends Parsers with ImplicitConversions {
   }
   implicit def parser2Fancy[T](p: Parser[T]): FancyParserOps[T]      = new FancyParserOps(p)
 //  implicit def string2parser(str: String):    Parser[String]        
-  implicit def string2Fancy(str: String):     FancyParserOps[String] = new FancyParserOps(str)
   
   
   protected def nameize[T](p: Parser[T], name: String): Parser[T] = p named name

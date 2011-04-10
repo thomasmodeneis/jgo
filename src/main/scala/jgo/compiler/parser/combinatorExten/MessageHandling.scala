@@ -8,7 +8,7 @@ import message._
 
 import scala.collection.mutable.ListBuffer
 import scala.util.parsing.combinator.Parsers
-import scala.util.parsing.input.{Positional, Position}
+import scala.util.parsing.input.{Positional, Position, NoPosition}
 import scala.util.control.ControlThrowable
 
 trait MessageHandling extends Parsers {
@@ -16,7 +16,46 @@ trait MessageHandling extends Parsers {
   implicit def withParser2certainParser [T] (p: Parser[WithMsg[T]]): Parser[T] =
     positioned(p) ^^ { case WithMsg(m, cont) => addMsg(m); cont }
   
-  def addMsg(msg: Message) {
+  implicit def any2noMsg[T](cont: T): PerhapsMsg[T] = NoMsg(cont)
+  
+  implicit def perhaps2cont[T](p: PerhapsMsg[T]): T = p match {
+    case WithMsg(msg, cont) =>
+      addMsg(msg)
+      cont
+    case NoMsg(cont) =>
+      cont
+  }
+  
+  implicit def any2orError[T](cont: T): OrError[T] = NoError(cont)
+  
+  implicit def orError2cont[T](o: OrError[T]): T = o match {
+    case NoError(cont)     => cont
+    case ErrorPresent(err) => throw ErrorThrow(err)
+  }
+  
+  implicit def anyParser2orErrorParser[T](p: Parser[T]): Parser[OrError[T]] =
+    p ^^ { NoError(_) }
+  
+  private var position: Position = NoPosition
+  
+  abstract override def Parser[T](f: Input => ParseResult[T]): Parser[T] = super.Parser {
+    in => f(in) match {
+      case r @ Success(_, in1) =>
+        position = in1.pos
+        r
+      case r => r
+    }
+  }
+  abstract override def OnceParser[T](f: Input => ParseResult[T]): Parser[T] =super.OnceParser {
+    in => f(in) match {
+      case r @ Success(_, in1) =>
+        position = in1.pos
+        r
+      case r => r
+    }
+  }
+  
+  private def addMsg(msg: Message) {
     msg match {
         case e: ErrorMsg   => errs  ::= e
         case w: WarningMsg => warns ::= w
@@ -24,10 +63,7 @@ trait MessageHandling extends Parsers {
       }
   }
   
-  //private case class UnposErrorThrow(msg: String) extends ControlThrowable
-  private case class ErrorThrow(msg: ErrorMsg)    extends ControlThrowable
-  
-  
+  /*
   def withErr  [T] (msg: String) (v: T): PerhapsMsg[T] = WithMsg(ErrorMsg(msg),   v)
   def withWarn [T] (msg: String) (v: T): PerhapsMsg[T] = WithMsg(WarningMsg(msg), v)
   def withNote [T] (msg: String) (v: T): PerhapsMsg[T] = WithMsg(NoteMsg(msg),    v)
@@ -38,15 +74,28 @@ trait MessageHandling extends Parsers {
     if (cond) withWarn(msg)(value) else NoMsg(value)
   def withNoteIf [T] (cond: => Boolean, msg: String) (value: T): PerhapsMsg[T] =
     if (cond) withNote(msg)(value) else NoMsg(value)
+  */
   
   /*def unless [T] (cond: => Boolean, msg: String) (res: T): OrError[T] =
     if (cond) ErrorPresent(ErrorMsg(msg)) else res*/
+  
+  def recordErr(msg: String) {
+    errs ::= ErrorMsg(msg).setPos(position)
+  }
+  def recordWarn(msg: String) {
+    warns ::= WarningMsg(msg).setPos(position)
+  }
+  def recordNote(msg: String) {
+    nts ::= NoteMsg(msg).setPos(position)
+  }
+  
+  private case class ErrorThrow(msg: ErrorMsg) extends ControlThrowable
   
   def errIf(cond: => Boolean, msg: String) {
     if (cond) throw ErrorThrow(ErrorMsg(msg))
   }
   
-  def handleErrors [T] (p: Parser[OrError[T]]): Parser[Option[T]] = p ^^ {
+  def handleErrors[T](p: Parser[OrError[T]]): Parser[Option[T]] = p ^^ {
     case ErrorPresent(err) => errs ::= err; None
     case NoError(cont)     => Some(cont)
   }
@@ -61,11 +110,6 @@ trait MessageHandling extends Parsers {
     }
   }*/
   
-  implicit def orError2any[T](or: OrError[T]): T = or match {
-    case NoError(cont)     => cont
-    case ErrorPresent(err) => throw ErrorThrow(err)
-  }
-  
   class HandlingParserOps[+T](p: Parser[OrError[T]]) {
     /**
      * Produces a parser that results in None in the presence of a thrown error message
@@ -76,6 +120,18 @@ trait MessageHandling extends Parsers {
      */
     def !? = handleErrors(p)
   }
+  implicit def parser2handlingOps[T](p: Parser[OrError[T]]) = new HandlingParserOps(p)
+  
+  class ErrorParserOps[+T](p: Parser[T]) {
+    def ^^! [U] (f: T => U): Parser[OrError[U]] = positioned { p ^^ {
+      t => try {
+        NoError(f(t))
+      } catch {
+        case ErrorThrow(err) => ErrorPresent(err)
+      }
+    }}
+  }
+  implicit def parser2errorOps[T](p: Parser[T]) = new ErrorParserOps(p)
   
 /*  @unchecked
   private def decorate [T] (f: Input => ParseResult[T]): Input => ParseResult[T] =

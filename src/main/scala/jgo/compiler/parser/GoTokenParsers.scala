@@ -55,8 +55,8 @@ trait GoTokenParsers extends TokenParsers {
   }
   
   /** A parser which matches a string literal */
-  def stringLit: Parser[StringLit] = {
+  def stringLit: Parser[String] = {
     //println("   looking for a string literal")
-    accept("string literal", { case t: StringLit => t })
+    accept("string literal", { case t: StringLit => t.value })
   }
 }

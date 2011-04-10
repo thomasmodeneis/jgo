@@ -3,7 +3,6 @@ package parser
 
 import interm._
 import types._
-import message._
 
 trait TypeSyntax extends Symbols {
   lazy val goType: P[Type] =                                                                "type" $
@@ -22,7 +21,7 @@ trait TypeSyntax extends Symbols {
   
   lazy val typeName: P[TypeName] =                                                     "type-name" $
     //qualifiedIdent
-    typeSymbol  ^^ { _.underlying }
+    typeSymbol  ^^ { _.typeName }
   
   
   lazy val arrayType: P[ArrayType] =                                                  "array type" $
@@ -41,15 +40,16 @@ trait TypeSyntax extends Symbols {
   
   lazy val structType: P[StructType] =                                               "struct type" $
     "struct" ~>! "{" ~> repWithSemi(structFieldDecl) <~ "}"  ^^ {
-      val fields = _.flatten
+      decls =>
+      val fields = decls.flatten
       StructType(fields)
       //add logic for duplicate field names, etc
     }
   
   lazy val structFieldDecl: P[List[FieldDesc]] =                               "struct field decl" $
-    ( identList ~ goType ~ stringLit.?  ^^ { case ids ~ t ~ tag => ids map { RegularFieldDesc(_, t, tag) } }
-    | "*" ~> typeName    ~ stringLit.?  ^^ { case t ~ tag       => EmbeddedFieldDesc(t.name, t, true,  tag) }
-    |        typeName    ~ stringLit.?  ^^ { case t ~ tag       => EmbeddedFieldDesc(t.name, t, false, tag) }
+    ( identList ~ goType ~ stringLit.?  ^^ { case ids ~ t ~ tag => ids map { id => RegularFieldDesc(id, t, tag) } }
+    | "*" ~> typeName    ~ stringLit.?  ^^ { case t ~ tag       => List(EmbeddedFieldDesc(t.name, t, true,  tag)) }
+    |        typeName    ~ stringLit.?  ^^ { case t ~ tag       => List(EmbeddedFieldDesc(t.name, t, false, tag)) }
     )
   
   
@@ -59,39 +59,39 @@ trait TypeSyntax extends Symbols {
   
   lazy val functionType: P[FuncType] =                                             "function type" $
     "func" ~>! funcTypeParams ~ funcTypeResult.?  ^^ {
-      case (params, isVariadic) ~ Some(results) => FuncType(params, resuts, isVariadic)
-      case (params, isVariadic) ~ None          => FuncType(params,    Nil, isVariadic)
+      case (params, isVariadic) ~ Some(results) => FuncType(params, results, isVariadic)
+      case (params, isVariadic) ~ None          => FuncType(params,     Nil, isVariadic)
     } 
   
-  lazy val funcTypeResult: P[List[Type]] =                                  "function-type result" $
-    ( goType         ^^ { List(_) }
-    | funcTypeParams ^^ {
-        case (results, isVariadic) =>
-          withErrIf(isVariadic, "Result \"parameter\" list may not be variadic") {
-            results
-          }
-      }
-    )
-  
   lazy val funcTypeParams: P[(List[Type], Boolean)] =                   "function-type parameters" $
-    "(" ~> repsep(funcParamDecl, ",") <~ ")"  ^^ { //recall that repsep admits zero repetitions
-      val (backwardsParams, variadic, err) = (_ foldLeft ((Nil, false, false))) {
+    "(" ~> repsep(funcTypeParamDecl, ",") <~ ")"  ^^ { //recall that repsep admits zero repetitions
+      decls =>
+      val (backwardsParams, variadic, err) = (decls foldLeft ((List[Type](), false, false))) {
         case ((lsAcc, isPrevVariadic, hasErr), (ls, isVariadic)) =>
           //if the previous decl was variadic (isVariadicAcc), set hasErr to true.
           (ls reverse_::: lsAcc, isVariadic, isPrevVariadic || hasErr)
       }
-      withErrIf(err, "`...' permitted only on the final type in a signature") {
-        (backwardsParams.reverse, variadic)
-      }
+      if (err) recordErr("`...' permitted only on the final type in a signature")
+      (backwardsParams.reverse, variadic)
     }
   
   //This needs to be improved, and made more succinct.  Also, account for the fact that
   //"either all of the parameter names are present in a param list, or all are absent"
-  lazy val funcParamDecl: P[(List[Type], Boolean)] =           "function parameter(s) declaration" $
+  lazy val funcTypeParamDecl: P[(List[Type], Boolean)] =       "function parameter(s) declaration" $
     ((identList <~ "...") ~ goType  ^^ { case is ~ t => (List.fill(is.length)(t), true) }
     | identList ~ goType            ^^ { case is ~ t => (List.fill(is.length)(t), false) }
-    | "..." ~> goType               ^^ { (List(_), true) }
-    | goType                        ^^ { (List(_), false) }
+    | "..." ~> goType               ^^ { t => (List(t), true) }
+    | goType                        ^^ { t => (List(t), false) }
+    )
+  
+  lazy val funcTypeResult: P[List[Type]] =                                  "function-type result" $
+    ( goType         ^^ { List(_) }
+    | "(" ~> repsep(funcTypeResultDecl, ",") <~ ")"  ^^ { _.flatten }
+    )
+  
+  lazy val funcTypeResultDecl: P[List[Type]] =
+    ( identList ~ goType  ^^ { case is ~ t => List.fill(is.length)(t) }
+    | goType              ^^ { List(_) }
     )
   
   /*
