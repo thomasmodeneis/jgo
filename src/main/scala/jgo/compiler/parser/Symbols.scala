@@ -20,15 +20,15 @@ trait Symbols extends Base {
   lazy val pkgSymbol:   P[Package]   =        "package symbol" $
     ident ^? symbols ^? { case p: Package => p }
   
-  lazy val typeSymbol:  P[TypeName]  =           "type symbol" $
-    ident ^? symbols ^? { case t: TypeName => t }
+  lazy val typeSymbol:  P[TypeSymbol]  =         "type symbol" $
+    ident ^? symbols ^? { case t: TypeSymbol => t }
   
   
   lazy val symbol: P[Symbol] =                        "symbol" $
     ident ^^ { str => symbols.get(str) match {
       case Some(s) => s
       case None    => WithMsg(Error("Symbol not found: `" + str +"'"), BadSymbol)
-    }
+    }}
   
   //not fully supported.
   lazy val qualifiedIdent: P_ =     "possibly qualified ident" $

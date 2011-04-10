@@ -4,7 +4,7 @@ package types
 
 import symbols.Symbol
 
-class TypeName(val name: String, val underlying: Type) extends Type with Symbol {
+class TypeName(val name: String, val underlying: Type) extends Type {
   def semantics = underlying.semantics
   
   def nilable   = underlying.nilable

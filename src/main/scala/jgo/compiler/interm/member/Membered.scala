@@ -3,12 +3,14 @@ package interm
 package member
 
 import types.Type
+
+import scala.{collection => coll}
+import coll.{mutable => mut}
  
 trait Membered extends PartialFunction[String, Member] {
   self: Type =>
   
   val members:    Map[String, Member] //yes, immutable map
-  val ptrMembers: Map[String, Member]
   
   def get(name: String):      Option[Member] = members get name
   def contains(name: String): Boolean        = members contains name

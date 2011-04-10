@@ -21,11 +21,10 @@ trait FancyParsers extends Parsers with ImplicitConversions {
     def ^^#  [U <: Positional] (f: T => U) = positioned(p ^^ f)
     def ^^^# [U <: Positional] (r: U) = positioned(p ^^^ r)
     
-    def &# (implicit evidence: T <:< Positional): Parser[T] = positioned(p)
-    
     def &@ (name: String): Parser[T] = nameize(p, name)
   }
-  implicit def parser2Fancy[T](p: Parser[T]): FancyParserOps[String] = new FancyParserOps(p)
+  implicit def parser2Fancy[T](p: Parser[T]): FancyParserOps[T]      = new FancyParserOps(p)
+//  implicit def string2parser(str: String):    Parser[String]        
   implicit def string2Fancy(str: String):     FancyParserOps[String] = new FancyParserOps(str)
   
   

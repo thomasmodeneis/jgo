@@ -57,4 +57,7 @@ trait Expressions extends PrimaryExprs {
     | "*"  ~> unaryExpr  //^^# (ChanRecieve(_))
     | primaryExpr
     )
+    
+  lazy val exprList: P[List[_]] =                  "expression list" $
+    rep1sep(expression, ",")
 }

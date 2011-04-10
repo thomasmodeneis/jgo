@@ -13,14 +13,14 @@ trait Constable extends Type
  * A marker trait that signifies that the value in question is
  * a compile-time constant.
  */
-trait Const extends Type {
+trait ConstType extends Type {
   self: Constable =>
 }
 
 /**
  * 
  */
-trait UntypedConst extends Constable with Const { //how oxymoronic!
+trait UntypedConst extends Constable with ConstType { //how oxymoronic!
   /**
    * Indicates whether this particular constant value
    * can fit in the specified type.
