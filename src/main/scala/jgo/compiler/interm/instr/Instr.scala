@@ -41,10 +41,10 @@ case object Dup_Down1 extends Instr
 case object Dup_Down2 extends Instr
 case object Swap      extends Instr
 
-case class LoadLocal(variable: LocalVar) extends Instr
-case class StoreLocal(variable: LocalVar) extends Instr
+case class LoadVar(v:  Variable) extends Instr
+case class StoreVar(v: Variable) extends Instr
 
-case class LoadGlobal(v: GlobalVar) extends Instr
+case class LoadGlobal(v:  GlobalVar) extends Instr
 case class StoreGlobal(v: GlobalVar) extends Instr
 
 case class GetField(t: Type, f: Field) extends Instr
