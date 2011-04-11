@@ -44,9 +44,6 @@ case object Swap      extends Instr
 case class LoadVar(v:  Variable) extends Instr
 case class StoreVar(v: Variable) extends Instr
 
-case class LoadGlobal(v:  GlobalVar) extends Instr
-case class StoreGlobal(v: GlobalVar) extends Instr
-
 case class GetField(t: Type, f: Field) extends Instr
 case class PutField(t: Type, f: Field) extends Instr
 
