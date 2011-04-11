@@ -33,6 +33,15 @@ trait EnclosedScope extends Scope {
     super.alreadyDefined(name)
 }
 
+trait PoppableScope[Repr <: PoppableScope[Repr]] extends EnclosedScope {
+  val tail: Option[Repr]
+}
+
+trait PoppableGrowableScope[Repr <: PoppableGrowableScope[Repr]] extends PoppableScope[Repr]
+                                                                    with GrowableScope //LOL!
+
+
+
 class MapScope private (bindings: mut.Map[String, Symbol]) extends GrowableScope {
   def this() = this(mut.Map[String, Symbol]())
   
@@ -42,4 +51,14 @@ class MapScope private (bindings: mut.Map[String, Symbol]) extends GrowableScope
   def put(name: String, symbol: Symbol) = bindings.put(name, symbol) isDefined
 }
 
-class SequentialScope(val enclosing: Scope) extends MapScope with EnclosedScope
+sealed trait SequentialScope extends PoppableGrowableScope[SequentialScope]
+object SequentialScope {
+  def base(encl: Scope) = new MapScope with SequentialScope {
+    val enclosing = encl
+    val tail = None
+  }
+  def frame(encl: SequentialScope) = new MapScope with SequentialScope {
+    val enclosing = encl
+    val tail = Some(encl)
+  }
+}

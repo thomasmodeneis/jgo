@@ -10,3 +10,5 @@ syntax: regexp
 ^project/plugins/target
 ^project/plugins/lib_managed/
 ^project/plugins/src_managed/
+
+.DS_Store

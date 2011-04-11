@@ -4,7 +4,7 @@ package parser
 import interm._
 import types._
 
-trait Operands extends CompositeLiterals with FunctionLiterals {
+trait Operands extends CompositeLiterals /*with FunctionLiterals*/ {
   self: Expressions =>
   
 //def symbols: Scope
@@ -14,7 +14,7 @@ trait Operands extends CompositeLiterals with FunctionLiterals {
   lazy val operand: P_ =         "operand" $
     ( "(" ~ expression ~ ")"
     | qualifiedIdent
-    | methodAsFunc
+//  | methodAsFunc
     | literal
     )
     
@@ -25,6 +25,6 @@ trait Operands extends CompositeLiterals with FunctionLiterals {
     | charLit
     | stringLit
     | compositeLit //nonterminal
-    | functionLit  //nonterminal
+//  | functionLit  //nonterminal
     )
 }

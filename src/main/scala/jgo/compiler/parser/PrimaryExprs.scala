@@ -17,7 +17,7 @@ trait PrimaryExprs extends Operands with TypeSyntax {
     | primaryExpr ~ typeAssert                                                //e.g. expr.(int)
     | "(" ~> expression <~ ")" //in general, "E = E ~ t2 | t1" MUST be used instead of "E = t1 | E ~ t2"
     | (goType <~ "(") ~ expression <~ ")"                     &@ "unambiguous type conversion"
-    | specialBuiltinTypeCall
+//  | specialBuiltinTypeCall //not yet supported
     | literal
     | ident //yes, this *must* be last, to prevent preemptive prefix-matching (I hope you/I remember what this means!)
     )
