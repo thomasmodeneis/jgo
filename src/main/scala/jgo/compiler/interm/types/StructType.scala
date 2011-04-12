@@ -20,21 +20,21 @@ case class StructType(fields: List[FieldDesc]) extends Type {
   }
 }
 
-sealed abstract class FieldDesc(
-  val name:   String,
-  val typeOf: Type,
-  val tag:    Option[String] = None
-)
+sealed abstract class FieldDesc {
+  val name:   String
+  val typeOf: Type
+  val tag:    Option[String]
+}
 
 case class RegularFieldDesc(
   name:   String,
   typeOf: Type,
   tag:    Option[String] = None)
-extends FieldDesc(name, typeOf, tag)
+extends FieldDesc
 
 case class EmbeddedFieldDesc(
   name:   String,
   typeOf: TypeName,
   isPtr:  Boolean,
   tag:    Option[String] = None)
-extends FieldDesc(name, typeOf, tag)
+extends FieldDesc

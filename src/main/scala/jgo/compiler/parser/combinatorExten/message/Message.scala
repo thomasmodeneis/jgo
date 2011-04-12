@@ -7,8 +7,10 @@ import scala.util.parsing.input.{Position, Positional}
 
 sealed abstract trait PerhapsWithMsg[T]
 
-sealed abstract class Message(val msg: String) extends Positional
+sealed abstract class Message extends Positional {
+  val msg: String
+}
 
-case class ErrorMsg  (msg: String) extends Message(msg)
-case class WarningMsg(msg: String) extends Message(msg)
-case class NoteMsg   (msg: String) extends Message(msg)
+case class ErrorMsg  (msg: String) extends Message
+case class WarningMsg(msg: String) extends Message
+case class NoteMsg   (msg: String) extends Message

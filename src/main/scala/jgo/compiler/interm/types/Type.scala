@@ -16,6 +16,8 @@ trait Type extends Equals with Membered {
   
   val nilable: Boolean = false //overridden by Nilable, TypeName
   
+  val members = Map()
+  
   /**
    * States whether or not this type is identical to the given type,
    * behaving just like a call to ==.

@@ -26,4 +26,8 @@ case object Float64 extends PrimitiveType
 case object Complex64  extends PrimitiveType //or BuiltinType?
 case object Complex128 extends PrimitiveType
 
-case object StringType extends BuiltinType //or Primitive...?
+sealed trait BuiltinRefType extends Type with Constable {
+  val semantics = Reference
+}
+
+case object StringType extends BuiltinRefType //or Primitive...?

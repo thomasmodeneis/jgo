@@ -46,7 +46,7 @@ trait MessageHandling extends Parsers {
       case r => r
     }
   }
-  abstract override def OnceParser[T](f: Input => ParseResult[T]): Parser[T] =super.OnceParser {
+  abstract override def OnceParser[T](f: Input => ParseResult[T]): OnceParser[T] =super.OnceParser {
     in => f(in) match {
       case r @ Success(_, in1) =>
         position = in1.pos

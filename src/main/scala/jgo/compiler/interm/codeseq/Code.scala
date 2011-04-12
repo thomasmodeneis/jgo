@@ -8,12 +8,14 @@ import scala.collection.LinearSeqOptimized
 import scala.collection.immutable._
 import scala.collection.generic._
 
-private[codeseq] object Stuff {
-  type Const[Result, _] = Result
+object Code {
+  def apply(elems: Instr*) = {
+    val cb = new CodeBuilder
+    for (elem <- elems)
+      cb += elem
+    cb.result
+  }
 }
-
-import Stuff._
-
 
 sealed abstract class Code extends LinearSeq[Instr]
                               with LinearSeqOptimized[Instr, Code]

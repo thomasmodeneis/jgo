@@ -8,7 +8,7 @@ import scala.{collection => coll}
 import coll.{mutable => mut}
  
 trait Membered extends PartialFunction[String, Member] {
-  self: Type =>
+//self: Type =>
   
   val members:    Map[String, Member] //yes, immutable map
   

@@ -11,6 +11,16 @@ import coll.{generic => gen}
 
 object CodeBuilder {
   val empty = new CodeBuilder
+  def apply(elems: Instr*): CodeBuilder = {
+    val cb = new CodeBuilder
+    for (elem <- elems)
+      cb += elem
+    cb
+  }
+  implicit def fromInstr(instr: Instr): CodeBuilder = {
+    val ls = Code(instr)
+    new CodeBuilder(ls, ls)
+  }
 }
 
 class CodeBuilder extends mut.Builder[Instr, Code] with Catenable[Instr, CodeBuilder] with Expendable {
@@ -75,7 +85,8 @@ class CodeBuilder extends mut.Builder[Instr, Code] with Catenable[Instr, CodeBui
   
   def catZero = CodeBuilder.empty
   
-  def |+| (other: CodeBuilder): CodeBuilder =
+  def |+| (other: CodeBuilder): CodeBuilder = {
+    errIfExpended()
     if (other isEmpty)
       this
     else last match {
@@ -87,4 +98,8 @@ class CodeBuilder extends mut.Builder[Instr, Code] with Catenable[Instr, CodeBui
         other.expend()
         this
     }
+  }
+  
+  def |+| (instr: Instr): CodeBuilder =
+    this += instr
 }
