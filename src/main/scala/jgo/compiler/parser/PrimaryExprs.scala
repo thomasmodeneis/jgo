@@ -9,7 +9,7 @@ import types._
 trait PrimaryExprs extends Operands with TypeSyntax {
   self: Expressions =>
   
-  lazy val primaryExpr: PP_ =                   "primary expression" $
+  lazy val primaryExpr: PP[Expr] =              "primary expression" $
     ( primaryExpr ~ selector                                                  //e.g. myStruct.field, or myPackage.value
     | primaryExpr ~ call                                                      //e.g. myFunc(param), int(5)
     | primaryExpr ~ index                                                     //e.g. arr[0], myMap["hello"]
@@ -28,12 +28,12 @@ trait PrimaryExprs extends Operands with TypeSyntax {
   lazy val index: P_      =                        "subscript/index" $ 
     "[" ~> expression <~ "]"
   
-  lazy val slice: P[Option[_] ~ Option[_]] =       "slice operation" $
+  lazy val slice: P[Option[Expr] ~ Option[Expr]] = "slice operation" $
     "[" ~> (expression.? <~ ":") ~ expression.? <~ "]"
   
   lazy val typeAssert: P[Type] =                    "type assertion" $
     "." ~> "(" ~> goType <~ ")"
   
-  lazy val call: P[List[_] ~ Option[String]] =       "function call" $
+  lazy val call: P[List[Expr] ~ Option[String]] =    "function call" $
     "(" ~> exprList ~ "...".? <~ ")" //again with the optional trailing comma!
 }

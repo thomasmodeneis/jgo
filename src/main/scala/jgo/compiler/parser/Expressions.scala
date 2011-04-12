@@ -5,20 +5,21 @@ import interm._
 import types._
 
 trait Expressions extends PrimaryExprs {
-  lazy val expression: PP_ =                            "expression" $
-    orExpr
+  lazy val expression: PP[Expr] =                       "expression" $
+    addExpr //orExpr
   
-  lazy val orExpr: PP_ =                     "or-expression: prec 1" $
+  //implementation delayed until implementation of BoolTree
+  /*lazy val orExpr: PP[Expr]=                 "or-expression: prec 1" $
     ( orExpr ~ ("||" ~> andExpr)  //^^# conv{ BinExpr(op_||, _, _) }
     | andExpr
     )
   
-  lazy val andExpr: PP_ =                   "and-expression: prec 2" $
+  lazy val andExpr: PP[Expr] =              "and-expression: prec 2" $
     ( andExpr ~ ("&&" ~> relExpr)  //^^# conv{ BinExpr(op_&&, _, _) }
     | relExpr
     )
   
-  lazy val relExpr: PP_ =            "relational expression: prec 3" $
+  lazy val relExpr: PP[Expr] =       "relational expression: prec 3" $
     ( relExpr ~ ("==" ~> addExpr)  //^^# conv{ BinExpr(op_==, _, _) }
     | relExpr ~ ("!=" ~> addExpr)  //^^# conv{ BinExpr(op_!=, _, _) }
     | relExpr ~ ("<"  ~> addExpr)  //^^# conv{ BinExpr(op_<, _, _)  }
@@ -26,9 +27,9 @@ trait Expressions extends PrimaryExprs {
     | relExpr ~ (">"  ~> addExpr)  //^^# conv{ BinExpr(op_>, _, _)  }
     | relExpr ~ (">=" ~> addExpr)  //^^# conv{ BinExpr(op_>=, _, _) }
     | addExpr
-    )
+    )*/
   
-  lazy val addExpr: PP_ =              "additive expression: prec 4" $
+  lazy val addExpr: PP[Expr] =         "additive expression: prec 4" $
     ( addExpr ~ ("+" ~> multExpr)  //^^# conv{ BinExpr(op_+, _, _) }
     | addExpr ~ ("-" ~> multExpr)  //^^# conv{ BinExpr(op_-, _, _) }
     | addExpr ~ ("|" ~> multExpr)  //^^# conv{ BinExpr(op_|, _, _) }
@@ -36,7 +37,7 @@ trait Expressions extends PrimaryExprs {
     | multExpr
     )
   
-  lazy val multExpr: PP_ =       "multiplicative expression: prec 5" $
+  lazy val multExpr: PP[Expr] =  "multiplicative expression: prec 5" $
     ( multExpr ~ ("*"  ~> unaryExpr)  //^^# conv{ BinExpr(op_*, _, _)  }
     | multExpr ~ ("/"  ~> unaryExpr)  //^^# conv{ BinExpr(op_/, _, _)  }
     | multExpr ~ ("%"  ~> unaryExpr)  //^^# conv{ BinExpr(op_%, _, _)  }
@@ -47,7 +48,7 @@ trait Expressions extends PrimaryExprs {
     | unaryExpr
     )
   
-  lazy val unaryExpr: PP_ =               "unary expression: prec 6" $
+  lazy val unaryExpr: PP[Expr] =          "unary expression: prec 6" $
     (("+"  ~> unaryExpr) //.&#
     | "-"  ~> unaryExpr  //^^# (Neg(_))
     | "!"  ~> unaryExpr  //^^# (Not(_))
@@ -58,6 +59,6 @@ trait Expressions extends PrimaryExprs {
     | primaryExpr
     )
     
-  lazy val exprList: P[List[_]] =                  "expression list" $
+  lazy val exprList: P[List[Expr]] =               "expression list" $
     rep1sep(expression, ",")
 }
