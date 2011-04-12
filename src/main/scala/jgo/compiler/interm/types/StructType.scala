@@ -7,7 +7,7 @@ import member._
 case class StructType(fields: List[FieldDesc]) extends Type {
   val semantics = Value
   
-  val members = {
+  override val members = {
     var mbrs: Map[String, Member] = Map()
     for (field <- fields) field match {
       case RegularFieldDesc(n, t, tag) =>

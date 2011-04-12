@@ -16,7 +16,7 @@ trait Type extends Equals with Membered {
   
   val nilable: Boolean = false //overridden by Nilable, TypeName
   
-  val members = Map()
+  val members: Map[String, Member] = Map()
   
   /**
    * States whether or not this type is identical to the given type,
@@ -79,11 +79,6 @@ sealed abstract class Semantics
   case object Reference extends Semantics
   case object Primitive extends Semantics
 
-
-case object TopType     extends Type
-case object NilType     extends Type
-case object BottomType  extends Type
-
 trait Nilable extends Type {
-  val nilable: Boolean = true
+  override val nilable: Boolean = true
 }

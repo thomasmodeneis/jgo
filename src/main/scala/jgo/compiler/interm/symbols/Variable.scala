@@ -6,7 +6,8 @@ import types._
 
 import util._
 
-sealed abstract class Variable(val typeOf: Type) extends ValueSymbol {
+sealed abstract class Variable extends ValueSymbol {
+  val typeOf: Type
   val callable: Boolean =
     typeOf.underlying.isInstanceOf[FuncType]
 }
@@ -15,11 +16,11 @@ sealed abstract class Variable(val typeOf: Type) extends ValueSymbol {
   override def toString = "var " + pkg.name + "." + name + ", type = " + typeOf
 }*/
 
-case class GlobalVar(name: String, typeOf: Type) extends Variable(typeOf) {
+case class GlobalVar(name: String, typeOf: Type) extends Variable {
   override def toString = "global var " + name + ", type = " + typeOf
 }
 
-class LocalVar(val name: String, typeOf: Type) extends Variable(typeOf) with Freezable {
+class LocalVar(val name: String, val typeOf: Type) extends Variable with Freezable {
   private var closedOver: Boolean = false
   
   /**

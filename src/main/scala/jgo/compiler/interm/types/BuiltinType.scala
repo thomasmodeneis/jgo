@@ -30,4 +30,7 @@ sealed trait BuiltinRefType extends Type with Constable {
   val semantics = Reference
 }
 
-case object StringType extends BuiltinRefType //or Primitive...?
+case object StringType  extends BuiltinRefType with Nilable //or Primitive...?
+case object TopType     extends BuiltinRefType
+case object NilType     extends BuiltinRefType
+case object BottomType  extends BuiltinRefType
