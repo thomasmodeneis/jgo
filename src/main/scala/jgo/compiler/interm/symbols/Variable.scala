@@ -8,8 +8,6 @@ import util._
 
 sealed abstract class Variable extends ValueSymbol {
   val typeOf: Type
-  val callable: Boolean =
-    typeOf.underlying.isInstanceOf[FuncType]
 }
 
 /*case class PackageVar(pkg: Package, name: String, typeOf: Type) extends Variable(typeOf) {

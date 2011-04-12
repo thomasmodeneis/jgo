@@ -18,7 +18,8 @@ case object Copy  extends Instr
 case class New(typeOf: Type) extends Instr
 
 case class  InvokeFunc(func: Function) extends Instr
-case object InvokeLambda extends Instr
+case class  InvokeLambda(t: FuncType) extends Instr
+case class  Func2Lambda(func: Function) extends Instr
 case object Return extends Instr
 
 case class Add(t: Arith) extends Instr

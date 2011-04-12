@@ -9,6 +9,7 @@ import member._
 
 sealed abstract class Expr {
   val typeOf: Type
+  val callable: Boolean = typeOf.underlying.isInstanceOf[FuncType]
   /**
    * Provides the code necessary for computing the value
    * of this expression and placing the result on the top
@@ -16,9 +17,20 @@ sealed abstract class Expr {
    * <i>evaluation code</i> of this expression.
    */
   def eval: CodeBuilder
+  def call(args: List[Expr]): CodeBuilder = {
+    require(callable)
+    (args foldLeft eval) { _ |+| _.eval }
+  }
 }
 
 case class SimpleExpr(eval: CodeBuilder, typeOf: Type) extends Expr
+case class FuncExpr(f: Function) extends Expr {
+  val typeOf = f.typeOf
+  override val callable = true
+  def eval = Func2Lambda(f)
+  override def call(args: List[Expr]): CodeBuilder =
+    (args reduceLeft { _.eval |+| _.eval }) |+| InvokeFunc(f)
+}
 //case class BoolExpr(tree: BoolTree) extends Expr(Bool)
 //case class ConstExpr(value: Any, typeOf: ConstType) extends Expr(typeOf)
 
