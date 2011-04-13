@@ -6,9 +6,7 @@ import types._
 
 import util._
 
-sealed abstract class Variable extends ValueSymbol {
-  val typeOf: Type
-}
+sealed abstract class Variable extends ValueSymbol
 
 /*case class PackageVar(pkg: Package, name: String, typeOf: Type) extends Variable(typeOf) {
   override def toString = "var " + pkg.name + "." + name + ", type = " + typeOf

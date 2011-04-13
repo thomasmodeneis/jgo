@@ -25,6 +25,22 @@ trait Type extends Equals with Membered {
   //final def === (other: Type): Boolean =
   //  this == other
   
+  abstract override def equals(other: Any) = other match {
+    case TypeError  => true
+    case that: Type => (that canEqual this) && super.equals(that)
+    case _ => false
+  }
+  
+  /**
+   * States whether values of this type and values of the specified type are
+   * comparable. Two types are said to have comparable values (colloquially,
+   * two types are said to be comparable) if values of either type are
+   * assignable to variables of the other (colloquially, if one type is
+   * assignable to the other).
+   */
+  final def <=> (other: Type): Boolean =
+    Type.canHold(this, other) || Type.canHold(other, this)
+  
   /**
    * States whether values of the specified type are assignable to variables
    * of this type.
@@ -40,7 +56,7 @@ trait Type extends Equals with Membered {
 
 object Type {
   def canHold(t1: Type, t2: Type): Boolean =
-    t1 == t2 ||
+    t1 == t2 || //a TypeError is equal to any type, so...
     (
       !t1.isInstanceOf[TypeName] &&
       !t2.isInstanceOf[TypeName] && {
@@ -65,7 +81,7 @@ object Type {
             case (reslt1, reslt2) =>    reslt1 <<= reslt2
           }
         )                              => true
-        case _ => false
+        case _                         => false
       } }
     ) ||
     canHold(t1.underlying, t2.underlying) && !(

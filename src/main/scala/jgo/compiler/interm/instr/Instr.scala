@@ -11,9 +11,10 @@ sealed abstract class Instr
 case class Decl(v: LocalVar) extends Instr
 case class UnDecl(v: LocalVar) extends Instr
 
-case object Deref extends Instr
-case object Enref extends Instr
-case object Copy  extends Instr
+case object Enref  extends Instr
+case object Deref  extends Instr
+case object PutRef extends Instr
+case object Copy   extends Instr
 
 case class New(typeOf: Type) extends Instr
 
@@ -21,6 +22,8 @@ case class  InvokeFunc(func: Function) extends Instr
 case class  InvokeLambda(t: FuncType) extends Instr
 case class  Func2Lambda(func: Function) extends Instr
 case object Return extends Instr
+
+case class Neg(t: Arith) extends Instr
 
 case class Add(t: Arith) extends Instr
 case class Sub(t: Arith) extends Instr
@@ -31,6 +34,14 @@ case class Mod(t: Integral) extends Instr
 
 case class ShiftL(t1: Integral, t2: Unsigned) extends Instr
 case class ShiftR(t1: Integral, t2: Unsigned) extends Instr
+
+case class BitwiseAnd(t: Integral)    extends Instr
+case class BitwiseOr(t: Integral)     extends Instr
+case class BitwiseAndNot(t: Integral) extends Instr
+case class BitwiseXor(t: Integral)    extends Instr
+
+case class BitwiseNot(t: Integral)    extends Instr
+
 
 case class Goto(target: Label) extends Instr
 //case class Branch(b: BooleanTree, target: Label) extends Instr
@@ -58,3 +69,6 @@ case object MapPut extends Instr
 
 case class ChanSend(elemT: Type) extends Instr
 case class ChanRecv(elemT: Type) extends Instr
+
+case object Placeholder extends Instr
+
