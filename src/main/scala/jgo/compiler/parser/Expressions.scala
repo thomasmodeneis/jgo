@@ -6,7 +6,7 @@ import types._
 import codeseq._
 import instr._
 
-trait Expressions extends PrimaryExprs {
+trait Expressions extends PrimaryExprs with ExprUtils {
   lazy val expression: PP[Expr] =                       "expression" $
     addExpr //orExpr
   
@@ -43,20 +43,30 @@ trait Expressions extends PrimaryExprs {
     ( multExpr ~ ("*"  ~> unaryExpr)  //^^# conv{ BinExpr(op_*, _, _)  }
     | multExpr ~ ("/"  ~> unaryExpr)  //^^# conv{ BinExpr(op_/, _, _)  }
     | multExpr ~ ("%"  ~> unaryExpr)  //^^# conv{ BinExpr(op_%, _, _)  }
-    | multExpr ~ ("<<" ~> unaryExpr)  //^^# conv{ BinExpr(op_<<, _, _) }
-    | multExpr ~ (">>" ~> unaryExpr)  //^^# conv{ BinExpr(op_>>, _, _) }
+    | multExpr ~ ("<<" ~> unaryExpr)  ^^ {
+        case e ~ f => shift(e, f) match {
+          case Some((t, i, u)) => SimpleExpr(e.eval |+| f.eval |+| ShiftL(i, u), t)
+          case None            => ExprError
+        }
+      }
+    | multExpr ~ (">>" ~> unaryExpr)  ^^ {
+        case e ~ f => shift(e, f) match {
+          case Some((t, i, u)) => SimpleExpr(e.eval |+| f.eval |+| ShiftR(i, u), t)
+          case None            => ExprError
+        }
+      }
     | multExpr ~ ("&"  ~> unaryExpr)  //^^# conv{ BinExpr(op_&, _, _)  }
     | multExpr ~ ("&^" ~> unaryExpr)  //^^# conv{ BinExpr(op_&^, _, _) }
     | unaryExpr
     )
   
   lazy val unaryExpr: PP[Expr] =          "unary expression: prec 6" $
-    (("+"  ~> unaryExpr) //.&#
-    | "-"  ~> unaryExpr  //^^# (Neg(_))
+    (("+"  ~> unaryExpr) ^^ { ifNumeric(_) { (e, t) => e } }
+    | "-"  ~> unaryExpr  ^^ { ifNumeric(_) { (e, t) => SimpleExpr(e.eval |+| Neg(t), e.t) } }//{ e => arith(e.t) match { case Some(st) => SimpleExpr(e.t, e.eval |+| Neg(st)); case None => ExprError } }
     | "!"  ~> unaryExpr  //^^# (Not(_))
-    | "^"  ~> unaryExpr  //^^# (BitwiseNot(_))
+    | "^"  ~> unaryExpr  ^^ { ifIntegral(_) { (e, t) => SimpleExpr(e.eval |+| BitwiseNot(t), e.t) } }
     | "&"  ~> unaryExpr  //^^# (AddrOf(_))
-    | "<-" ~> unaryExpr  //^^# (PtrDeref(_))
+    | "<-" ~> unaryExpr  //^^ { case e if e.t.underlying 
     | "*"  ~> unaryExpr  ^^ {
         e =>
         e.t.underlying match {
@@ -73,22 +83,7 @@ trait Expressions extends PrimaryExprs {
     rep1sep(expression, ",")
   
   
-  def toStackType(t: NumericType): Arith = t match {
-    case Uint8      => U8
-    case Uint16     => U16
-    case Uint32     => U32
-    case Uint64     => U64
-    case Int8       => I8
-    case Int16      => I16
-    case Int32      => I32
-    case Int64      => I64
-    case Float32    => F32
-    case Float64    => F64
-    case Complex64  => C64
-    case Complex128 => C128
-  }
-  
-  def shift(e1: Expr, e2: Expr): Option[Type] =
+  /*
     if (!e1.t.underlying.isInstanceOf[Integral]) {
       val s = String.format("type, %s, of left operand of shift not integral", e1.t)
       recordErr(s)
@@ -100,7 +95,8 @@ trait Expressions extends PrimaryExprs {
       None
     }
     else
-      Some(e1.t)
+      Some((e1.t, toArith(e1.t.underlying.asInstanceOf[Integral]), toArith(e1.t.underlying.asInstanceOf[Unsigned])))
+  */
   
   def sameType(e1: Expr, e2: Expr): Option[Type] =
     if (e1.t == e2.t)
@@ -119,7 +115,7 @@ trait Expressions extends PrimaryExprs {
       None
   }
   
-  def numeric(t: Type): Option[NumericType] = t.underlying match {
+  def arith(t: Type): Option[Arith] = t.underlying match {
     case nt: NumericType => Some(nt)
     case _ =>
       val s = String.format("operand type %s not numeric", t)
@@ -127,7 +123,7 @@ trait Expressions extends PrimaryExprs {
       None
   }
   
-  def integral(t: Type): Option[IntegralType] = t.underlying match {
+  def integral(t: Type): Option[Integral] = t.underlying match {
     case it: IntegralType => Some(it)
     case _ =>
       val s = String.format("operand type %s not integral", t)
@@ -135,11 +131,16 @@ trait Expressions extends PrimaryExprs {
       None
   }
   
-  def unsigned(t: Type): Option[UnsignedType] = t.underlying match {
+  def unsigned(t: Type): Option[Unsigned] = t.underlying match {
     case ut: UnsignedType => Some(ut)
     case _ =>
       val s = String.format("operand type %s not unsigned", t)
       recordErr(s)
       None
   }
+  
+  def sameAddable(e1: Expr, e2: Expr):  Option[AddableType] = sameType(e1, e2) flatMap addable
+  def sameArith(e1: Expr, e2: Expr):    Option[Arith]       = sameType(e1, e2) flatMap arith
+  def sameIntegral(e1: Expr, e2: Expr): Option[Integral]    = sameType(e1, e2) flatMap integral
+  def sameUnsigned(e1: Expr, e2: Expr): Option[Unsigned]    = sameType(e1, e2) flatMap unsigned
 }

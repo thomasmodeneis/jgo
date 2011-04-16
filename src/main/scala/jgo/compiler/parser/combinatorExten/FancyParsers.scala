@@ -1,14 +1,15 @@
 package jgo.compiler.parser.combinatorExten
 
-import scala.util.parsing.combinator._
+import scala.util.parsing.combinator.Parsers
 import scala.util.parsing.input.Positional
 
-trait FancyParsers extends Parsers with ImplicitConversions {
-  
+trait FancyParsers extends Parsers with FunctioningImplicitConversions {
+  /*
   implicit def conv[A, B, C]         (f: (A, B) => C) =          flatten2(f)
   implicit def conv[A, B, C, D]      (f: (A, B, C) => D) =       flatten3(f)
   implicit def conv[A, B, C, D, E]   (f: (A, B, C, D) => E) =    flatten4(f)
   implicit def conv[A, B, C, D, E, F](f: (A, B, C, D, E) => F) = flatten5(f)
+  */
   
   class FancyParserOps[+T](p: Parser[T]) {
     def ~>! [U] (q: => Parser[U]): Parser[U] = p ~> commit(q)

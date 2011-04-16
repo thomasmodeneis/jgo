@@ -23,6 +23,8 @@ case class  InvokeLambda(t: FuncType) extends Instr
 case class  Func2Lambda(func: Function) extends Instr
 case object Return extends Instr
 
+case object StrAdd extends Instr
+
 case class Neg(t: Arith) extends Instr
 
 case class Add(t: Arith) extends Instr
@@ -47,11 +49,11 @@ case class Goto(target: Label) extends Instr
 //case class Branch(b: BooleanTree, target: Label) extends Instr
 case class Lbl(l: Label) extends Instr
 
-case object Pop       extends Instr
-case object Dup       extends Instr
-case object Dup_Down1 extends Instr
-case object Dup_Down2 extends Instr
-case object Swap      extends Instr
+case object Pop        extends Instr
+case object Dupl       extends Instr
+case object Dupl_Down1 extends Instr
+case object Dupl_Down2 extends Instr
+case object Swap       extends Instr
 
 case class LoadVar(v:  Variable) extends Instr
 case class StoreVar(v: Variable) extends Instr
@@ -67,8 +69,10 @@ case class ArrayPut(elemT: Type) extends Instr
 case class SlicePut(elemT: Type) extends Instr
 case object MapPut extends Instr
 
-case class ChanSend(elemT: Type) extends Instr
-case class ChanRecv(elemT: Type) extends Instr
+case object ChanSend extends Instr
+case object ChanRecv extends Instr
+
+case class PushBool(b: Boolean) extends Instr
 
 case object Placeholder extends Instr
 

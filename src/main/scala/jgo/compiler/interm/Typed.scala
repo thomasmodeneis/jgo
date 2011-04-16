@@ -13,3 +13,26 @@ trait Typed {
   def :=  (otherT: Type): Boolean = typeOf.underlying == otherT
   def :== (otherT: Type): Boolean = typeOf == otherT
 }
+
+object OfType {
+  def unapply[T <: Typed](v: T): Option[(T, Type)] =
+    Some(v, v.typeOf.underlying)
+}
+
+/*
+case e OfType t: FuncType
+
+case e OfType (t: FuncType)
+
+case e OfType FuncType(_)
+
+case e |: t: FuncType
+
+case e |: (t: FuncType)
+
+case e |: FuncType(_)
+
+case e =: t: FuncType
+
+case e -: (t: FuncType)
+*/
