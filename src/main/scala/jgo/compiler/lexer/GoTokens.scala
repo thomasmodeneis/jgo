@@ -14,48 +14,63 @@ trait GoTokens extends Tokens {
   
   object IntLit {
     def apply(v: Long): IntLit = new IntLit(v.toString, v, 10)
+    def apply(v: Int):  IntLit = new IntLit(v.toString, v, 10)
+    
     def apply(chars: String, radix: Int): Token = { //might be error token
       require(radix == 10 || radix == 16 || radix == 2 || radix == 8)
-      val value: Option[Long] = try { radix match {
+      val value: Option[BigInt] = try radix match {
         case 2 =>
           if (chars(0) == '0' && chars(1).toLower == 'b')
-            Some(java.lang.Long.parseLong(chars.view drop 2 filter (_ != '_') mkString, 2))
+            Some(BigInt(chars drop 2, 2))
           else None
+        
         case 8 =>
-          if (chars(0) == '0') //pass the 0 along to parseLong, it can't do any harm. But if we don't
-            Some(java.lang.Long.parseLong(chars.view filter (_ != '_') mkString, 8))//"0" causes exception
-          else
-            None
+          if (chars(0) == '0') //pass the 0 along to parseLong; it can't do any harm. But if we don't
+            Some(BigInt(chars, 8))//the int literal "0" will become BigInt("", 8) -> error
+          else None
+        
         case 10 =>
           if (chars(0) != '0')
-            Some(java.lang.Long.parseLong(chars.view filter (_ != '_') mkString, 10))
-          else
-            None
+            Some(BigInt(chars, 10))
+          else None
+        
         case 16 =>
           if (chars(0) == '0' && chars(1).toLower == 'x')
-            Some(java.lang.Long.parseLong(chars.view drop 2 filter (_ != '_') mkString, 16))
-          else
-            None
-      }} catch {
-        case e: NumberFormatException =>
-          None
+            Some(BigInt(chars drop 2, 16))
+          else None
+      }
+      catch {
+        case e: NumberFormatException => None
       }
       if (value.isDefined)
         new IntLit(chars, value.get, radix)
       else
         ErrorToken("Invalid integer literal: " + chars)
     }
-    def unapply(tok: Token): Option[String] = tok match {
-      case intLit: IntLit => Some(intLit.chars)
+    def unapply(tok: Token): Option[BigInt] = tok match {
+      case intLit: IntLit => Some(intLit.value)
       case _ => None
     }
   }
-  class IntLit private(override val chars: String, val value: Long, val radix: Int) extends Token {
+  class IntLit private (override val chars: String, val value: BigInt, val radix: Int) extends Token {
     override def toString = "integral literal " + chars //+
       (if (radix != 10) " (value = " + value + ")" else "")
   }
   
-  case class FloatLit(override val chars: String) extends Token {
+  object FloatLit {
+    def apply(chars: String): Token =
+      try new FloatLit(chars, BigDecimal(chars))
+      catch {
+        case e: NumberFormatException => ErrorToken("Invalid floating-point literal: " + chars)
+      }
+    
+    def unapply(tok: Token): Option[BigDecimal] = tok match {
+      case f: FloatLit => Some(f.value)
+      case _ => None
+    }
+  }
+  
+  class FloatLit private (override val chars: String, val value: BigDecimal) extends Token {
     override def toString = "floating-point literal: " + chars
   }
   
