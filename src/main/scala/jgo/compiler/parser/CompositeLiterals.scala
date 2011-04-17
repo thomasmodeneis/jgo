@@ -16,7 +16,7 @@ trait CompositeLiterals extends TypeSyntax {
     | ("[" ~ "..." ~ "]") ~> goType
     | sliceType
     | mapType
-    | typeName  //must refer to one of the above kinds of type
+    | typeSymbol  //must refer to one of the above kinds of type
     )
   
   lazy val compLitValue: PP_ =     "value-clause of composite literal" $

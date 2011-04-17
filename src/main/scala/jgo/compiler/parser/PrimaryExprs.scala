@@ -10,13 +10,13 @@ trait PrimaryExprs extends Operands with TypeSyntax with Scoped {
   self: Expressions =>
   
   lazy val primaryExpr: PP[Expr] =              "primary expression" $
-    ( primaryExpr ~ selector                                                  //e.g. myStruct.field, or myPackage.value
+    /*( primaryExpr ~ selector                                                  //e.g. myStruct.field, or myPackage.value
     | primaryExpr ~ call                                                      //e.g. myFunc(param), int(5)
     | primaryExpr ~ index                                                     //e.g. arr[0], myMap["hello"]
     | primaryExpr ~ slice                                                     //e.g. arr[2 : 5]
     | primaryExpr ~ typeAssert                                                //e.g. expr.(int)
-    | "(" ~> expression <~ ")" //in general, "E = E ~ t2 | t1" MUST be used instead of "E = t1 | E ~ t2"
-    | (goType <~ "(") ~ expression <~ ")"                     &@ "unambiguous type conversion"
+    | */ ("(" ~> expression <~ ")" //in general, "E = E ~ t2 | t1" MUST be used instead of "E = t1 | E ~ t2"
+    //| (goType <~ "(") ~ expression <~ ")"                     &@ "unambiguous type conversion"
 //  | specialBuiltinTypeCall //not yet supported
     | operand
     )

@@ -3,10 +3,11 @@ package parser
 
 import interm._
 import types._
+import symbols._
 
-trait TypeSyntax extends Symbols {
+trait TypeSyntax extends Symbols with TypeUtils {
   lazy val goType: P[Type] =                                                                "type" $
-    ( typeName
+    ( typeSymbol
     | "(" ~> goType <~ ")"   &@ "parenthesized type"
     | arrayType
     | structType
@@ -19,79 +20,58 @@ trait TypeSyntax extends Symbols {
     )
   
   
-  lazy val typeName: P[TypeName] =                                                     "type-name" $
+  lazy val typeSymbol: P[Type with Named] =                                            "type-name" $
+    symbol ^^ typeSymb
     //qualifiedIdent
-    typeSymbol  ^^ { _.typeName }
+    //typeSymbol  ^^ { _.typeName }
   
   
   lazy val arrayType: P[ArrayType] =                                                  "array type" $
     //("[" ~> expression <~ "]") ~ goType //compile-time constants not yet fully supported
-    ("[" ~> intLit <~ "]") ~ goType  ^^ {
-      case i ~ t => 
-        val len = i.value.asInstanceOf[Int]
-        errIf(len < 0, "cannot have negative array length")
-        ArrayType(len, t)
-    }
+    ("[" ~> intLit <~ "]") ~ goType  ^^ array
   
   
   lazy val sliceType: P[SliceType] =                                                  "slice type" $
-    "[" ~ "]" ~> goType  ^^ { SliceType(_) }
+    "[" ~ "]" ~> goType  ^^ SliceType
   
   
   lazy val structType: P[StructType] =                                               "struct type" $
-    "struct" ~>! "{" ~> repWithSemi(structFieldDecl) <~ "}"  ^^ {
-      decls =>
-      val fields = decls.flatten
-      StructType(fields)
-      //add logic for duplicate field names, etc
-    }
+    "struct" ~>! "{" ~> repWithSemi(structFieldDecl) <~ "}"  ^^ struct
   
   lazy val structFieldDecl: P[List[FieldDesc]] =                               "struct field decl" $
-    ( identList ~ goType ~ stringLit.?  ^^ { case ids ~ t ~ tag => ids map { id => RegularFieldDesc(id, t, tag) } }
-    | "*" ~> typeName    ~ stringLit.?  ^^ { case t ~ tag       => List(EmbeddedFieldDesc(t.name, t, true,  tag)) }
-    |        typeName    ~ stringLit.?  ^^ { case t ~ tag       => List(EmbeddedFieldDesc(t.name, t, false, tag)) }
+    ( identList ~ goType ~ stringLit.?  ^^ regularFieldDecl
+    | "*" ~> typeSymbol  ~ stringLit.?  ^^ embeddedFieldDecl(true)
+    |        typeSymbol  ~ stringLit.?  ^^ embeddedFieldDecl(false)
     )
   
   
   lazy val pointerType: P[PointerType] =                                            "pointer type" $
-    "*" ~> goType  ^^ { PointerType(_) }
+    "*" ~> goType  ^^ PointerType
   
   
   lazy val functionType: P[FuncType] =                                             "function type" $
-    "func" ~>! funcTypeParams ~ funcTypeResult.?  ^^ {
-      case (params, isVariadic) ~ Some(results) => FuncType(params, results, isVariadic)
-      case (params, isVariadic) ~ None          => FuncType(params,     Nil, isVariadic)
-    } 
+    "func" ~>! funcTypeParams ~ funcTypeResult.?  ^^ func
   
   lazy val funcTypeParams: P[(List[Type], Boolean)] =                   "function-type parameters" $
-    "(" ~> repsep(funcTypeParamDecl, ",") <~ ")"  ^^ { //recall that repsep admits zero repetitions
-      decls =>
-      val (backwardsParams, variadic, err) = (decls foldLeft ((List[Type](), false, false))) {
-        case ((lsAcc, isPrevVariadic, hasErr), (ls, isVariadic)) =>
-          //if the previous decl was variadic (isVariadicAcc), set hasErr to true.
-          (ls reverse_::: lsAcc, isVariadic, isPrevVariadic || hasErr)
-      }
-      if (err) recordErr("`...' permitted only on the final type in a signature")
-      (backwardsParams.reverse, variadic)
-    }
+    "(" ~> repsep(funcTypeParamDecl, ",") <~ ")"  ^^ funcParams
   
   //This needs to be improved, and made more succinct.  Also, account for the fact that
   //"either all of the parameter names are present in a param list, or all are absent"
   lazy val funcTypeParamDecl: P[(List[Type], Boolean)] =       "function parameter(s) declaration" $
-    ((identList <~ "...") ~ goType  ^^ { case is ~ t => (List.fill(is.length)(t), true) }
-    | identList ~ goType            ^^ { case is ~ t => (List.fill(is.length)(t), false) }
-    | "..." ~> goType               ^^ { t => (List(t), true) }
-    | goType                        ^^ { t => (List(t), false) }
+    ((identList <~ "...") ~ goType  ^^ funcParamIdentDecl(true)
+    | identList ~ goType            ^^ funcParamIdentDecl(false)
+    | "..." ~> goType               ^^ funcParamTypeDecl(true)
+    | goType                        ^^ funcParamTypeDecl(false)
     )
   
   lazy val funcTypeResult: P[List[Type]] =                                  "function-type result" $
-    ( goType         ^^ { List(_) }
-    | "(" ~> repsep(funcTypeResultDecl, ",") <~ ")"  ^^ { _.flatten }
+    ( goType                                         ^^ enlist
+    | "(" ~> repsep(funcTypeResultDecl, ",") <~ ")"  ^^ flatten
     )
   
   lazy val funcTypeResultDecl: P[List[Type]] =
-    ( identList ~ goType  ^^ { case is ~ t => List.fill(is.length)(t) }
-    | goType              ^^ { List(_) }
+    ( identList ~ goType  ^^ countAndFill
+    | goType              ^^ enlist
     )
   
   /*
@@ -105,31 +85,74 @@ trait TypeSyntax extends Symbols {
   */
   
   lazy val mapType: P[MapType] =                                                        "map type" $
-    "map" ~>! ("[" ~> goType <~ "]") ~ goType  ^^ { //the first type is that of the keys; the second, the vals
-      case k ~ v => MapType(k, v)
-    }
+    "map" ~>! ("[" ~> goType <~ "]") ~ goType  ^^ MapType
   
-  //figure out how to resolve the ambiguity here such that
-  //"[t]he <- operator associates with the leftmost chan possible."
-  //I think this does it!
   lazy val channelType: P[ChanType] =                                               "channel type" $
-    ( "chan" ~> "<-" ~> goType  ^^ { ChanType(_, canRecieve = false, canSend = true) }
-    | "<-" ~> "chan" ~> goType  ^^ { ChanType(_, canRecieve = true,  canSend = false) }
-    | "chan" ~> goType          ^^ { ChanType(_, canRecieve = true,  canSend = true) }
+    ( "chan" ~> "<-" ~> goType  ^^ chan(recv = false, send = true)
+    | "<-" ~> "chan" ~> goType  ^^ chan(recv = true,  send = false)
+    | "chan" ~> goType          ^^ chan(recv = true,  send = true)
     )
-  
-  
-  lazy val typeNoAmbigPrefix: P_ =                              "type without an ambiguous prefix" $
-    not("<-").named("not `<-'") ~> goType
-  
-  
-  lazy val typeNoAmbigPrefixNoIdent: P_ =     "type without an ambiguous prefix or prefixal ident" $
-    ( not("<-").named("not `<-'")
-    ~ not(rep("(") ~ ident).named("forbid idents")
-    ~> goType
-    )
-  
   
   lazy val typeList: P[List[Type]] =                                                   "type list" $
     rep1sep(goType, ",")
+  
+  
+  private def enlist[T](t: T):               List[T] = t :: Nil
+  private def flatten[T](ls: List[List[T]]): List[T] = ls.flatten
+  
+  private def countAndFill(is: List[String], t: Type):  List[Type] =
+    for (i <- is) yield t
+  
+  private val typeSymb: Symbol => Type with Named = {
+    case t: TypeSymbol => t.theType
+    case NoSymbol => TypeError
+    case _ => badType("symbol does not refer to a type")
+  }
+  
+  private def array(i: lexical.IntLit, t: Type) = {
+    val len = i.value.asInstanceOf[Int]
+    errIf(len < 0, "cannot have negative array length")
+    ArrayType(len, t)
+  }
+  
+  private def chan(recv: Boolean, send: Boolean)(elemT: Type) =
+    ChanType(elemT, canReceive = recv, canSend = send)
+  
+  
+  private def struct(decls: List[List[FieldDesc]]) = {
+    val fields = decls.flatten
+    StructType(fields)
+    //add logic for duplicate field names, etc
+  }
+  
+  private def regularFieldDecl(ids: List[String], t: Type, tag: Option[String]) =
+    ids map { id => RegularFieldDesc(id, t, tag) }
+  
+  private def embeddedFieldDecl(isPtr: Boolean)(t: Type with Named, tag: Option[String]) =
+    List(EmbeddedFieldDesc(t.name, t, isPtr,  tag))
+  
+  
+  private def func(paramInfo: (List[Type], Boolean), resultInfo: Option[List[Type]]): FuncType = {
+    val (params, isVariadic) = paramInfo
+    resultInfo match {
+      case Some(results) => FuncType(params, results, isVariadic)
+      case None          => FuncType(params,     Nil, isVariadic)
+    }
+  }
+  
+  private def funcParams(ls: List[(List[Type], Boolean)]): (List[Type], Boolean) = {
+    val (decls, variadics) = ls.unzip
+    val (err, variadic) = (variadics.init contains true, variadics last)
+    errIf(err, "`...' permitted only on the final type in a signature")
+    (decls.flatten, variadic)
+  }
+  
+  private def funcParamIdentDecl(variadic: Boolean)(is: List[String], t: Type) =
+    (List.fill(is.length)(t), variadic)
+  
+  private def funcParamTypeDecl(variadic: Boolean)(t: Type) =
+    (t :: Nil, variadic)
+  
+  
+  
 }

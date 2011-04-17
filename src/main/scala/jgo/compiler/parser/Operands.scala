@@ -16,8 +16,8 @@ trait Operands extends CompositeLiterals /*with FunctionLiterals*/ {
 //  | qualifiedIdent
 //  | methodAsFunc
 //  | literal
-    | varSymbol   ^^ VarLval //yes, this *must* be last, to prevent preemptive prefix-matching (I hope you/I remember what this means!)
-    | funcSymbol  ^^ { FuncExpr(_) }
+    | onlyVarSymbol   ^^ VarLval //yes, this *must* be last, to prevent preemptive prefix-matching (I hope you/I remember what this means!)
+    | onlyFuncSymbol  ^^ FuncExpr
     )
   
   /*

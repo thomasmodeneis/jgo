@@ -19,7 +19,7 @@ case class MapType(keyType: Type, valueType: Type) extends Type with Nilable {
   val semantics = Reference
 }
 
-case class ChanType(elemType: Type, canRecieve: Boolean = true, canSend: Boolean = true)
+case class ChanType(elemType: Type, canReceive: Boolean = true, canSend: Boolean = true)
 extends Type with Nilable {
   val semantics = Reference
 }

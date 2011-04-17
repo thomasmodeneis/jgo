@@ -10,8 +10,7 @@ trait ExprUtils extends TypeConversions {
   self: Base =>
   
   def badExpr(msg: String, args: AnyRef*): ExprError.type = {
-    val s = String.format(msg, args: _*)
-    recordErr(s)
+    recordErr(msg, args: _*)
     ExprError
   }
   

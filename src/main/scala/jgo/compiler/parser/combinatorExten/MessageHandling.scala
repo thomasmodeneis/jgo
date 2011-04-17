@@ -13,7 +13,7 @@ import scala.util.control.ControlThrowable
 
 trait MessageHandling extends Parsers {
   
-  implicit def withParser2certainParser [T] (p: Parser[WithMsg[T]]): Parser[T] =
+  implicit def withParser2certainParser[T](p: Parser[WithMsg[T]]): Parser[T] =
     positioned(p) ^^ { case WithMsg(m, cont) => addMsg(m); cont }
   
   implicit def any2noMsg[T](cont: T): PerhapsMsg[T] = NoMsg(cont)
@@ -79,14 +79,17 @@ trait MessageHandling extends Parsers {
   /*def unless [T] (cond: => Boolean, msg: String) (res: T): OrError[T] =
     if (cond) ErrorPresent(ErrorMsg(msg)) else res*/
   
-  def recordErr(msg: String) {
-    errs ::= ErrorMsg(msg).setPos(position)
+  def recordErr(msg: String, args: AnyRef*) {
+    val s = String.format(msg, args: _*)
+    errs ::= ErrorMsg(s).setPos(position)
   }
-  def recordWarn(msg: String) {
-    warns ::= WarningMsg(msg).setPos(position)
+  def recordWarn(msg: String, args: AnyRef*) {
+    val s = String.format(msg, args: _*)
+    warns ::= WarningMsg(s).setPos(position)
   }
-  def recordNote(msg: String) {
-    nts ::= NoteMsg(msg).setPos(position)
+  def recordNote(msg: String, args: AnyRef*) {
+    val s = String.format(msg, args: _*)
+    nts ::= NoteMsg(s).setPos(position)
   }
   
   private case class ErrorThrow(msg: ErrorMsg) extends ControlThrowable
