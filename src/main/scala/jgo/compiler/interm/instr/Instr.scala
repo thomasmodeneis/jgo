@@ -72,7 +72,21 @@ case object MapPut extends Instr
 case object ChanSend extends Instr
 case object ChanRecv extends Instr
 
-case class PushBool(b: Boolean) extends Instr
+case class Unbox(t: PrimitiveType)
+
+case class PushBool(b: Boolean)       extends Instr
+case class BranchTrue(target: Label)  extends Instr
+case class BranchFalse(target: Label) extends Instr
+
+case class BranchObjEq(target: Label) extends Instr
+case class BranchObjNe(target: Label) extends Instr
+
+case class Compare(t: Arith) extends Instr
+case class BranchEq(target: Label)  extends Instr
+case class BranchNe(target: Label)  extends Instr
+case class BranchLt(target: Label)  extends Instr
+case class BranchLeq(target: Label) extends Instr
+case class BranchGt(target: Label)  extends Instr
+case class BranchGeq(target: Label) extends Instr
 
 case object Placeholder extends Instr
-

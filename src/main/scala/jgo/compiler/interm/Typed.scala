@@ -10,8 +10,10 @@ trait Typed {
   
   val callable = typeOf.underlying.isInstanceOf[FuncType]
   
-  def isOfType(otherT: Type): Boolean = typeOf.underlying == otherT
-  def isOfType[T <: Type] = typeOf.underlying.isInstanceOf[T]
+  def isOfType(otherT: Type): Boolean =
+    typeOf.underlying == otherT || (typeOf.underlying eq TypeError) //== would always be true
+  def isOfType[T <: Type] =
+    typeOf.underlying.isInstanceOf[T] || (typeOf.underlying eq TypeError)
 }
 
 object OfType {

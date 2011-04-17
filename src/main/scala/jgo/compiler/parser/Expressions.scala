@@ -65,23 +65,6 @@ trait Expressions extends PrimaryExprs with ExprUtils {
     rep1sep(expression, ",")
   
   
-  private def encat[T <: Type](f: (CodeBuilder, T, Type) => Expr): (CodeBuilder, CodeBuilder, T, Type) => Expr =
-    (b1, b2, t0, t) => f(b1 |+| b2, t0, t)
-  
-  private def encat[T1 <: Type, T2 <: Type](f: (CodeBuilder, T1, T2, Type) => Expr)
-    : (CodeBuilder, CodeBuilder, T1, T2, Type) => Expr =
-    (b1, b2, t1, t2, t) => f(b1 |+| b2, t1, t2, t)
-  
-  private def simple(cat: CodeBuilder) =
-    (b: CodeBuilder, exprT: Type) => SimpleExpr(b |+| cat, exprT)
-  
-  private def simple[T <: Type](catF: T => CodeBuilder) =
-    (b: CodeBuilder, underlT: T, exprT: Type) => SimpleExpr(b |+| catF(underlT), exprT)
-  
-  private def simple[T1 <: Type, T2 <: Type](catF: (T1, T2) => CodeBuilder) =
-    (b: CodeBuilder, underlT1: T1, underlT2: T2, exprT: Type) => SimpleExpr(b |+| catF(underlT1, underlT2), exprT)
-  
-  
   private def plus(e1: Expr, e2: Expr): Expr =
     if (e1.t != e2.t)
       badExpr("operands have differing types %s and %s", e1.t, e2.t)

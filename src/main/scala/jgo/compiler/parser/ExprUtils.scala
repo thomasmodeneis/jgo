@@ -6,7 +6,7 @@ import types._
 import codeseq._
 import instr._
 
-trait ExprUtils {
+trait ExprUtils extends TypeConversions {
   self: Base =>
   
   def badExpr(msg: String, args: AnyRef*): ExprError.type = {
@@ -71,35 +71,20 @@ trait ExprUtils {
       }
     }
   
+  def encat[T <: Type](f: (CodeBuilder, T, Type) => Expr): (CodeBuilder, CodeBuilder, T, Type) => Expr =
+    (b1, b2, t0, t) => f(b1 |+| b2, t0, t)
   
-  implicit def toArith(t: NumericType): Arith = t match {
-    case Uint8      => U8
-    case Uint16     => U16
-    case Uint32     => U32
-    case Uint64     => U64
-    case Int8       => I8
-    case Int16      => I16
-    case Int32      => I32
-    case Int64      => I64
-    case Float32    => F32
-    case Float64    => F64
-    case Complex64  => C64
-    case Complex128 => C128
-  } 
-  implicit def toArith(t: IntegralType): Integral = t match {
-    case Uint8      => U8
-    case Uint16     => U16
-    case Uint32     => U32
-    case Uint64     => U64
-    case Int8       => I8
-    case Int16      => I16
-    case Int32      => I32
-    case Int64      => I64
-  } 
-  implicit def toArith(t: UnsignedType): Unsigned = t match {
-    case Uint8      => U8
-    case Uint16     => U16
-    case Uint32     => U32
-    case Uint64     => U64
-  }
+  def encat[T1 <: Type, T2 <: Type](f: (CodeBuilder, T1, T2, Type) => Expr)
+    : (CodeBuilder, CodeBuilder, T1, T2, Type) => Expr =
+    (b1, b2, t1, t2, t) => f(b1 |+| b2, t1, t2, t)
+  
+  def simple(cat: CodeBuilder) =
+    (b: CodeBuilder, exprT: Type) => SimpleExpr(b |+| cat, exprT)
+  
+  def simple[T <: Type](catF: T => CodeBuilder) =
+    (b: CodeBuilder, underlT: T, exprT: Type) => SimpleExpr(b |+| catF(underlT), exprT)
+  
+  def simple[T1 <: Type, T2 <: Type](catF: (T1, T2) => CodeBuilder) =
+    (b: CodeBuilder, underlT1: T1, underlT2: T2, exprT: Type) => SimpleExpr(b |+| catF(underlT1, underlT2), exprT)
+  
 }
