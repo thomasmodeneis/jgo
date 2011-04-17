@@ -15,56 +15,62 @@ trait ExprUtils {
     ExprError
   }
   
-  def ifNumeric(expr: Expr)(f: (Expr, NumericType, Type) => Expr): Expr = expr match {
-    case e OfType (t: NumericType) => f(expr, t, expr.t)
+  def ifNumeric(expr: Expr)(f: (CodeBuilder, NumericType, Type) => Expr): Expr = expr match {
+    case e OfType (t: NumericType) => f(expr.eval, t, expr.t)
     case _ => badExpr("operand type %s is not numeric", expr.t)
   }
-  def ifIntegral(expr: Expr)(f: (Expr, IntegralType, Type) => Expr): Expr = expr match {
-    case e OfType (t: IntegralType) => f(expr, t, expr.t)
+  def ifIntegral(expr: Expr)(f: (CodeBuilder, IntegralType, Type) => Expr): Expr = expr match {
+    case e OfType (t: IntegralType) => f(expr.eval, t, expr.t)
     case _ => badExpr("operand type %s is not integral", expr.t)
   }
-  def ifUnsigned(expr: Expr)(f: (Expr, UnsignedType, Type) => Expr): Expr = expr match {
-    case e OfType (t: UnsignedType) => f(expr, t, expr.t)
+  def ifUnsigned(expr: Expr)(f: (CodeBuilder, UnsignedType, Type) => Expr): Expr = expr match {
+    case e OfType (t: UnsignedType) => f(expr.eval, t, expr.t)
     case _ => badExpr("operand type %s is not unsigned", expr.t)
   }
   
-  def ifChan(expr: Expr)(f: (Expr, Type) => Expr): Expr = expr match {
-    case e OfType ChanType(elemT, _, _) => f(expr, elemT)
-    case _ => badExpr("operand type %s is not a channel type", expr.t)
+  
+  def ifPtr(expr: Expr)(f: (CodeBuilder, Type) => Expr): Expr = expr match {
+    case e OfType PointerType(elemT) => f(expr.eval, elemT)
+    case _ => badExpr("operand type %s is not a pointer type", expr.t)
   }
-  def ifArray(expr: Expr)(f: (Expr, Type) => Expr): Expr = expr match {
-    case e OfType ArrayType(_, elemT) => f(expr, elemT)
+  def ifArray(expr: Expr)(f: (CodeBuilder, Type) => Expr): Expr = expr match {
+    case e OfType ArrayType(_, elemT) => f(expr.eval, elemT)
     case _ => badExpr("operand type %s is not an array type", expr.t)
   }
-  def ifSlice(expr: Expr)(f: (Expr, Type) => Expr): Expr = expr match {
-    case e OfType SliceType(elemT) => f(expr, elemT)
+  def ifSlice(expr: Expr)(f: (CodeBuilder, Type) => Expr): Expr = expr match {
+    case e OfType SliceType(elemT) => f(expr.eval, elemT)
     case _ => badExpr("operand type %s is not a slice type", expr.t)
   }
+  def ifChan(expr: Expr)(f: (CodeBuilder, Type) => Expr): Expr = expr match {
+    case e OfType ChanType(elemT, _, _) => f(expr.eval, elemT)
+    case _ => badExpr("operand type %s is not a channel type", expr.t)
+  }
   
-  def ifSameNumeric(e1: Expr, e2: Expr)(f: (Expr, Expr, NumericType, Type) => Expr): Expr =
+  def ifSameNumeric(e1: Expr, e2: Expr)(f: (CodeBuilder, CodeBuilder, NumericType, Type) => Expr): Expr =
     if (e1.t != e2.t)
       badExpr("operands have differing types %s and %s", e1.t, e2.t)
     else
-      ifNumeric(e2) { f(e1, _, _, _) }
+      ifNumeric(e2) { f(e1.eval, _, _, _) }
   
-  def ifSameIntegral(e1: Expr, e2: Expr)(f: (Expr, Expr, IntegralType, Type) => Expr): Expr =
+  def ifSameIntegral(e1: Expr, e2: Expr)(f: (CodeBuilder, CodeBuilder, IntegralType, Type) => Expr): Expr =
     if (e1.t != e2.t)
       badExpr("operands have differing types %s and %s", e1.t, e2.t)
     else
-      ifIntegral(e2) { f(e1, _, _, _) }
+      ifIntegral(e2) { f(e1.eval, _, _, _) }
   
-  def ifSameUnsigned(e1: Expr, e2: Expr)(f: (Expr, Expr, UnsignedType, Type) => Expr): Expr =
+  def ifSameUnsigned(e1: Expr, e2: Expr)(f: (CodeBuilder, CodeBuilder, UnsignedType, Type) => Expr): Expr =
     if (e1.t != e2.t)
       badExpr("operands have differing types %s and %s", e1.t, e2.t)
     else
-      ifUnsigned(e2) { f(e1, _, _, _) }
+      ifUnsigned(e2) { f(e1.eval, _, _, _) }
   
-  def ifValidShift(e1: Expr, e2: Expr)(f: (Expr, Expr, IntegralType, UnsignedType, Type) => Expr): Expr =
-    ifIntegral(e1) { (exp1, intT, typ1) =>
-      ifUnsigned(e2) { (exp2, unsT, typ2) =>
-        f(e1, e2, intT, unsT, typ1)
+  def ifValidShift(e1: Expr, e2: Expr)(f: (CodeBuilder, CodeBuilder, IntegralType, UnsignedType, Type) => Expr): Expr =
+    ifIntegral(e1) { (code1, intT, typ1) =>
+      ifUnsigned(e2) { (code2, unsT, typ2) =>
+        f(code1, code2, intT, unsT, typ1)
       }
     }
+  
   
   implicit def toArith(t: NumericType): Arith = t match {
     case Uint8      => U8

@@ -6,7 +6,7 @@ import scope._
 import interm._
 import types._
 
-trait PrimaryExprs extends Operands with TypeSyntax {
+trait PrimaryExprs extends Operands with TypeSyntax with Scoped {
   self: Expressions =>
   
   lazy val primaryExpr: PP[Expr] =              "primary expression" $
@@ -18,8 +18,7 @@ trait PrimaryExprs extends Operands with TypeSyntax {
     | "(" ~> expression <~ ")" //in general, "E = E ~ t2 | t1" MUST be used instead of "E = t1 | E ~ t2"
     | (goType <~ "(") ~ expression <~ ")"                     &@ "unambiguous type conversion"
 //  | specialBuiltinTypeCall //not yet supported
-    | literal
-    | ident //yes, this *must* be last, to prevent preemptive prefix-matching (I hope you/I remember what this means!)
+    | operand
     )
   
   lazy val selector: P[String] =          "field or method selector" $

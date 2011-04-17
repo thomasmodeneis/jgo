@@ -32,50 +32,32 @@ trait Expressions extends PrimaryExprs with ExprUtils {
     )*/
   
   lazy val addExpr: PP[Expr] =         "additive expression: prec 4" $
-    ( addExpr ~ ("+" ~> multExpr)  //^^# conv{ BinExpr(op_+, _, _) }
-    | addExpr ~ ("-" ~> multExpr)  //^^# conv{ BinExpr(op_-, _, _) }
-    | addExpr ~ ("|" ~> multExpr)  //^^# conv{ BinExpr(op_|, _, _) }
-    | addExpr ~ ("^" ~> multExpr)  //^^# conv{ BinExpr(op_^, _, _) }
+    ( addExpr ~ ("+" ~> multExpr)  ^^ plus
+    | addExpr ~ ("-" ~> multExpr)  ^^ minus
+    | addExpr ~ ("|" ~> multExpr)  ^^ bitOr
+    | addExpr ~ ("^" ~> multExpr)  ^^ bitXor
     | multExpr
     )
   
   lazy val multExpr: PP[Expr] =  "multiplicative expression: prec 5" $
-    ( multExpr ~ ("*"  ~> unaryExpr)  //^^# conv{ BinExpr(op_*, _, _)  }
-    | multExpr ~ ("/"  ~> unaryExpr)  //^^# conv{ BinExpr(op_/, _, _)  }
-    | multExpr ~ ("%"  ~> unaryExpr)  //^^# conv{ BinExpr(op_%, _, _)  }
-    | multExpr ~ ("<<" ~> unaryExpr)  ^^ {
-        case e ~ f => shift(e, f) match {
-          case Some((t, i, u)) => SimpleExpr(e.eval |+| f.eval |+| ShiftL(i, u), t)
-          case None            => ExprError
-        }
-      }
-    | multExpr ~ (">>" ~> unaryExpr)  ^^ {
-        case e ~ f => shift(e, f) match {
-          case Some((t, i, u)) => SimpleExpr(e.eval |+| f.eval |+| ShiftR(i, u), t)
-          case None            => ExprError
-        }
-      }
-    | multExpr ~ ("&"  ~> unaryExpr)  //^^# conv{ BinExpr(op_&, _, _)  }
-    | multExpr ~ ("&^" ~> unaryExpr)  //^^# conv{ BinExpr(op_&^, _, _) }
+    ( multExpr ~ ("*"  ~> unaryExpr)  ^^ times
+    | multExpr ~ ("/"  ~> unaryExpr)  ^^ div
+    | multExpr ~ ("%"  ~> unaryExpr)  ^^ mod
+    | multExpr ~ ("<<" ~> unaryExpr)  ^^ shiftl
+    | multExpr ~ (">>" ~> unaryExpr)  ^^ shiftr
+    | multExpr ~ ("&"  ~> unaryExpr)  ^^ bitAnd
+    | multExpr ~ ("&^" ~> unaryExpr)  ^^ bitAndNot
     | unaryExpr
     )
   
   lazy val unaryExpr: PP[Expr] =          "unary expression: prec 6" $
-    (("+"  ~> unaryExpr) ^^ { ifNumeric(_) { (e, t) => e } }
-    | "-"  ~> unaryExpr  ^^ { ifNumeric(_) { (e, t) => SimpleExpr(e.eval |+| Neg(t), e.t) } }//{ e => arith(e.t) match { case Some(st) => SimpleExpr(e.t, e.eval |+| Neg(st)); case None => ExprError } }
+    (("+"  ~> unaryExpr) ^^ { ifNumeric(_) { (code, underlNumericT, actualT) => SimpleExpr(code, actualT) } }
+    | "-"  ~> unaryExpr  ^^ { ifNumeric(_) { (c, n, t) => SimpleExpr(c |+| Neg(n), t) } }
+    | "^"  ~> unaryExpr  ^^ { ifIntegral(_) { (c, i, t) => SimpleExpr(c |+| BitwiseNot(i), t) } }
     | "!"  ~> unaryExpr  //^^# (Not(_))
-    | "^"  ~> unaryExpr  ^^ { ifIntegral(_) { (e, t) => SimpleExpr(e.eval |+| BitwiseNot(t), e.t) } }
+    | "<-" ~> unaryExpr  ^^ chanRecv
     | "&"  ~> unaryExpr  //^^# (AddrOf(_))
-    | "<-" ~> unaryExpr  //^^ { case e if e.t.underlying 
-    | "*"  ~> unaryExpr  ^^ {
-        e =>
-        e.t.underlying match {
-          case PointerType(t) =>
-            PtrLval(e)
-          case _ =>
-            ExprError
-        }
-      }
+    | "*"  ~> unaryExpr  ^^ deref
     | primaryExpr
     )
     
@@ -83,64 +65,48 @@ trait Expressions extends PrimaryExprs with ExprUtils {
     rep1sep(expression, ",")
   
   
-  /*
-    if (!e1.t.underlying.isInstanceOf[Integral]) {
-      val s = String.format("type, %s, of left operand of shift not integral", e1.t)
-      recordErr(s)
-      None
+  private def encat[T <: Type](f: (CodeBuilder, T, Type) => Expr): (CodeBuilder, CodeBuilder, T, Type) => Expr =
+    (b1, b2, t0, t) => f(b1 |+| b2, t0, t)
+  
+  private def encat[T1 <: Type, T2 <: Type](f: (CodeBuilder, T1, T2, Type) => Expr)
+    : (CodeBuilder, CodeBuilder, T1, T2, Type) => Expr =
+    (b1, b2, t1, t2, t) => f(b1 |+| b2, t1, t2, t)
+  
+  private def simple(cat: CodeBuilder) =
+    (b: CodeBuilder, exprT: Type) => SimpleExpr(b |+| cat, exprT)
+  
+  private def simple[T <: Type](catF: T => CodeBuilder) =
+    (b: CodeBuilder, underlT: T, exprT: Type) => SimpleExpr(b |+| catF(underlT), exprT)
+  
+  private def simple[T1 <: Type, T2 <: Type](catF: (T1, T2) => CodeBuilder) =
+    (b: CodeBuilder, underlT1: T1, underlT2: T2, exprT: Type) => SimpleExpr(b |+| catF(underlT1, underlT2), exprT)
+  
+  
+  private def plus(e1: Expr, e2: Expr): Expr =
+    if (e1.t != e2.t)
+      badExpr("operands have differing types %s and %s", e1.t, e2.t)
+    else e1 match {
+      case _ OfType (StringType)  => SimpleExpr(e1.eval |+| e2.eval |+| StrAdd, e1.t)
+      case _ OfType (t: NumericType) => SimpleExpr(e1.eval |+| e2.eval |+| Add(t), e1.t)
+      case _ => badExpr("operand type %s not numeric or string type", e1.t)
     }
-    else if (!e2.t.underlying.isInstanceOf[Unsigned]) {
-      val s = String.format("type, %s, of right operand of shift not unsigned", e2.t)
-      recordErr(s)
-      None
-    }
-    else
-      Some((e1.t, toArith(e1.t.underlying.asInstanceOf[Integral]), toArith(e1.t.underlying.asInstanceOf[Unsigned])))
-  */
+  //Get ready for procedural abstraction, functional programming style!
+  private def minus(e1: Expr, e2: Expr): Expr     = ifSameNumeric(e1, e2)(encat(simple(Sub(_))))
+  private def times(e1: Expr, e2: Expr): Expr     = ifSameNumeric(e1, e2)(encat(simple(Mul(_))))
+  private def div(e1: Expr, e2: Expr): Expr       = ifSameNumeric(e1, e2)(encat(simple(Div(_))))
+  private def mod(e1: Expr, e2: Expr): Expr       = ifSameIntegral(e1, e2)(encat(simple(Mod(_))))
+  private def bitAnd(e1: Expr, e2: Expr): Expr    = ifSameIntegral(e1, e2)(encat(simple(BitwiseAnd(_))))
+  private def bitAndNot(e1: Expr, e2: Expr): Expr = ifSameIntegral(e1, e2)(encat(simple(BitwiseAndNot(_))))
+  private def bitOr(e1: Expr, e2: Expr): Expr     = ifSameIntegral(e1, e2)(encat(simple(BitwiseOr(_))))
+  private def bitXor(e1: Expr, e2: Expr): Expr    = ifSameIntegral(e1, e2)(encat(simple(BitwiseXor(_))))
+  private def shiftl(e1: Expr, e2: Expr): Expr    = ifValidShift(e1, e2)(encat(simple(ShiftL(_, _))))
+  private def shiftr(e1: Expr, e2: Expr): Expr    = ifValidShift(e1, e2)(encat(simple(ShiftR(_, _))))
   
-  def sameType(e1: Expr, e2: Expr): Option[Type] =
-    if (e1.t == e2.t)
-      Some(e1.t)
-    else {
-      val s = String.format("operands have differing types %s and %s", e1.t, e2.t)
-      recordErr(s)
-      None
-    }
-  
-  def addable(t: Type): Option[AddableType] = t.underlying match {
-    case at: AddableType => Some(at)
-    case _ =>
-      val s = String.format("operand type %s not numeric or string type", t)
-      recordErr(s)
-      None
-  }
-  
-  def arith(t: Type): Option[Arith] = t.underlying match {
-    case nt: NumericType => Some(nt)
-    case _ =>
-      val s = String.format("operand type %s not numeric", t)
-      recordErr(s)
-      None
-  }
-  
-  def integral(t: Type): Option[Integral] = t.underlying match {
-    case it: IntegralType => Some(it)
-    case _ =>
-      val s = String.format("operand type %s not integral", t)
-      recordErr(s)
-      None
-  }
-  
-  def unsigned(t: Type): Option[Unsigned] = t.underlying match {
-    case ut: UnsignedType => Some(ut)
-    case _ =>
-      val s = String.format("operand type %s not unsigned", t)
-      recordErr(s)
-      None
-  }
-  
-  def sameAddable(e1: Expr, e2: Expr):  Option[AddableType] = sameType(e1, e2) flatMap addable
-  def sameArith(e1: Expr, e2: Expr):    Option[Arith]       = sameType(e1, e2) flatMap arith
-  def sameIntegral(e1: Expr, e2: Expr): Option[Integral]    = sameType(e1, e2) flatMap integral
-  def sameUnsigned(e1: Expr, e2: Expr): Option[Unsigned]    = sameType(e1, e2) flatMap unsigned
+  private def pos(expr: Expr): Expr      = ifNumeric(expr)((_, _, _) => SimpleExpr(expr.eval, expr.t))
+  private def neg(expr: Expr): Expr      = ifNumeric(expr)(simple(Neg(_)))
+  //private def not(expr: Expr): Expr      = ifNumeric(expr)(simple)
+  private def compl(expr: Expr): Expr    = ifIntegral(expr)(simple(BitwiseNot(_)))
+  //private def addrOf(expr: Expr): Expr   = ifNumeric(expr)(simple(Neg(_)))
+  private def deref(expr: Expr): Expr    = PtrLval(ifPtr(expr)(simple(Deref)))
+  private def chanRecv(expr: Expr): Expr = ifChan(expr)(simple(Deref))
 }
