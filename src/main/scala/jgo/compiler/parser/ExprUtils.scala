@@ -14,6 +14,10 @@ trait ExprUtils extends TypeConversions {
     ExprError
   }
   
+  def ifNumericE(expr: Expr)(e: => Expr): Expr = expr match {
+    case e OfType (t: NumericType) => e
+    case _ => badExpr("operand type %s is not numeric", expr.t)
+  }
   def ifNumeric(expr: Expr)(f: (CodeBuilder, NumericType, Type) => Expr): Expr = expr match {
     case e OfType (t: NumericType) => f(expr.eval, t, expr.t)
     case _ => badExpr("operand type %s is not numeric", expr.t)
@@ -45,6 +49,12 @@ trait ExprUtils extends TypeConversions {
     case _ => badExpr("operand type %s is not a channel type", expr.t)
   }
   
+  def ifSameNumericE(e1: Expr, e2: Expr)(e: => Expr): Expr =
+    if (e1.t != e2.t)
+      badExpr("operands have differing types %s and %s", e1.t, e2.t)
+    else
+      ifNumericE(e2)(e)
+  
   def ifSameNumeric(e1: Expr, e2: Expr)(f: (CodeBuilder, CodeBuilder, NumericType, Type) => Expr): Expr =
     if (e1.t != e2.t)
       badExpr("operands have differing types %s and %s", e1.t, e2.t)
@@ -62,6 +72,12 @@ trait ExprUtils extends TypeConversions {
       badExpr("operands have differing types %s and %s", e1.t, e2.t)
     else
       ifUnsigned(e2) { f(e1.eval, _, _, _) }
+  
+  def ifSame(e1: Expr, e2: Expr)(e: => Expr): Expr =
+    if (e1.t != e2.t)
+      badExpr("operands have differing types %s and %s", e1.t, e2.t)
+    else
+      e
   
   def ifValidShift(e1: Expr, e2: Expr)(f: (CodeBuilder, CodeBuilder, IntegralType, UnsignedType, Type) => Expr): Expr =
     ifIntegral(e1) { (code1, intT, typ1) =>

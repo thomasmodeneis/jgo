@@ -6,6 +6,7 @@ import types._
 import symbols._
 import codeseq._
 import member._
+import bool._
 
 sealed abstract class Expr extends Typed {
   /**
@@ -30,6 +31,7 @@ case object ExprError extends LvalExpr {
 }
 
 case class SimpleExpr(eval: CodeBuilder, typeOf: Type) extends Expr
+
 case class FuncExpr(f: Function) extends Expr {
   val typeOf = f.typeOf
   override val callable = true
@@ -37,7 +39,18 @@ case class FuncExpr(f: Function) extends Expr {
   override def call(args: List[Expr]): CodeBuilder =
     (args foldLeft CodeBuilder.empty) { _ |+| _.eval } |+| InvokeFunc(f)
 }
-//case class BoolExpr(tree: BoolTree) extends Expr(Bool)
+
+case class BoolExpr(tree: BoolTree) extends Expr {
+  val typeOf            = Bool
+  override val callable = false
+  def eval = tree.evalAsBool
+  
+  def branchTo(lbl: Label)                           = tree.branchTo(lbl)
+  def mkIf(ifB: CodeBuilder)                         = tree.mkIf(ifB)
+  def mkIfElse(ifB: CodeBuilder, elseB: CodeBuilder) = tree.mkIfElse(ifB, elseB)
+  def mkWhile(loopBody: CodeBuilder)                 = tree.mkWhile(loopBody)
+}
+
 //case class ConstExpr(value: Any, typeOf: ConstType) extends Expr(typeOf)
 
 sealed abstract class LvalExpr extends Expr {

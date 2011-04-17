@@ -23,7 +23,7 @@ object CodeBuilder {
   }
 }
 
-class CodeBuilder extends mut.Builder[Instr, Code] with Catenable[Instr, CodeBuilder] with Expendable {
+class CodeBuilder extends mut.Builder[Instr, Code] with Expendable {
   private def this(fst: Code, lst: Code) = {
     this()
     first = fst
@@ -70,7 +70,7 @@ class CodeBuilder extends mut.Builder[Instr, Code] with Catenable[Instr, CodeBui
     last match {
       case Empty =>
         first = add
-      case lst @ (i ::: Empty) =>
+      case lst: (:::) =>
         lst.tl = add
     }
     last = add
@@ -92,7 +92,7 @@ class CodeBuilder extends mut.Builder[Instr, Code] with Catenable[Instr, CodeBui
     else last match {
       case Empty =>
         other
-      case lst @ (i ::: Empty) =>
+      case lst: (:::) =>
         lst.tl = other.first
         last   = other.last
         other.expend()

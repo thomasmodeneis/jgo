@@ -5,31 +5,31 @@ import interm._
 import types._
 import codeseq._
 import instr._
+import bool._
 
 trait Expressions extends PrimaryExprs with ExprUtils {
   lazy val expression: PP[Expr] =                       "expression" $
-    addExpr //orExpr
+    orExpr
   
-  //implementation delayed until implementation of BoolTree
-  /*lazy val orExpr: PP[Expr]=                 "or-expression: prec 1" $
-    ( orExpr ~ ("||" ~> andExpr)  //^^# conv{ BinExpr(op_||, _, _) }
+  lazy val orExpr: PP[Expr]=                 "or-expression: prec 1" $
+    ( orExpr ~ ("||" ~> andExpr)   ^^ or
     | andExpr
     )
   
   lazy val andExpr: PP[Expr] =              "and-expression: prec 2" $
-    ( andExpr ~ ("&&" ~> relExpr)  //^^# conv{ BinExpr(op_&&, _, _) }
+    ( andExpr ~ ("&&" ~> relExpr)  ^^ and
     | relExpr
     )
   
   lazy val relExpr: PP[Expr] =       "relational expression: prec 3" $
-    ( relExpr ~ ("==" ~> addExpr)  //^^# conv{ BinExpr(op_==, _, _) }
-    | relExpr ~ ("!=" ~> addExpr)  //^^# conv{ BinExpr(op_!=, _, _) }
-    | relExpr ~ ("<"  ~> addExpr)  //^^# conv{ BinExpr(op_<, _, _)  }
-    | relExpr ~ ("<=" ~> addExpr)  //^^# conv{ BinExpr(op_<=, _, _) }
-    | relExpr ~ (">"  ~> addExpr)  //^^# conv{ BinExpr(op_>, _, _)  }
-    | relExpr ~ (">=" ~> addExpr)  //^^# conv{ BinExpr(op_>=, _, _) }
+    ( relExpr ~ ("==" ~> addExpr)  ^^ compEq
+    | relExpr ~ ("!=" ~> addExpr)  ^^ compNe
+    | relExpr ~ ("<"  ~> addExpr)  ^^ lt
+    | relExpr ~ ("<=" ~> addExpr)  ^^ le
+    | relExpr ~ (">"  ~> addExpr)  ^^ gt
+    | relExpr ~ (">=" ~> addExpr)  ^^ ge
     | addExpr
-    )*/
+    )
   
   lazy val addExpr: PP[Expr] =         "additive expression: prec 4" $
     ( addExpr ~ ("+" ~> multExpr)  ^^ plus
@@ -64,6 +64,36 @@ trait Expressions extends PrimaryExprs with ExprUtils {
   lazy val exprList: P[List[Expr]] =               "expression list" $
     rep1sep(expression, ",")
   
+  
+  private def and(e1: Expr, e2: Expr): Expr = (e1, e2) match {
+    case (b1: BoolExpr, b2: BoolExpr) => And(b1, b2)
+    case _ => badExpr("operand(s) of && not of boolean type")
+  }
+  private def or(e1: Expr, e2: Expr): Expr = (e1, e2) match {
+    case (b1: BoolExpr, b2: BoolExpr) => Or(b1, b2)
+    case _ => badExpr("operand(s) of || not of boolean type")
+  }
+  
+  private def compEq(e1: Expr, e2: Expr): Expr = ifSame(e1, e2) {
+    e1.t.underlying match {
+      case _: NumericType => NumEquals(e1, e2)
+      case Bool           => BoolEquals(e1, e2)
+      case _              => ObjEquals(e1, e2)
+    }
+  }
+  
+  private def compNe(e1: Expr, e2: Expr): Expr = ifSame(e1, e2) {
+    e1.t.underlying match {
+      case _: NumericType => NumNotEquals(e1, e2)
+      case Bool           => BoolNotEquals(e1, e2)
+      case _              => ObjNotEquals(e1, e2)
+    }
+  }
+  
+  private def lt(e1: Expr, e2: Expr): Expr = ifSameNumericE(e1, e2)(LessThan(e1, e2))
+  private def le(e1: Expr, e2: Expr): Expr = ifSameNumericE(e1, e2)(LessEquals(e1, e2))
+  private def gt(e1: Expr, e2: Expr): Expr = ifSameNumericE(e1, e2)(GreaterThan(e1, e2))
+  private def ge(e1: Expr, e2: Expr): Expr = ifSameNumericE(e1, e2)(GreaterEquals(e1, e2))
   
   private def plus(e1: Expr, e2: Expr): Expr =
     if (e1.t != e2.t)

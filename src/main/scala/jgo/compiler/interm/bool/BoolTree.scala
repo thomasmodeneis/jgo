@@ -5,11 +5,17 @@ package bool
 import types._
 import instr._
 import codeseq._
+import CodeBuilder.fromInstr
 
 import TypeConversions._
 
+object BoolTree {
+  implicit def toExpr(tree: BoolTree): Expr     = BoolExpr(tree)
+  implicit def toTree(expr: BoolExpr): BoolTree = expr.tree
+}
+
 sealed abstract class BoolTree {
-  def pushBool: CodeBuilder = {
+  def evalAsBool: CodeBuilder = {
     val end = new Label("end pushBool")
     val t   = new Label("push true")
     val f   = new Label("push false")
@@ -38,6 +44,16 @@ sealed abstract class BoolTree {
     code(t, f) |+| Lbl(f) |+| elseBranch |+| Goto(end) |+| Lbl(t) |+| ifBranch |+| Lbl(end)
   }
   
+  def mkWhile(loopBody: CodeBuilder) = {
+    val end  = new Label("end of loop")
+    val top  = new Label("top of loop")
+    val cond = new Label("condition of loop")
+    Goto(cond) |+|
+    Lbl(top)   |+| loopBody |+|
+    Lbl(cond)  |+| code(top, end) |+|
+    Lbl(end)
+  }
+  
   protected[bool] def code(trueBr: Label, falseBr: Label): CodeBuilder
 }
 
@@ -60,7 +76,7 @@ case class Or(b1: BoolTree, b2: BoolTree) extends BoolTree {
   }
 }
 
-sealed abstract class Comparison(branch: Label => Instr) extends BoolTree with Typed {
+private[bool] sealed abstract class Comparison(branch: Label => Instr) extends BoolTree with Typed {
   val e1, e2: Expr
   require(e1.t == e2.t)
   val typeOf = e1.t
@@ -73,8 +89,11 @@ sealed abstract class Comparison(branch: Label => Instr) extends BoolTree with T
 case class ObjEquals(e1: Expr, e2: Expr)    extends Comparison(BranchObjEq)
 case class ObjNotEquals(e1: Expr, e2: Expr) extends Comparison(BranchObjNe)
 
+case class BoolEquals(e1: Expr, e2: Expr)    extends Comparison(BranchBoolEq)
+case class BoolNotEquals(e1: Expr, e2: Expr) extends Comparison(BranchBoolNe)
 
-sealed abstract class NumericComparison(branch: Label => Instr) extends Comparison(branch) {
+
+private[bool] sealed abstract class NumericComparison(branch: Label => Instr) extends Comparison(branch) {
   require(isOfType[NumericType])
   val numerT: NumericType     = t.underlying.asInstanceOf[NumericType]
   override protected[bool] def comp = e1.eval |+| e2.eval |+| Compare(numerT)

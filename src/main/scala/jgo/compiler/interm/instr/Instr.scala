@@ -78,6 +78,9 @@ case class PushBool(b: Boolean)       extends Instr
 case class BranchTrue(target: Label)  extends Instr
 case class BranchFalse(target: Label) extends Instr
 
+case class BranchBoolEq(target: Label) extends Instr
+case class BranchBoolNe(target: Label) extends Instr
+
 case class BranchObjEq(target: Label) extends Instr
 case class BranchObjNe(target: Label) extends Instr
 
