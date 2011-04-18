@@ -51,7 +51,6 @@ case class IntConst(i: Long, t: Integral) extends Instr
 case class BoolConst(b: Boolean)          extends Instr
 
 case class Goto(target: Label) extends Instr
-//case class Branch(b: BooleanTree, target: Label) extends Instr
 case class Lbl(l: Label) extends Instr
 
 case object Pop        extends Instr
@@ -95,5 +94,3 @@ case class BranchLt(target: Label)  extends Instr
 case class BranchLeq(target: Label) extends Instr
 case class BranchGt(target: Label)  extends Instr
 case class BranchGeq(target: Label) extends Instr
-
-case object Placeholder extends Instr
