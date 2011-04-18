@@ -44,6 +44,11 @@ case class BitwiseXor(t: Integral)    extends Instr
 
 case class BitwiseNot(t: Integral)    extends Instr
 
+case class Incr(v: Variable, n: Int, t: Integral)  extends Instr
+case class Decr(v: Variable, n: Int, t: Integral)  extends Instr
+
+case class IntConst(i: Long, t: Integral) extends Instr
+case class BoolConst(b: Boolean)          extends Instr
 
 case class Goto(target: Label) extends Instr
 //case class Branch(b: BooleanTree, target: Label) extends Instr
@@ -61,12 +66,12 @@ case class StoreVar(v: Variable) extends Instr
 case class GetField(f: Field, t: Type) extends Instr
 case class PutField(f: Field, t: Type) extends Instr
 
-case class ArrayGet(elemT: Type) extends Instr
-case class SliceGet(elemT: Type) extends Instr
+case class  ArrayGet(elemT: Type) extends Instr
+case class  SliceGet(elemT: Type) extends Instr
 case object MapGet extends Instr
 
-case class ArrayPut(elemT: Type) extends Instr
-case class SlicePut(elemT: Type) extends Instr
+case class  ArrayPut(elemT: Type) extends Instr
+case class  SlicePut(elemT: Type) extends Instr
 case object MapPut extends Instr
 
 case object ChanSend extends Instr
@@ -74,7 +79,6 @@ case object ChanRecv extends Instr
 
 case class Unbox(t: PrimitiveType)
 
-case class PushBool(b: Boolean)       extends Instr
 case class BranchTrue(target: Label)  extends Instr
 case class BranchFalse(target: Label) extends Instr
 

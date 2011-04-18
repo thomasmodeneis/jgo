@@ -12,6 +12,7 @@ trait Typed {
   
   def isOfType(otherT: Type): Boolean =
     typeOf.underlying == otherT || (typeOf.underlying eq TypeError) //== would always be true
+  
   def isOfType[T <: Type] =
     typeOf.underlying.isInstanceOf[T] || (typeOf.underlying eq TypeError)
 }
@@ -21,20 +22,7 @@ object OfType {
     Some(v, v.typeOf.underlying)
 }
 
-/*
-case e OfType t: FuncType
-
-case e OfType (t: FuncType)
-
-case e OfType FuncType(_)
-
-case e |: t: FuncType
-
-case e |: (t: FuncType)
-
-case e |: FuncType(_)
-
-case e =: t: FuncType
-
-case e -: (t: FuncType)
-*/
+object HasType {
+  def unapply[T <: Typed](v: T): Option[Type] =
+    Some(v.typeOf.underlying)
+}

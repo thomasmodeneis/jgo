@@ -21,8 +21,8 @@ sealed abstract class BoolTree {
     val f   = new Label("push false")
     
     code(t, f) |+|
-    Lbl(f) |+| PushBool(false) |+| Goto(end) |+|
-    Lbl(t) |+| PushBool(true)  |+|
+    Lbl(f) |+| BoolConst(false) |+| Goto(end) |+|
+    Lbl(t) |+| BoolConst(true)  |+|
     Lbl(end)
   }
   
