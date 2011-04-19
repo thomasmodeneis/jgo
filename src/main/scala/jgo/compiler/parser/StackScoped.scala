@@ -9,6 +9,8 @@ import instr.Undecl
 import symbols.LocalVar
 
 trait StackScoped extends GrowablyScoped {
+  self: Base =>
+  
   protected val initialEnclosing: Scope
   
   private var curScope: SequentialScope = SequentialScope.base(initialEnclosing)
@@ -24,6 +26,15 @@ trait StackScoped extends GrowablyScoped {
   }
   
   def undecl(): CodeBuilder {
-    
+    //implement me!!!
+  }
+  
+  
+  def scoped[T](p: Parser[T]): Parser[T ~ CodeBuilder] = Parser {
+    in =>
+    push()
+    val res = for (r <- p(in)) yield new ~(r, undecl())
+    pop()
+    res
   }
 }

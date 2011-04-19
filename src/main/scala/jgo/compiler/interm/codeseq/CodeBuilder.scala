@@ -17,14 +17,10 @@ object CodeBuilder {
       cb += elem
     cb
   }
-  implicit def fromInstr(instr: Instr): CodeBuilder = {
-    val ls = Code(instr)
-    new CodeBuilder(ls, ls)
-  }
 }
 
 class CodeBuilder extends mut.Builder[Instr, Code] with Expendable {
-  private def this(fst: Code, lst: Code) = {
+  private[codeseq] def this(fst: Code, lst: Code) = {
     this()
     first = fst
     last  = lst

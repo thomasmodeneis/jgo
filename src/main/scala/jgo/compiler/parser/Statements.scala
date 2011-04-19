@@ -1,39 +1,37 @@
 package jgo.compiler
 package parser
 
-trait Statements extends Expressions with StackScoped with SimpleStmts with Declarations {
-  lazy val statement: P_ =                                       "statement" $
+import interm._
+import codeseq._
+import instr._
+
+trait Statements extends Expressions with StackScoped with SimpleStmts with Declarations with StmtUtils {
+  lazy val statement: P[CodeBuilder] =                            "statement" $
     ( block
-    | labeledStmt
+//    | labeledStmt
     | simpleStmt
     | ifStmt
-    | switchStmt
+//    | switchStmt
     | forStmt
- // | selectStmt  //not yet supported
-    | goStmt
-    | returnStmt
-    | breakStmt
-    | continueStmt
-    | gotoStmt
-    | deferStmt
-    | declaration
+//    | selectStmt  //not yet supported
+//    | goStmt
+//    | returnStmt
+//    | breakStmt
+//    | continueStmt
+//    | gotoStmt
+//    | deferStmt
+//    | declaration
     )
   
-  lazy val block: P_ =                                               "block" $
-    "{" ~> stmtList <~ "}"
+  lazy val block: P[CodeBuilder] =                                    "block" $
+    scoped("{" ~> stmtList <~ "}")  ^^ makeBlock
   
-  lazy val labeledStmt: P_ =                             "labeled statement" $
+  lazy val labeledStmt: P_ =                              "labeled statement" $
     (ident <~ ":") ~ statement
   
-  lazy val ifStmt: P_ =                                       "if statement" $
-    ( "if" ~>!
-        ( (simpleStmt <~ ";") ~ expression ~ block
-        | (simpleStmt <~ ";")              ~ block
-        |                       expression ~ block
-        |                                    block
-        )
-    ~ ("else" ~>! statement).?
-    )
+  lazy val ifStmt: P[CodeBuilder] =                            "if statement" $
+    "if" ~>!
+      scoped((simpleStmt <~ ";").? ~ expression ~ block ~ ("else" ~>! statement).?)  ^^ makeIfStmt
   
   lazy val switchStmt: P_ =                                "switch statement" $
     "switch" ~>!
@@ -60,17 +58,19 @@ trait Statements extends Expressions with StackScoped with SimpleStmts with Decl
     | "default"          ~ (":" ~> stmtList)
     )
   
-  lazy val forStmt: P_ =                                      "for statement" $
+  lazy val forStmt: P[CodeBuilder] =                          "for statement" $
     "for" ~>!
-      ( (block                &@ "for with no clause: forever")
-      | (expression  ~ block  &@ "for with while-esq conditional clause")
-      | (forClause   ~ block  &@ "for with ordinary for-clause")
-      | (rangeClause ~ block  &@ "for with range clause")
+      ( (block                &@ "for with no clause: forever")            ^^ makeInfLoop
+      | (expression  ~ block  &@ "for with while-esq conditional clause")  ^^ makeWhile
+      | scoped(forClause   ~ block  &@ "for with ordinary for-clause")     ^^ makeFor
+//      | (rangeClause ~ block  &@ "for with range clause")
       )
-  lazy val forClause: P_ =         "for-clause: ordinary, ternary for clause" $
-    (opt(simpleStmt) <~ ";") ~ (opt(expression) <~ ";") ~ simpleStmt?
+  
+  lazy val forClause =             "for-clause: ordinary, ternary for clause" $
+    (simpleStmt.? <~ ";") ~ (expression.? <~ ";") ~ simpleStmt.?
+  
   lazy val rangeClause: P_ =                "range clause of a for statement" $
-    expression ~ opt("," ~> expression) ~ (("=" | ":=") ~> "range" ~> expression)
+    expression ~ ("," ~> expression).? ~ (("=" | ":=") ~> "range" ~> expression)
   
 //  lazy val selectStmt: PP =
 //    "select" ~> "{" ~> rep(commClause) <~ "}"
@@ -94,6 +94,63 @@ trait Statements extends Expressions with StackScoped with SimpleStmts with Decl
   lazy val deferStmt: P_ =                                  "defer statement" $
     "defer" ~>! primaryExpr
   
-  lazy val stmtList: P_ =                                    "statement list" $
+  lazy val stmtList: P[List[CodeBuilder]] =                  "statement list" $
     repWithSemi(statement)
+  
+  
+  private implicit def opt2code(opt: Option[CodeBuilder]): CodeBuilder =
+    opt getOrElse CodeBuilder.empty
+  
+  private implicit def ls2code(ls: List[CodeBuilder]): CodeBuilder =
+    ls reduceLeft { _ |+| _ }
+  
+  def makeBlock(stmts: List[CodeBuilder], undeclCode: CodeBuilder): CodeBuilder =
+    stmts |+| undeclCode
+  
+  def makeIfStmt(
+    init:       Option[CodeBuilder],
+    cond:       Expr,
+    body:       CodeBuilder,
+    els:        Option[CodeBuilder],
+    undeclCode: CodeBuilder
+  ): CodeBuilder = cond match {
+    
+    case bool: BoolExpr =>
+      init |+|
+      (els match {
+        case None           => bool.mkIf(body)
+        case Some(elseCode) => bool.mkIfElse(body, elseCode)
+      }) |+|
+      undeclCode
+      
+    case _ => badStmt("condition of if statement not a boolean expression")
+  }
+  
+  def makeInfLoop(body: CodeBuilder): CodeBuilder = {
+    val top = new Label("top of unconditional for loop")
+    Lbl(top) |+| body |+| Goto(top)
+  }
+  
+  def makeWhile(cond: Expr, body: CodeBuilder) = cond match {
+    case bool: BoolExpr => bool.mkWhile(body)
+    case _ => badStmt("condition of for statement not a boolean expression")
+  }
+  
+  def makeFor(
+    init:       Option[CodeBuilder],
+    cond:       Option[Expr],
+    incrStmt:   Option[CodeBuilder],
+    body:       CodeBuilder,
+    undeclCode: CodeBuilder
+  ): CodeBuilder = cond match {
+    
+    case Some(bool: BoolExpr) =>
+      init |+|
+      bool.mkWhile(body |+| incrStmt) |+|
+      undeclCode
+      
+    case Some(_) => badStmt("condition of for statement not a boolean expression")
+    
+    case None => init |+| makeInfLoop(body |+| incrStmt) |+| undeclCode
+  }
 }

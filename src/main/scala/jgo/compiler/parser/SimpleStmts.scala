@@ -2,8 +2,7 @@ package jgo.compiler
 package parser
 
 import interm._
-import codeseq.CodeBuilder
-import CodeBuilder.fromInstr
+import codeseq._
 import instr._
 import types._
 import symbols._

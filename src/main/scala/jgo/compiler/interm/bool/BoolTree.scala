@@ -5,7 +5,6 @@ package bool
 import types._
 import instr._
 import codeseq._
-import CodeBuilder.fromInstr
 
 import TypeConversions._
 
@@ -26,25 +25,25 @@ sealed abstract class BoolTree {
     Lbl(end)
   }
   
-  def branchTo(lbl: Label) = {
+  def branchTo(lbl: Label): CodeBuilder = {
     val end = new Label("end branchTo")
     code(lbl, end)
   }
   
-  def mkIf(ifBranch: CodeBuilder) = {
+  def mkIf(ifBranch: CodeBuilder): CodeBuilder = {
     val end = new Label("end if")
     val t   = new Label("if: true branch")
     code(t, end) |+| Lbl(t) |+| ifBranch |+| Lbl(end)
   }
   
-  def mkIfElse(ifBranch: CodeBuilder, elseBranch: CodeBuilder) = {
+  def mkIfElse(ifBranch: CodeBuilder, elseBranch: CodeBuilder): CodeBuilder = {
     val end = new Label("end if-else")
     val t   = new Label("if-else: true branch")
     val f   = new Label("if-else: false branch")
     code(t, f) |+| Lbl(f) |+| elseBranch |+| Goto(end) |+| Lbl(t) |+| ifBranch |+| Lbl(end)
   }
   
-  def mkWhile(loopBody: CodeBuilder) = {
+  def mkWhile(loopBody: CodeBuilder): CodeBuilder = {
     val end  = new Label("end of loop")
     val top  = new Label("top of loop")
     val cond = new Label("condition of loop")
@@ -55,6 +54,13 @@ sealed abstract class BoolTree {
   }
   
   protected[bool] def code(trueBr: Label, falseBr: Label): CodeBuilder
+}
+
+case object TrueTree extends BoolTree {
+  protected[bool] def code(tr: Label, fl: Label): CodeBuilder = Goto(tr)
+}
+case object FalseTree extends BoolTree {
+  protected[bool] def code(tr: Label, fl: Label): CodeBuilder = Goto(fl)
 }
 
 case class Not(b: BoolTree) extends BoolTree {
