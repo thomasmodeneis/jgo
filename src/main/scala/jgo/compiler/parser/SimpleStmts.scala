@@ -2,9 +2,11 @@ package jgo.compiler
 package parser
 
 import interm._
-import codeseq._
+import codeseq.CodeBuilder
+import CodeBuilder.fromInstr
 import instr._
 import types._
+import symbols._
 
 trait SimpleStmts extends Expressions with Symbols with GrowablyScoped with StmtUtils {
   lazy val simpleStmt: P[CodeBuilder] =                           "simple statement" $ //was PP; not sure why
@@ -41,19 +43,50 @@ trait SimpleStmts extends Expressions with Symbols with GrowablyScoped with Stmt
     )
   
   lazy val shortVarDecl: P[CodeBuilder] =               "short variable declaration" $
-    (identList <~ ":=") ~ exprList        //the number of idents must = the number of exprs
+    (identList <~ ":=") ~ exprList  ^^declAssign   //the number of idents must = the number of exprs
   
   
   private def evaluate(e: Expr): CodeBuilder = e.eval
   
+  private def declAssign(left: List[String], right: List[Expr]): CodeBuilder = {
+    var declCode, leftCode, rightCode = CodeBuilder.empty
+    var actuallySawDecl = false
+    
+    checkArity(left, right)
+    
+    for ((l, r) <- left zip right) {
+      if (!growable.alreadyDefined(l)) { //not already defined in innermost scope
+        actuallySawDecl = true
+        val v = new LocalVar(l, r.t)
+        growable.put(l, v)
+        declCode  = declCode    |+| Decl(v)
+        leftCode  = leftCode    |+| r.eval
+        rightCode = StoreVar(v\) |+| rightCode
+      }
+      else {
+        scope.get(l) match {
+          case v: LocalVar =>
+            if (v.t <<= r.t) {
+              leftCode  = leftCode    |+| r.eval
+              rightCode = StoreVar(v) |+| rightCode
+            }
+            else
+              recordErr("left operand of := not assignable to corresponding types")
+          case NoSymbol =>
+            recordErr("symbol not found: `" + l + "'")
+          case _ =>
+            recordErr("not a variable symbol")
+        }
+      }
+    }
+    errIf(!actuallySawDecl, "no new variables on left side of :=")
+    declCode |+| leftCode |+| rightCode
+  }
+  
   private def assign(left: List[Expr], right: List[Expr]): CodeBuilder = {
     var leftCode, rightCode = CodeBuilder.empty
     
-    val (lLen, rLen) = (left length, right length)
-    if (lLen != rLen)
-      recordErr("Arity (%d) of left side of assignment unequal to arity (%d) of right side",
-        lLen.asInstanceOf[AnyRef],
-        rLen.asInstanceOf[AnyRef])
+    checkArity(left, right)
     
     for ((l, r) <- left zip right) {
       if (l.t <<= r.t) 
@@ -68,6 +101,18 @@ trait SimpleStmts extends Expressions with Symbols with GrowablyScoped with Stmt
         recordErr("right-hand type %s not assignable to left-hand type %s", r.t, l.t)
     }
     leftCode |+| rightCode
+  }
+  
+  private def checkArity(left: List[_], right: List[Expr]): Boolean = {
+    val (lLen, rLen) = (left length, right length)
+    if (lLen != rLen) {
+      recordErr("Arity (%d) of left side of assignment unequal to arity (%d) of right side",
+        lLen.asInstanceOf[AnyRef],
+        rLen.asInstanceOf[AnyRef])
+      false
+    }
+    else
+      true
   }
   
   private def send(e1: Expr, e2: Expr): CodeBuilder = e1 match {

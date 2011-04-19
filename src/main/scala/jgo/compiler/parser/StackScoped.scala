@@ -3,6 +3,11 @@ package parser
 
 import scope._
 
+import interm._
+import codeseq._
+import instr.Undecl
+import symbols.LocalVar
+
 trait StackScoped extends GrowablyScoped {
   protected val initialEnclosing: Scope
   
@@ -16,5 +21,9 @@ trait StackScoped extends GrowablyScoped {
   }
   def pop() {
     curScope = curScope.tail getOrElse (throw new IllegalStateException)
+  }
+  
+  def undecl(): CodeBuilder {
+    
   }
 }

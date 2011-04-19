@@ -9,7 +9,7 @@ import member._
 sealed abstract class Instr
 
 case class Decl(v: LocalVar) extends Instr
-case class UnDecl(v: LocalVar) extends Instr
+case class Undecl(v: LocalVar) extends Instr
 
 case object Enref  extends Instr
 case object Deref  extends Instr
