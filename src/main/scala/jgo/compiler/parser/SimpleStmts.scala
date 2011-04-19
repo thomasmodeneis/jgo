@@ -63,20 +63,15 @@ trait SimpleStmts extends Expressions with Symbols with GrowablyScoped with Stmt
         leftCode  = leftCode    |+| r.eval
         rightCode = StoreVar(v) |+| rightCode
       }
-      else {
-        scope.get(l) match {
-          case v: LocalVar =>
-            if (v.t <<= r.t) {
-              leftCode  = leftCode    |+| r.eval
-              rightCode = StoreVar(v) |+| rightCode
-            }
-            else
-              recordErr("left operand of := not assignable to corresponding types")
-          case NoSymbol =>
-            recordErr("symbol not found: `" + l + "'")
-          case _ =>
-            recordErr("not a variable symbol")
+      else getVariable(l) foreach {
+        v =>
+        if (v.t <<= r.t) {
+          leftCode  = leftCode    |+| r.eval
+          rightCode = StoreVar(v) |+| rightCode
         }
+        else
+          recordErr("right operand of := has type %s not assignable to type %s of left operand %s",
+            r.t, v.t, l)
       }
     }
     errIf(!actuallySawDecl, "no new variables on left side of :=")

@@ -24,9 +24,11 @@ sealed abstract class Expr extends Typed {
 }
 
 case object ExprError extends LvalExpr {
-  val typeOf                = TypeError
-  def load                  = CodeBuilder.empty
-  def store(v: CodeBuilder) = CodeBuilder.empty
+  val typeOf                          = TypeError
+  def load                            = CodeBuilder()
+  def store(v: CodeBuilder)           = CodeBuilder()
+  def storePrefix(value: CodeBuilder) = CodeBuilder()
+  def storeSuffix: CodeBuilder        = CodeBuilder()
   override val addressable  = true
 }
 

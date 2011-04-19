@@ -21,7 +21,7 @@ trait TypeSyntax extends Symbols with TypeUtils {
   
   
   lazy val typeSymbol: P[Type with Named] =                                            "type-name" $
-    symbol ^^ typeSymb
+    ident ^^ typeSymb
     //qualifiedIdent
     //typeSymbol  ^^ { _.typeName }
   
@@ -103,10 +103,9 @@ trait TypeSyntax extends Symbols with TypeUtils {
   private def countAndFill(is: List[String], t: Type):  List[Type] =
     for (i <- is) yield t
   
-  private val typeSymb: Symbol => Type with Named = {
-    case t: TypeSymbol => t.theType
-    case NoSymbol => TypeError
-    case _ => badType("symbol does not refer to a type")
+  private val typeSymb: String => Type with Named = getTypeSymbol(_) match {
+    case Some(t: TypeSymbol) => t.theType
+    case _                   => TypeError
   }
   
   private def array(i: lexical.IntLit, t: Type) = {
