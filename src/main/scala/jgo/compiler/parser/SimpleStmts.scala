@@ -61,7 +61,7 @@ trait SimpleStmts extends Expressions with Symbols with GrowablyScoped with Stmt
         growable.put(l, v)
         declCode  = declCode    |+| Decl(v)
         leftCode  = leftCode    |+| r.eval
-        rightCode = StoreVar(v\) |+| rightCode
+        rightCode = StoreVar(v) |+| rightCode
       }
       else {
         scope.get(l) match {
