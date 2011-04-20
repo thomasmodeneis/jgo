@@ -1,8 +1,10 @@
 package jgo.compiler
 package parser
+package exprs
 
+import parser.types._
 import interm._
-import types._
+import interm.types._
 
 trait CompositeLiterals extends TypeSyntax {
   self: Expressions =>

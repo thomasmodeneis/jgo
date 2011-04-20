@@ -1,5 +1,8 @@
 package jgo.compiler
-package parser
+package parser.stmts
+
+import parser.exprs._
+import parser.scoped._
 
 import interm._
 import codeseq._

@@ -1,5 +1,6 @@
 package jgo.compiler
 package parser
+package types
 
 import interm._
 import types._

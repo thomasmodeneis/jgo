@@ -1,9 +1,12 @@
 package jgo.compiler
-package parser
+package parser.stmts
+
+import parser.exprs._
+import parser.scoped._
 
 import interm._
-import symbols._
 import types._
+import symbols._
 import codeseq._
 import instr._
 

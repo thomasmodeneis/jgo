@@ -1,8 +1,9 @@
 package jgo.compiler
 package parser
+package exprs
 
 import interm._
-import types._
+import interm.types._
 
 trait Operands extends CompositeLiterals /*with FunctionLiterals*/ {
   self: Expressions =>

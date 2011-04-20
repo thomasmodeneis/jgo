@@ -1,10 +1,13 @@
 package jgo.compiler
-package parser
+package parser.exprs
 
 import scope._
 
+import parser.types._
+import parser.scoped._
+
 import interm._
-import types._
+import interm.types._
 
 trait PrimaryExprs extends Operands with TypeSyntax with Scoped with ExprUtils {
   self: Expressions =>

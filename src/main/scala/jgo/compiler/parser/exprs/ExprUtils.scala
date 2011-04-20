@@ -1,8 +1,8 @@
 package jgo.compiler
-package parser
+package parser.exprs
 
 import interm._
-import types._
+import interm.types._
 import codeseq._
 import instr._
 

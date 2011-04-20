@@ -1,5 +1,6 @@
 package jgo.compiler
 package parser
+package scoped
 
 import scope._
 import interm._

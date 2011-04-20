@@ -1,5 +1,5 @@
 package jgo.compiler
-package parser
+package parser.stmts
 
 import interm._
 import codeseq._
