@@ -16,7 +16,8 @@ case object Deref  extends Instr
 case object PutRef extends Instr
 case object Copy   extends Instr
 
-case class New(typeOf: Type) extends Instr
+case class New(typeOf: Type)  extends Instr
+case class Cast(oldType: Type, newType: Type) extends Instr
 
 case class  InvokeFunc(func: Function) extends Instr
 case class  InvokeLambda(t: FuncType) extends Instr

@@ -79,16 +79,16 @@ trait MessageHandling extends Parsers {
   /*def unless [T] (cond: => Boolean, msg: String) (res: T): OrError[T] =
     if (cond) ErrorPresent(ErrorMsg(msg)) else res*/
   
-  def recordErr(msg: String, args: AnyRef*) {
-    val s = String.format(msg, args: _*)
+  def recordErr(msg: String, args: Any*) {
+    val s = msg format (args: _*)
     errs ::= ErrorMsg(s).setPos(position)
   }
-  def recordWarn(msg: String, args: AnyRef*) {
-    val s = String.format(msg, args: _*)
+  def recordWarn(msg: String, args: Any*) {
+    val s = msg format (args: _*)
     warns ::= WarningMsg(s).setPos(position)
   }
-  def recordNote(msg: String, args: AnyRef*) {
-    val s = String.format(msg, args: _*)
+  def recordNote(msg: String, args: Any*) {
+    val s = msg format (args: _*)
     nts ::= NoteMsg(s).setPos(position)
   }
   

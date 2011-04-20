@@ -45,6 +45,7 @@ case object StringType extends BuiltinRefType //or Primitive...?
 case object TopType     extends BuiltinRefType
 case object NilType     extends BuiltinRefType
 case object BottomType  extends BuiltinRefType
+case object UnitType    extends BuiltinRefType
 
 case object TypeError extends BuiltinRefType with Named {
   //I don't know of any way of overriding hashCode
