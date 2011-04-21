@@ -8,7 +8,7 @@ import interm._
 import codeseq._
 import instr._
 
-trait Statements extends Expressions with StackScoped with SimpleStmts with Declarations with StmtUtils {
+trait Statements extends Expressions with SimpleStmts with Declarations with StackScoped with StmtUtils {
   lazy val statement: P[CodeBuilder] =                            "statement" $
     ( block
 //    | labeledStmt
@@ -23,7 +23,7 @@ trait Statements extends Expressions with StackScoped with SimpleStmts with Decl
 //    | continueStmt
 //    | gotoStmt
 //    | deferStmt
-//    | declaration
+    | declaration
     )
   
   lazy val block: P[CodeBuilder] =                                    "block" $
@@ -104,13 +104,13 @@ trait Statements extends Expressions with StackScoped with SimpleStmts with Decl
   private implicit def opt2code(opt: Option[CodeBuilder]): CodeBuilder =
     opt getOrElse CodeBuilder.empty
   
-  private implicit def ls2code(ls: List[CodeBuilder]): CodeBuilder =
-    ls reduceLeft { _ |+| _ }
+//  private implicit def ls2code(ls: List[CodeBuilder]): CodeBuilder =
+//    ls reduceLeft { _ |+| _ }
   
-  def makeBlock(stmts: List[CodeBuilder], undeclCode: CodeBuilder): CodeBuilder =
-    stmts |+| undeclCode
+  private def makeBlock(stmts: List[CodeBuilder], undeclCode: CodeBuilder): CodeBuilder =
+    stmts.reduceLeft(_ |+| _) |+| undeclCode
   
-  def makeIfStmt(
+  private def makeIfStmt(
     init:       Option[CodeBuilder],
     cond:       Expr,
     body:       CodeBuilder,
@@ -129,17 +129,17 @@ trait Statements extends Expressions with StackScoped with SimpleStmts with Decl
     case _ => badStmt("condition of if statement not a boolean expression")
   }
   
-  def makeInfLoop(body: CodeBuilder): CodeBuilder = {
+  private def makeInfLoop(body: CodeBuilder): CodeBuilder = {
     val top = new Label("top of unconditional for loop")
     Lbl(top) |+| body |+| Goto(top)
   }
   
-  def makeWhile(cond: Expr, body: CodeBuilder) = cond match {
+  private def makeWhile(cond: Expr, body: CodeBuilder) = cond match {
     case bool: BoolExpr => bool.mkWhile(body)
     case _ => badStmt("condition of for statement not a boolean expression")
   }
   
-  def makeFor(
+  private def makeFor(
     init:       Option[CodeBuilder],
     cond:       Option[Expr],
     incrStmt:   Option[CodeBuilder],

@@ -8,7 +8,7 @@ import member._
 
 sealed abstract class Instr
 
-case class Decl(v: LocalVar) extends Instr
+case class Decl(v: LocalVar)   extends Instr
 case class Undecl(v: LocalVar) extends Instr
 
 case object Enref  extends Instr
@@ -16,12 +16,25 @@ case object Deref  extends Instr
 case object PutRef extends Instr
 case object Copy   extends Instr
 
-case class New(typeOf: Type)  extends Instr
-case class Cast(oldType: Type, newType: Type) extends Instr
+case class New(t: Type)                             extends Instr
+case class MakeArray(t: Type, len: Int)             extends Instr
+case class MakeSlice(t: Type, len: Int, cap: Int)   extends Instr
+case class MakeMap(k: Type, v: Type)                extends Instr
+case class MakeMapSize(k: Type, v: Type, size: Int) extends Instr
+case class MakeChan(t: Type)                        extends Instr
 
-case class  InvokeFunc(func: Function) extends Instr
-case class  InvokeLambda(t: FuncType) extends Instr
+case class SliceArray(t: Type, bounds: SliceBounds) extends Instr
+case class SliceSlice(t: Type, bounds: SliceBounds) extends Instr
+
+case class Unbox(t: PrimitiveType)
+
+case class Cast(oldType: Type, newType: Type) extends Instr
+case class TypeAssert(t: Type)                extends Instr
+
+case class  InvokeFunc(func: Function)  extends Instr
+case class  InvokeLambda(t: FuncType)   extends Instr
 case class  Func2Lambda(func: Function) extends Instr
+
 case object Return extends Instr
 
 case object StrAdd extends Instr
@@ -52,9 +65,6 @@ case class StrConst(s: String)            extends Instr
 case class IntConst(i: Long, t: Integral) extends Instr
 case class BoolConst(b: Boolean)          extends Instr
 
-case class Goto(target: Label) extends Instr
-case class Lbl(l: Label) extends Instr
-
 case object Pop        extends Instr
 case object Dupl       extends Instr
 case object Dupl_Down1 extends Instr
@@ -67,19 +77,17 @@ case class StoreVar(v: Variable) extends Instr
 case class GetField(f: Field, t: Type) extends Instr
 case class PutField(f: Field, t: Type) extends Instr
 
-case object StrIndex
+case object StrIndex              extends Instr
 case class  ArrayGet(elemT: Type) extends Instr
 case class  SliceGet(elemT: Type) extends Instr
-case object MapGet extends Instr
+case object MapGet                extends Instr
 
 case class  ArrayPut(elemT: Type) extends Instr
 case class  SlicePut(elemT: Type) extends Instr
-case object MapPut extends Instr
+case object MapPut                extends Instr
 
 case object ChanSend extends Instr
 case object ChanRecv extends Instr
-
-case class Unbox(t: PrimitiveType)
 
 case class BranchTrue(target: Label)  extends Instr
 case class BranchFalse(target: Label) extends Instr
@@ -89,6 +97,10 @@ case class BranchBoolNe(target: Label) extends Instr
 
 case class BranchObjEq(target: Label) extends Instr
 case class BranchObjNe(target: Label) extends Instr
+
+
+case class Goto(target: Label) extends Instr
+case class Lbl(l: Label)       extends Instr
 
 case class Compare(t: Arith) extends Instr
 case class BranchEq(target: Label)  extends Instr

@@ -8,4 +8,7 @@ package object codeseq {
     val ls = Code(instr)
     new CodeBuilder(ls, ls)
   }
+  
+  implicit def fromOption(opt: Option[CodeBuilder]): CodeBuilder =
+    opt getOrElse CodeBuilder()
 }
