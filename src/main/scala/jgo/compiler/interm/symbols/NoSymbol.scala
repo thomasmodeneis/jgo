@@ -2,4 +2,4 @@ package jgo.compiler
 package interm
 package symbols
 
-object NoSymbol extends Symbol
+//object NoSymbol extends Symbol

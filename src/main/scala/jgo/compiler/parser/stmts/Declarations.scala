@@ -19,11 +19,14 @@ trait Declarations extends Expressions with GrowablyScoped with StmtUtils {
   }
   
   lazy val declaration: P[CodeBuilder] =                        "declaration" $
-    /*constDecl |*/ typeDecl | varDecl
+    ( varDecl
+    | typeDecl  ^^^ noCode
+//  | constDecl
+    )
   
   lazy val constDecl: P_ =                                "const declaration" $
     "const" ~>! ( constSpec
-                | "(" ~> repWithSemi(constSpec) <~ ")"  ^^^ ()
+                | "(" ~> repWithSemi(constSpec) <~ ")"
                 )
   lazy val constSpec: P_ =                                  "const decl spec" $
     ( identList ~ "=" ~ exprList               //note the first spec in a constDecl may not have form `idList'
@@ -31,16 +34,16 @@ trait Declarations extends Expressions with GrowablyScoped with StmtUtils {
     | identList                                //don't forget about iota
     )
   
-  lazy val typeDecl: P[Unit] =                             "type declaration" $
+  lazy val typeDecl: P[Unit] =                            "type declaration" $
     "type" ~>! ( typeSpec
-               | "(" ~> repWithSemi(typeSpec) <~ ")"  ^^^ ()
+               | "(" ~> repWithSemi(typeSpec) <~ ")"
                )
   lazy val typeSpec: P[Unit] =                               "type decl spec" $
     ident ~ goType  ^^ procTypeSpec
   
   lazy val varDecl: P[CodeBuilder] =                        "var declaration" $
     "var" ~>! ( varSpec
-              | "(" ~> repWithSemi(varSpec) <~ ")"  ^^^ ()
+              | "(" ~> repWithSemi(varSpec) <~ ")"  ^^ foldTogether
               )
   lazy val varSpec: P[CodeBuilder] =                          "var decl spec" $
     ( identList          ~ ("=" ~> exprList)  ^^ procVarSpecInfer
@@ -57,6 +60,10 @@ trait Declarations extends Expressions with GrowablyScoped with StmtUtils {
   private def resetIota() {
     iotaValue = 0
   }
+  
+  private def noCode = CodeBuilder()
+  
+  private def foldTogether(ls: List[CodeBuilder]): CodeBuilder = ls reduceLeft { _ |+| _ }
   
   private def procTypeSpec(name: String, target: Type) {
     bind(name, TypeSymbol(new TypeName(name, target)))
@@ -97,8 +104,8 @@ trait Declarations extends Expressions with GrowablyScoped with StmtUtils {
       bind(name, v)
       declCode = declCode |+| dc
     }
+    declCode
   }
   
-  private implicit def any2unit(any: Any): Unit = ()
-  private implicit def unit2code(u: Unit): CodeBuilder = CodeBuilder.empty
+  private implicit def lsUnitP2unitP(p: Parser[List[Unit]]): Parser[Unit] = p ^^^ ()
 }

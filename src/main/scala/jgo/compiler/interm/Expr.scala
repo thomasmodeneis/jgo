@@ -11,7 +11,7 @@ import bool._
 object Expr {
   private def ordinal(n: Int): String = {
     require(n >= 0)
-    n match {
+    (n: @scala.annotation.switch) match {
       case 0 => "zeroth"
       case 1 => "first"
       case 2 => "second"
@@ -25,6 +25,24 @@ object Expr {
       case i => i.toString + "th"
     }
   }
+  
+  def checkCall(funcType: FuncType, args: List[Expr]): Either[String, Type] = funcType match {
+    case None => Left("not of function type")
+    
+    case Some(FuncType(_, List(res0, res1, _*), _)) => Left("polyadic results not currently supported")
+    
+    case Some(FuncType(params, results, false)) =>
+      if (params.length != args.length)
+        Left("number (%d) of arguments passed unequal to number (%d) required" format (args.length, params.length))
+      else {
+        for (((param, HasType(arg)), index) <- (params zip args).zipWithIndex)
+          if (!(param <<= arg))
+            return Left("%s argument has type %s not assignable to corresponding parameter type %s" format (Expr.ordinal(index), arg, param))
+        Right(results.headOption getOrElse UnitType)
+      }
+    
+    case Some(FuncType(params, results, true)) => Left("variadic calls not yet supported")
+  }
 }
 
 sealed abstract class Expr extends Typed {
@@ -37,29 +55,9 @@ sealed abstract class Expr extends Typed {
   def eval: CodeBuilder
   
   val addressable = false
-  
-  final def checkCall(args: List[Expr]): Either[String, Type] = this.funcType match {
-    case None => Left("not of function type")
-    
-    case Some(FuncType(_, List(res0, res1, _*), _)) =>
-      Left("polyadic results not currently supported")
-    
-    case Some(FuncType(params, results, false)) =>
-      if (params.length != args.length)
-        Left("number (%d) of arguments passed unequal to number (%d) required" format (args.length, params.length))
-      else {
-        for (((param, HasType(arg)), index) <- (params zip args).zipWithIndex)
-          if (!(param <<= arg))
-            return Left("%s argument has type %s not assignable to corresponding parameter type %s" format (index, arg, param))
-        Right(results.headOption getOrElse UnitType)
-      }
-    
-    case Some(FuncType(params, results, true)) =>
-      Left("variadic calls not yet supported")
-  }
     
   def call(args: List[Expr]): Either[String, Expr] =
-    for (resultT <- checkCall(args).right)
+    for (resultT <- Expr.checkCall(funcType, args).right)
     yield SimpleExpr((args foldLeft eval) { _ |+| _.eval } |+| InvokeLambda(funcType.get), resultT)
 }
 

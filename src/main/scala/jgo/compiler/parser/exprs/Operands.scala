@@ -12,6 +12,7 @@ trait Operands extends CompositeLiterals /*with FunctionLiterals*/ {
 //def lexical = symbols //the lexical scope of any lambda expression
                         //herein is the current scope
   
+  //in general, "E = E ~ t2 | t1" MUST be used instead of "E = t1 | E ~ t2"
   lazy val operand: P[Expr] =    "operand" $
     ( "(" ~> expression <~ ")"
 //  | qualifiedIdent

@@ -18,7 +18,6 @@ trait PrimaryExprs extends Operands with TypeSyntax with Scoped with ExprUtils {
     | primaryExpr ~ index       ^^ mkIndex                                    //e.g. arr[0], myMap["hello"]
     | primaryExpr ~ slice                                                     //e.g. arr[2 : 5]
     | primaryExpr ~ typeAssert                                                //e.g. expr.(int)
-    | "(" ~> expression <~ ")" //in general, "E = E ~ t2 | t1" MUST be used instead of "E = t1 | E ~ t2"
 //  | (goType <~ "(") ~ expression <~ ")"                     &@ "unambiguous type conversion"
 //  | specialBuiltinTypeCall //not yet supported
     | operand
@@ -43,12 +42,17 @@ trait PrimaryExprs extends Operands with TypeSyntax with Scoped with ExprUtils {
   
   def mkCall(func: Expr, args: List[Expr]): Expr
   
-  def mkIndex(arr: Expr, indx: Expr): Expr =
-    if (!indx.isOfType[IntegralType])
-      badExpr("index not integral") //check what type is required (integral, unsigned, etc)
-    else arr match {
-      case HasType(ArrayType) => ArrayIndexLval(arr, indx)
-      case HasType(SliceType) => SliceIndexLval(arr, indx)
+  def mkIndex(arrBase: Expr, indx: Expr): Expr = {
+    @inline
+    def demandIntegral() {
+      if (!indx.isOfType[IntegralType])
+        recordErr("index type %s not an integral type", indx.t) //yes, integral is the correct type
+    }
+    
+    arrBase match {
+      case HasType(_: ArrayType) => demandIntegral(); ArrayIndexLval(arrBase, indx)
+      case HasType(_: SliceType) => demandIntegral(); SliceIndexLval(arrBase, indx)
       case _ => badExpr("not an array or slice")
     }
+  }
 }
