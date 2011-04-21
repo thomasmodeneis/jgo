@@ -2,6 +2,7 @@ package jgo.compiler
 package interm
 
 import instr._
+import instr.TypeConversions._
 import types._
 import symbols._
 import codeseq._
@@ -26,7 +27,7 @@ object Expr {
     }
   }
   
-  def checkCall(funcType: FuncType, args: List[Expr]): Either[String, Type] = funcType match {
+  def checkCall(funcType: Option[FuncType], args: List[Expr]): Either[String, Type] = funcType match {
     case None => Left("not of function type")
     
     case Some(FuncType(_, List(res0, res1, _*), _)) => Left("polyadic results not currently supported")
@@ -37,7 +38,7 @@ object Expr {
       else {
         for (((param, HasType(arg)), index) <- (params zip args).zipWithIndex)
           if (!(param <<= arg))
-            return Left("%s argument has type %s not assignable to corresponding parameter type %s" format (Expr.ordinal(index), arg, param))
+            return Left("%s argument has type %s not assignable to corresponding parameter type %s" format (Expr.ordinal(index + 1), arg, param))
         Right(results.headOption getOrElse UnitType)
       }
     
@@ -72,13 +73,17 @@ case object ExprError extends LvalExpr {
 
 case class SimpleExpr(eval: CodeBuilder, typeOf: Type) extends Expr
 
+case class IntConstExpr(value: BigInt, typeOf: IntegralType) extends Expr {
+  def eval = IntConst(value.toLong, typeOf)
+}
+
 case class FuncExpr(f: Function) extends Expr {
   val typeOf = f.typeOf
   override val callable = true
   
   def eval = Func2Lambda(f)
   override def call(args: List[Expr]): Either[String, Expr] =
-    for (resultT <- checkCall(args).right)
+    for (resultT <- Expr.checkCall(funcType, args).right)
     yield SimpleExpr((args foldLeft CodeBuilder()) { _ |+| _.eval } |+| InvokeFunc(f), resultT)
 }
 
@@ -138,8 +143,8 @@ case class FieldLval(obj: Expr, f: Field) extends LvalExpr {
   override val addressable = obj.addressable
 }
 
-case class ArrayIndexLval(array: Expr, index: Expr) extends LvalExpr {
-  val typeOf = array.t.underlying.asInstanceOf[ArrayType].elemType
+case class ArrayIndexLval(array: Expr, index: Expr, typeOf: Type) extends LvalExpr {
+  //val typeOf = array.t.underlying.asInstanceOf[ArrayType].elemType
   
   def load                        = array.eval |+| index.eval       |+| ArrayGet(this.typeOf)
   def store(v: CodeBuilder)       = array.eval |+| index.eval |+| v |+| ArrayPut(this.typeOf)
@@ -149,8 +154,8 @@ case class ArrayIndexLval(array: Expr, index: Expr) extends LvalExpr {
   override val addressable = array.addressable
 }
 
-case class SliceIndexLval(slice: Expr, index: Expr) extends LvalExpr {
-  val typeOf = slice.t.underlying.asInstanceOf[SliceType].elemType
+case class SliceIndexLval(slice: Expr, index: Expr, typeOf: Type) extends LvalExpr {
+  //val typeOf = slice.t.underlying.asInstanceOf[SliceType].elemType
   
   def load                        = slice.eval |+| index.eval       |+| SliceGet(this.typeOf)
   def store(v: CodeBuilder)       = slice.eval |+| index.eval |+| v |+| SlicePut(this.typeOf)
@@ -160,8 +165,8 @@ case class SliceIndexLval(slice: Expr, index: Expr) extends LvalExpr {
   override val addressable = true
 }
 
-case class MapIndexLval(map: Expr, index: Expr) extends LvalExpr {
-  val typeOf = map.t.underlying.asInstanceOf[MapType].keyType
+case class MapIndexLval(map: Expr, index: Expr, typeOf: Type) extends LvalExpr {
+  //val typeOf = map.t.underlying.asInstanceOf[MapType].keyType
   
   //the ", ok" pattern is not currently supported
   def load                        = map.eval |+| index.eval       |+| MapGet

@@ -49,10 +49,18 @@ trait PrimaryExprs extends Operands with TypeSyntax with Scoped with ExprUtils {
         recordErr("index type %s not an integral type", indx.t) //yes, integral is the correct type
     }
     
+    @inline
+    def demandKey(keyT: Type, mapT: Type) {
+      if (!(keyT <<= indx.t))
+        recordErr("index type %s not assignable to key type %s of map type %s", indx.t, keyT, mapT)
+    }
+    
     arrBase match {
-      case HasType(_: ArrayType) => demandIntegral(); ArrayIndexLval(arrBase, indx)
-      case HasType(_: SliceType) => demandIntegral(); SliceIndexLval(arrBase, indx)
-      case _ => badExpr("not an array or slice")
+      case HasType(ArrayType(_, t))    => demandIntegral(); ArrayIndexLval(arrBase, indx, t)
+      case HasType(SliceType(t))       => demandIntegral(); SliceIndexLval(arrBase, indx, t)
+      case HasType(mt @ MapType(k, v)) => demandKey(k, mt); MapIndexLval(arrBase, indx, v)
+      case HasType(StringType)         => demandIntegral(); SimpleExpr(arrBase.eval |+| indx.eval |+| StrIndex, Uint8)
+      case _ => badExpr("base type %s of index expression not array, slice, map, or string type", arrBase.t)
     }
   }
 }

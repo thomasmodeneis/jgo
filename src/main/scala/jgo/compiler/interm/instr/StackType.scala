@@ -6,7 +6,8 @@ sealed abstract class StackType
 
 case object Ref extends StackType
 
-sealed abstract class Arith extends StackType
+sealed abstract class Arith    extends StackType
+sealed abstract class Floating extends Arith
 sealed abstract class Integral extends Arith
 sealed abstract class Unsigned extends Integral
 
@@ -20,8 +21,8 @@ case object U16 extends Unsigned
 case object U32 extends Unsigned
 case object U64 extends Unsigned
 
-case object F32 extends Arith
-case object F64 extends Arith
+case object F32 extends Floating
+case object F64 extends Floating
 
 case object C64  extends Arith
 case object C128 extends Arith

@@ -48,6 +48,7 @@ case class BitwiseNot(t: Integral)    extends Instr
 case class Incr(v: Variable, n: Int, t: Integral)  extends Instr
 case class Decr(v: Variable, n: Int, t: Integral)  extends Instr
 
+case class StrConst(s: String)            extends Instr
 case class IntConst(i: Long, t: Integral) extends Instr
 case class BoolConst(b: Boolean)          extends Instr
 
@@ -66,6 +67,7 @@ case class StoreVar(v: Variable) extends Instr
 case class GetField(f: Field, t: Type) extends Instr
 case class PutField(f: Field, t: Type) extends Instr
 
+case object StrIndex
 case class  ArrayGet(elemT: Type) extends Instr
 case class  SliceGet(elemT: Type) extends Instr
 case object MapGet extends Instr

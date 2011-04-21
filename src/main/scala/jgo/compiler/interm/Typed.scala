@@ -10,7 +10,7 @@ trait Typed {
   
   val callable = typeOf.underlying.isInstanceOf[FuncType]
   
-  val funcType = typeOf.underlying match {
+  val funcType: Option[FuncType] = typeOf.underlying match {
     case ft: FuncType => Some(ft)
     case _            => None
   }
