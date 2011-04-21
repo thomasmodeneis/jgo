@@ -25,6 +25,7 @@ case class MakeChan(t: Type)                        extends Instr
 
 case class SliceArray(t: Type, bounds: SliceBounds) extends Instr
 case class SliceSlice(t: Type, bounds: SliceBounds) extends Instr
+case class Substring(bounds: SliceBounds)           extends Instr
 
 case class Unbox(t: PrimitiveType)
 

@@ -71,14 +71,24 @@ trait PrimaryExprs extends Operands with TypeSyntax with Scoped with ExprUtils {
   }
   
   private def sliceBounds(low: Option[Expr], high: Option[Expr]): (CodeBuilder, SliceBounds) = {
-    for (l <- low) if (!bound.isOfType[IntegralType])
-      reportErr(
+    for (l <- low) if (!l.isOfType[IntegralType])
+      reportErr("type %s of slice's lower bound not integral")
+    for (h <- high) if (!h.isOfType[IntegralType])
+      reportErr("type %s of slice's lower bound not integral")
+    
     (low, high) match {
-      case 
+      case (Some(e1), Some(e2)) => (e1.eval |+| e2.eval, BothBounds)
+      case (Some(e1), None)     => (e1.eval            , LowBound)
+      case (None,     Some(e2)) => (            e2.eval, HighBound)
+      case (None,     None)     => (CodeBuilder(),       NoBounds)
     }
   }
   
-  private def mkSlice(base: Expr, low: Option[Expr], high: Option[Expr]): Expr = ((low, high) match {
+  private def mkSlice(base: Expr, low: Option[Expr], high: Option[Expr]): Expr = {
+    val (boundsCode, boundsInfo) = sliceBounds(low, high)
     
-  })
+    base match {
+      case HasType(ArrayType(_, t)) => SimpleExpr(
+    }
+  }
 }
