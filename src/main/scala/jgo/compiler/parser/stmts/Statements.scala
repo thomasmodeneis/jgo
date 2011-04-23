@@ -101,8 +101,6 @@ trait Statements extends Expressions with SimpleStmts with Declarations with Sta
     repWithSemi(statement)
   
   
-  private implicit def opt2code(opt: Option[CodeBuilder]): CodeBuilder =
-    opt getOrElse CodeBuilder.empty
   
 //  private implicit def ls2code(ls: List[CodeBuilder]): CodeBuilder =
 //    ls reduceLeft { _ |+| _ }

@@ -7,6 +7,7 @@ import parser.scoped._
 import interm._
 import interm.types._
 import instr._
+import codeseq._
 
 trait PrimaryExprs extends Operands with TypeSyntax with Scoped with ExprUtils {
   self: Expressions =>
@@ -14,7 +15,7 @@ trait PrimaryExprs extends Operands with TypeSyntax with Scoped with ExprUtils {
   lazy val primaryExpr: PP[Expr] =                 "primary expression" $
     ( primaryExpr ~ call        ^^ mkCall                                     //e.g. myFunc(param), int(5)
     | primaryExpr ~ index       ^^ mkIndex                                    //e.g. arr[0], myMap["hello"]
-    | primaryExpr ~ slice                                                     //e.g. arr[2 : 5]
+    | primaryExpr ~ slice       ^^ { case e ~ (l ~ h) => mkSlice(e, l, h) }   //e.g. arr[2 : 5]
 //  | primaryExpr ~ selector                                                  //e.g. myStruct.field, or myPackage.value
 //  | primaryExpr ~ typeAssert                                                //e.g. expr.(int)
 //  | (goType <~ "(") ~ expression <~ ")"                     &@ "unambiguous type conversion"
@@ -72,9 +73,9 @@ trait PrimaryExprs extends Operands with TypeSyntax with Scoped with ExprUtils {
   
   private def sliceBounds(low: Option[Expr], high: Option[Expr]): (CodeBuilder, SliceBounds) = {
     for (l <- low) if (!l.isOfType[IntegralType])
-      reportErr("type %s of slice's lower bound not integral")
+      recordErr("type %s of slice's lower bound not integral")
     for (h <- high) if (!h.isOfType[IntegralType])
-      reportErr("type %s of slice's lower bound not integral")
+      recordErr("type %s of slice's lower bound not integral")
     
     (low, high) match {
       case (Some(e1), Some(e2)) => (e1.eval |+| e2.eval, BothBounds)
@@ -86,9 +87,13 @@ trait PrimaryExprs extends Operands with TypeSyntax with Scoped with ExprUtils {
   
   private def mkSlice(base: Expr, low: Option[Expr], high: Option[Expr]): Expr = {
     val (boundsCode, boundsInfo) = sliceBounds(low, high)
+    val stackingCode = base.eval |+| boundsCode
     
     base match {
-      case HasType(ArrayType(_, t)) => SimpleExpr(
+      case HasType(ArrayType(_, t)) => SimpleExpr(stackingCode |+| SliceArray(t, boundsInfo), t)
+      case HasType(SliceType(t))    => SimpleExpr(stackingCode |+| SliceSlice(t, boundsInfo), t)
+      case HasType(StringType)      => SimpleExpr(stackingCode |+| Substring(boundsInfo), StringType)
+      case _ => badExpr("Cannot slice a value of type %s; must be of array, slice, or string type", base.t)
     }
   }
 }
