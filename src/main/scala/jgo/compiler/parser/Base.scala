@@ -3,7 +3,7 @@ package parser
 
 import combinatorExten._
 import message._
-import lexer.{Scanners, Lexical}
+//import lexer.{Scanner, Lexical}
 import scope._
 
 import scala.util.parsing._
@@ -13,7 +13,7 @@ import input.{Position, NoPosition}
 
 import scala.collection.mutable.ListBuffer
 
-trait Base extends GoTokenParsers with PackratParsers with FancyParsers with MessageHandling {
+trait Base extends Tokens with PackratParsers with FancyParsers with MessageHandling {
   type P[+T]   = Parser       [T]
   type PP[+T]  = Parser       [T]
   type P_      = Parser       [Any]

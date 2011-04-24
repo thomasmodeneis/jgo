@@ -7,7 +7,7 @@ import scala.collection.mutable.HashMap
 
 //this component includes code from, and corresponds to,
 //scala.util.parsing.combinator.syntactical.StdTokenParsers
-trait GoTokenParsers extends Parsers {
+trait Tokens extends Parsers {
   type Elem = Token
   
   protected val keywordCache : HashMap[String, Parser[String]] = HashMap.empty
