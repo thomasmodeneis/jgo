@@ -7,7 +7,7 @@ import scala.{collection => coll}
 import scala.collection.{immutable => imm, mutable => mut, generic => gen}
 
 
-trait Scope extends PartialFunction[String, Symbol] {
+trait Scope extends PartialFunction[String, Symbol] with coll.Iterable[Symbol] {
   def get(name: String):            Option[Symbol]
   def contains(name: String):       Boolean
   def alreadyDefined(name: String): Boolean
@@ -34,31 +34,36 @@ trait EnclosedScope extends Scope {
 }
 
 trait PoppableScope[Repr <: PoppableScope[Repr]] extends EnclosedScope {
-  val tail: Option[Repr]
+  val under: Option[Repr]
 }
 
 trait PoppableGrowableScope[Repr <: PoppableGrowableScope[Repr]] extends PoppableScope[Repr]
                                                                     with GrowableScope //LOL!
 
-
-
-class MapScope private (bindings: mut.Map[String, Symbol]) extends GrowableScope {
-  def this() = this(mut.Map[String, Symbol]())
+abstract class MapScope extends Scope {
+  protected val bindings: coll.Map[String, Symbol]
   
   def get(name: String)                 = bindings get name
   def contains(name: String)            = bindings contains name
   def alreadyDefined(name: String)      = bindings contains name
+  
+  def iterator = bindings.valuesIterator
+}
+
+class GrowableMapScope private (protected val bindings: mut.Map[String, Symbol]) extends MapScope with GrowableScope {
+  def this() = this(mut.Map[String, Symbol]())
+  
   def put(name: String, symbol: Symbol) = bindings.put(name, symbol) isDefined
 }
 
 sealed trait SequentialScope extends PoppableGrowableScope[SequentialScope]
 object SequentialScope {
-  def base(encl: Scope) = new MapScope with SequentialScope {
+  def base(encl: Scope) = new GrowableMapScope with SequentialScope {
     val enclosing = encl
-    val tail = None
+    val under = None
   }
-  def frame(encl: SequentialScope) = new MapScope with SequentialScope {
+  def frame(encl: SequentialScope) = new GrowableMapScope with SequentialScope {
     val enclosing = encl
-    val tail = Some(encl)
+    val under = Some(encl)
   }
 }

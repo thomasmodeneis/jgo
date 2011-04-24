@@ -2,15 +2,13 @@ package jgo.compiler
 package parser
 
 import scala.util.parsing.combinator._
-import syntactical._
-import lexer.GoTokens
+import lexer._
 import scala.collection.mutable.HashMap
 
 //this component includes code from, and corresponds to,
 //scala.util.parsing.combinator.syntactical.StdTokenParsers
-trait GoTokenParsers extends TokenParsers {
-  type Tokens <: lexer.GoTokens
-  import lexical.{Token, Keyword, Identifier, IntLit, FloatLit, CharLit, StringLit}
+trait GoTokenParsers extends Parsers {
+  type Elem = Token
   
   protected val keywordCache : HashMap[String, Parser[String]] = HashMap.empty
 

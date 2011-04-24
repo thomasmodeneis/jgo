@@ -76,7 +76,10 @@ trait SimpleStmts extends Expressions with Symbols with GrowablyScoped with Stmt
             r.t, v.t, l)
       }
     }
-    errIf(!actuallySawDecl, "no new variables on left side of :=")
+    
+    if (!actuallySawDecl)
+      recordErr("no new variables on left side of :=")
+    
     declCode |+| leftCode |+| rightCode
   }
   

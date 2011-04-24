@@ -23,11 +23,17 @@ trait StackScoped extends GrowablyScoped {
     curScope = SequentialScope.frame(curScope)
   }
   def pop() {
-    curScope = curScope.tail getOrElse (throw new IllegalStateException)
+    curScope = curScope.under getOrElse (throw new IllegalStateException)
   }
   
-  def undecl(): CodeBuilder {
-    //implement me!!!
+  def undecl(): CodeBuilder = {
+    var code = CodeBuilder()
+    for (s <- curScope) s match {
+      case l: LocalVar =>
+        l.freeze
+        code = code |+| Undecl(l)
+    }
+    code
   }
   
   

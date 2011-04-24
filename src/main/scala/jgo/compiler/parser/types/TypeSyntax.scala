@@ -110,9 +110,10 @@ trait TypeSyntax extends Symbols with TypeUtils {
     case _                   => TypeError
   }
   
-  private def array(i: lexical.IntLit, t: Type) = {
-    val len = i.value.asInstanceOf[Int]
-    errIf(len < 0, "cannot have negative array length")
+  private def array(i: lexer.IntLit, t: Type) = {
+    val len = i.value.toInt
+    if(len < 0)
+      recordErr("cannot have negative array length")
     ArrayType(len, t)
   }
   
@@ -144,7 +145,8 @@ trait TypeSyntax extends Symbols with TypeUtils {
   private def funcParams(ls: List[(List[Type], Boolean)]): (List[Type], Boolean) = {
     val (decls, variadics) = ls.unzip
     val (err, variadic) = (variadics.init contains true, variadics last)
-    errIf(err, "`...' permitted only on the final type in a signature")
+    if (err)
+      recordErr("`...' permitted only on the final type in a signature")
     (decls.flatten, variadic)
   }
   
@@ -153,7 +155,4 @@ trait TypeSyntax extends Symbols with TypeUtils {
   
   private def funcParamTypeDecl(variadic: Boolean)(t: Type) =
     (t :: Nil, variadic)
-  
-  
-  
 }

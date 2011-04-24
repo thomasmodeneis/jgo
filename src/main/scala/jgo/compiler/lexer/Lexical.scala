@@ -7,8 +7,8 @@ import CharSequenceReader.EofCh
 import combinator._
 import scala.annotation.tailrec
 
-//portions of this class taken from scala.util.parsing.combinator.lexical.{Lexical, StdLexical}
-class GoLexical extends GoTokenScanners {
+//portions of this object taken from scala.util.parsing.combinator.lexical.{Lexical, StdLexical}
+object Lexical extends Scanners {
   
   private implicit def extractor2Predicate(ex: CharExtractor): Char => Boolean =
     ex.unapply(_).isDefined
@@ -266,11 +266,17 @@ class GoLexical extends GoTokenScanners {
     }
     (str.result, cur)
   }
+  
   private def dropWhile(r: Reader[Char])(p: Char => Boolean): Reader[Char] = {
     var cur = r
     while (p(cur.first))
       cur = cur.rest
     cur
+  }
+  
+  private object ~: {
+    def unapply[A](r: Reader[A]): Option[Pair[A, Reader[A]]] =
+      Some(r.first, r.rest)
   }
   
   private sealed abstract class CharExtractor {
@@ -325,22 +331,5 @@ class GoLexical extends GoTokenScanners {
     def unapply(ch: Char): Option[Char] =
       if (ch.isLetter || ch == '_' || ch.isDigit) Some(ch)
       else None
-  }
-}
-
-object LexerTest {
-  import java.io._
-  import input._
-  import scala.collection.immutable.PagedSeq
-  
-  def main(args: Array[String]) {
-    object lex extends GoLexical
-    var scan = if (args.length > 0) lex.Scanner(args(0))
-               else lex.Scanner("/Volumes/KLAPERMAN/Horace Mann/Twelfth Grade/Computer Science/Old Go Compiler Code (Scala)/lexer_test_full.txt")
-    
-    while (!scan.atEnd) {
-      println(scan.first)
-      scan = scan.rest
-    }
   }
 }

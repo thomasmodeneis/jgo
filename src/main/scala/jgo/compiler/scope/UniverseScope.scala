@@ -4,11 +4,11 @@ package scope
 import interm.types._
 import interm.symbols._
 
-object UniverseScope extends Scope {
+object UniverseScope extends MapScope {
   private implicit def t(p: (String, Type)): (String, TypeSymbol) =
     (p._1, TypeSymbol(new TypeName(p._1, p._2)))
   
-  private val bindings = Map[String, Symbol] (
+  protected val bindings = Map[String, Symbol] (
     t("string"     -> StringType),
     t("bool"       -> Bool),
     t("byte"       -> Uint8),
@@ -57,8 +57,4 @@ object UniverseScope extends Scope {
     "recover"
     */
   )
-  
-  def get(name: String)            = bindings get name
-  def contains(name: String)       = bindings contains name
-  def alreadyDefined(name: String) = contains(name)
 }
