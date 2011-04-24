@@ -7,6 +7,7 @@ import parser.scoped._
 import interm._
 import codeseq._
 import instr._
+import instr.TypeConversions._
 import types._
 import symbols._
 

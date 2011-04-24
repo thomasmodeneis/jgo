@@ -55,7 +55,7 @@ sealed abstract class Expr extends Typed {
    */
   def eval: CodeBuilder
   
-  val addressable = false
+  def addressable = false
     
   def call(args: List[Expr]): Either[String, Expr] =
     for (resultT <- Expr.checkCall(funcType, args).right)
@@ -79,7 +79,7 @@ case class IntConstExpr(value: BigInt, typeOf: IntegralType) extends Expr {
 
 case class FuncExpr(f: Function) extends Expr {
   val typeOf = f.typeOf
-  override val callable = true
+  override def callable = true
   
   def eval = Func2Lambda(f)
   override def call(args: List[Expr]): Either[String, Expr] =
@@ -89,7 +89,7 @@ case class FuncExpr(f: Function) extends Expr {
 
 case class BoolExpr(tree: BoolTree) extends Expr {
   val typeOf            = Bool
-  override val callable = false
+  override def callable = false
   def eval = tree.evalAsBool
   
   def branchTo(lbl: Label)                           = tree.branchTo(lbl)
@@ -111,14 +111,14 @@ sealed abstract class LvalExpr extends Expr {
 }
 
 case class VarLval(v: Variable) extends LvalExpr {
-  val typeOf                 = v.typeOf
+  val typeOf = v.typeOf
   
-  def load                   =         LoadVar(v)
-  def store(vl: CodeBuilder) = vl |+| StoreVar(v)
-  def storePrefix(vl: CodeBuilder) = CodeBuilder.empty |+| vl
-  def storeSuffix                  = StoreVar(v)
+  def load                         =         LoadVar(v)
+  def store(vl: CodeBuilder)       = vl |+| StoreVar(v)
+  def storePrefix(vl: CodeBuilder) = vl
+  def storeSuffix                  =        StoreVar(v)
   
-  override val addressable   = true
+  override def addressable = true
 }
 
 case class PtrLval(ptr: Expr) extends LvalExpr {
@@ -129,7 +129,7 @@ case class PtrLval(ptr: Expr) extends LvalExpr {
   def storePrefix(v: CodeBuilder) = ptr.eval |+| v
   def storeSuffix                 =                    PutRef
   
-  override val addressable = true
+  override def addressable = true
 }
 
 case class FieldLval(obj: Expr, f: Field) extends LvalExpr {
@@ -140,7 +140,7 @@ case class FieldLval(obj: Expr, f: Field) extends LvalExpr {
   def storePrefix(v: CodeBuilder) = obj.eval |+| v
   def storeSuffix                 =                    PutField(f, this.typeOf)
   
-  override val addressable = obj.addressable
+  override def addressable = obj.addressable
 }
 
 case class ArrayIndexLval(array: Expr, index: Expr, typeOf: Type) extends LvalExpr {
@@ -151,7 +151,7 @@ case class ArrayIndexLval(array: Expr, index: Expr, typeOf: Type) extends LvalEx
   def storePrefix(v: CodeBuilder) = array.eval |+| index.eval |+| v
   def storeSuffix                 =                                     ArrayPut(this.typeOf)
   
-  override val addressable = array.addressable
+  override def addressable = array.addressable
 }
 
 case class SliceIndexLval(slice: Expr, index: Expr, typeOf: Type) extends LvalExpr {
@@ -162,7 +162,7 @@ case class SliceIndexLval(slice: Expr, index: Expr, typeOf: Type) extends LvalEx
   def storePrefix(v: CodeBuilder) = slice.eval |+| index.eval |+| v
   def storeSuffix                 = SlicePut(this.typeOf)
   
-  override val addressable = true
+  override def addressable = true
 }
 
 case class MapIndexLval(map: Expr, index: Expr, typeOf: Type) extends LvalExpr {

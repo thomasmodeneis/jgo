@@ -48,6 +48,7 @@ class CodeBuilder extends mut.Builder[Instr, Code] with Expendable {
   */
   
   override def toString = first.toString
+  def listing = first.listing
   
   def isEmpty: Boolean = {
     errIfExpended()

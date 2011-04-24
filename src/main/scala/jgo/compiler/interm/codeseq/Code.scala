@@ -29,6 +29,21 @@ sealed abstract class Code extends LinearSeqOptimized[Instr, Code] with Equals {
   }
   
   override def toString: String = {
+    if (isEmpty)
+      return ""
+    val sb = new StringBuilder
+    var cur = this
+    while (!cur.tail.isEmpty) {
+      sb append cur.head append "; "
+      cur = cur.tail
+    }
+    sb append cur.head
+    sb.result
+  }
+  
+  def listing: String = {
+    if (isEmpty)
+      return ""
     val sb = new StringBuilder("\n")
     for (instr <- this)
       sb append instr append "\n"

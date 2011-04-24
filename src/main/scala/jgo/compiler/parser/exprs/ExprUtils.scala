@@ -6,8 +6,9 @@ import interm._
 import interm.types._
 import codeseq._
 import instr._
+import instr.TypeConversions._
 
-trait ExprUtils extends TypeConversions {
+trait ExprUtils {
   self: Base =>
   
   def badExpr(msg: String, args: Any*): ExprError.type = {

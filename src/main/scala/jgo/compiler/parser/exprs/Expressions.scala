@@ -6,11 +6,12 @@ import interm._
 import interm.types._
 import codeseq._
 import instr._
+import instr.TypeConversions._
 import bool._
 
 trait Expressions extends PrimaryExprs with ExprUtils {
   lazy val expression: PP[Expr] =                       "expression" $
-    orExpr
+    orExpr  ^^ { e => println(e); e }
   
   lazy val orExpr: PP[Expr] =                //"or-expression: prec 1" $
     ( orExpr ~ ("||" ~> andExpr)   ^^ or

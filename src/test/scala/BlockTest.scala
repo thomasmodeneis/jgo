@@ -35,7 +35,7 @@ object BlockTest {
       
       val bl = new BlockLang(sc) //with TracePrintingParsers
       println(bl.errors)
-      println(bl.result)
+      println(bl.result map { _.listing })
     }
     catch {
       case e =>
