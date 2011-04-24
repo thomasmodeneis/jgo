@@ -1,6 +1,7 @@
 package jgo.compiler
 package scope
 
+import interm._
 import interm.types._
 import interm.symbols._
 
@@ -8,25 +9,27 @@ object UniverseScope extends MapScope {
   private implicit def t(p: (String, Type)): (String, TypeSymbol) =
     (p._1, TypeSymbol(new TypeName(p._1, p._2)))
   
+  private implicit def toTypeSymbol(t: Type with Named) = TypeSymbol(t)
+  
   protected val bindings = Map[String, Symbol] (
-    t("string"     -> StringType),
-    t("bool"       -> Bool),
-    t("byte"       -> Uint8),
-    t("int"        -> Int32),
-    t("uint"       -> Uint32),
+    "string"     -> StringType,
+    "bool"       -> Bool,
+    "byte"       -> Uint8,
+    "int"        -> Int32,
+    "uint"       -> Uint32,
     
-    t("uint8"      -> Uint8),
-    t("uint16"     -> Uint16),
-    t("uint32"     -> Uint32),
-    t("uint64"     -> Uint64),
-    t("int8"       -> Int8),
-    t("int16"      -> Int16),
-    t("int32"      -> Int32),
-    t("int64"      -> Int64),
-    t("float32"    -> Float32),
-    t("float64"    -> Float64),
-    t("complex64"  -> Complex64),
-    t("complex128" -> Complex128)
+    "uint8"      -> Uint8,
+    "uint16"     -> Uint16,
+    "uint32"     -> Uint32,
+    "uint64"     -> Uint64,
+    "int8"       -> Int8,
+    "int16"      -> Int16,
+    "int32"      -> Int32,
+    "int64"      -> Int64,
+    "float32"    -> Float32,
+    "float64"    -> Float64,
+    "complex64"  -> Complex64,
+    "complex128" -> Complex128
     
     /*
     "uintptr" ->

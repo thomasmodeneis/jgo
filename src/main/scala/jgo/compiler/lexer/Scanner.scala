@@ -20,6 +20,14 @@ final class Scanner private(prev: Option[Token], in: Reader[Char]) extends Reade
   
   override def source = in.source
   override def offset = in.offset
+  
+  def foreach[U](f: Token => U) {
+    var cur = this
+    while (!cur.atEnd) {
+      f(cur.first)
+      cur = cur.rest
+    }
+  }
 }
 
 object Scanner {

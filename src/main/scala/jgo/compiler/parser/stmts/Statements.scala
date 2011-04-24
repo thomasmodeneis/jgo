@@ -12,7 +12,6 @@ trait Statements extends Expressions with SimpleStmts with Declarations with Sta
   lazy val statement: P[CodeBuilder] =                            "statement" $
     ( block
 //    | labeledStmt
-    | simpleStmt
     | ifStmt
 //    | switchStmt
     | forStmt
@@ -24,6 +23,7 @@ trait Statements extends Expressions with SimpleStmts with Declarations with Sta
 //    | gotoStmt
 //    | deferStmt
     | declaration
+    | simpleStmt  //contains the empty statement, so must come last
     )
   
   lazy val block: P[CodeBuilder] =                                    "block" $
@@ -106,7 +106,7 @@ trait Statements extends Expressions with SimpleStmts with Declarations with Sta
 //    ls reduceLeft { _ |+| _ }
   
   private def makeBlock(stmts: List[CodeBuilder], undeclCode: CodeBuilder): CodeBuilder =
-    stmts.reduceLeft(_ |+| _) |+| undeclCode
+    (stmts foldLeft CodeBuilder())(_ |+| _) |+| undeclCode
   
   private def makeIfStmt(
     init:       Option[CodeBuilder],

@@ -16,8 +16,8 @@ trait SimpleStmts extends Expressions with Symbols with GrowablyScoped with Stmt
     | shortVarDecl
     | incOrDecStmt
     | sendStmt
-    | expression   ^^  evaluate
-    | guard(";")   ^^^ CodeBuilder.empty
+    | expression  ^^  evaluate
+    | success(CodeBuilder.empty)
     )
   
   lazy val sendStmt: P[CodeBuilder] =                               "send statement" $

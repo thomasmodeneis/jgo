@@ -13,7 +13,7 @@ import instr._
 trait Declarations extends Expressions with GrowablyScoped with StmtUtils {
   private var iotaValue = 0
   
-  def mkVariable(name: String, typeOf: Type): (Variable, CodeBuilder) = {
+  protected def mkVariable(name: String, typeOf: Type): (Variable, CodeBuilder) = {
     val res = new LocalVar(name, typeOf)
     (res, Decl(res))
   }

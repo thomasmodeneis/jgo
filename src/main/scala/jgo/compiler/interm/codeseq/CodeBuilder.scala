@@ -26,8 +26,8 @@ class CodeBuilder extends mut.Builder[Instr, Code] with Expendable {
     last  = lst
   }
   
-  private var first: Code = Empty
-  private var last:  Code = Empty
+  private var first: Code = CodeNil
+  private var last:  Code = CodeNil
   
   /*
   private var resetReqd = false
@@ -47,24 +47,26 @@ class CodeBuilder extends mut.Builder[Instr, Code] with Expendable {
   }
   */
   
+  override def toString = first.toString
+  
   def isEmpty: Boolean = {
     errIfExpended()
-    first == Empty && last == Empty
+    first == CodeNil && last == CodeNil
   }
   
   def clear() {
     errIfExpended()
-    first = Empty
-    last = Empty
+    first = CodeNil
+    last  = CodeNil
     //resetReqd = false
   }
   
   def += (instr: Instr): this.type = {
     errIfExpended()
     
-    val add = instr ::: Empty
+    val add = instr ::: CodeNil
     last match {
-      case Empty =>
+      case CodeNil =>
         first = add
       case lst: (:::) =>
         lst.tl = add
@@ -85,14 +87,17 @@ class CodeBuilder extends mut.Builder[Instr, Code] with Expendable {
     errIfExpended()
     if (other isEmpty)
       this
+    else if (this isEmpty)
+      other
     else last match {
-      case Empty =>
+      case CodeNil =>
         other
       case lst: (:::) =>
         lst.tl = other.first
         last   = other.last
         other.expend()
         this
+      case x => println(x); this
     }
   }
   

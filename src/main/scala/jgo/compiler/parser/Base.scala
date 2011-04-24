@@ -15,7 +15,7 @@ import scala.collection.mutable.ListBuffer
 
 trait Base extends Tokens with PackratParsers with FancyParsers with MessageHandling {
   type P[+T]   = Parser       [T]
-  type PP[+T]  = Parser       [T]
+  type PP[+T]  = PackratParser[T]
   type P_      = Parser       [Any]
   type PP_     = PackratParser[Any]
   

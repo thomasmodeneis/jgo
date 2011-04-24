@@ -12,7 +12,7 @@ trait Expressions extends PrimaryExprs with ExprUtils {
   lazy val expression: PP[Expr] =                       "expression" $
     orExpr
   
-  lazy val orExpr: PP[Expr]=                 "or-expression: prec 1" $
+  lazy val orExpr: PP[Expr] =                //"or-expression: prec 1" $
     ( orExpr ~ ("||" ~> andExpr)   ^^ or
     | andExpr
     )

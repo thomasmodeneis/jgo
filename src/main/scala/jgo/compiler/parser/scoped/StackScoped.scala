@@ -12,7 +12,11 @@ import symbols.LocalVar
 trait StackScoped extends GrowablyScoped {
   self: Base =>
   
-  protected val initialEnclosing: Scope
+  //def, not val, because val leads to NPE
+  //if val, will be null until subclass constructor call
+  //which happens after curScope is initialized.
+  //So curScope would be initialized to SeqScope.base(null)
+  protected def initialEnclosing: Scope
   
   private var curScope: SequentialScope = SequentialScope.base(initialEnclosing)
   

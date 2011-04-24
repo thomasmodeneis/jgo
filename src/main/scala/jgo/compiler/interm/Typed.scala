@@ -6,11 +6,11 @@ import types._
 trait Typed {
   val typeOf: Type
   
-  final val t: typeOf.type = typeOf //shorthand 
+  final def t: typeOf.type = typeOf //shorthand 
   
-  val callable = typeOf.underlying.isInstanceOf[FuncType]
+  def callable = typeOf.underlying.isInstanceOf[FuncType]
   
-  val funcType: Option[FuncType] = typeOf.underlying match {
+  def funcType: Option[FuncType] = typeOf.underlying match {
     case ft: FuncType => Some(ft)
     case _            => None
   }

@@ -194,6 +194,27 @@ object Lexical {
     }
     else (Right(""), in)
   
+  def processPrefix(prev: Option[Token], in: Reader[Char]): (Option[Token], Reader[Char]) = prev match {
+    case Some(id:    Identifier) => procForSemi(in)
+    case Some(int:   IntLit)     => procForSemi(in)
+    case Some(float: FloatLit)   => procForSemi(in)
+  //case Some(imag:  ImagLit)    => procForSemi(in)
+    case Some(char:  CharLit)    => procForSemi(in)
+    case Some(str:   StringLit)  => procForSemi(in)
+    case Some(Keyword(
+           "break" |
+           "continue" |
+           "fallthrough" |
+           "return" |
+           "++" |
+           "--" |
+           ")" |
+           "]" |
+           "}" ))                => procForSemi(in)
+    case _ => (None, stripWhitespace(in))
+  }
+  
+  /*  //old version; changed on Apr 24
   def processPrefix(prev: Option[Token], in: Reader[Char]): (Option[Token], Reader[Char]) = {
     if (prev match {
           case Some(id:    Identifier) => true
@@ -216,12 +237,13 @@ object Lexical {
     else
       (None, stripWhitespace(in))
   }
+  */
   
   //TODO: add logic to detect empty lines and not produce ';' there
   @tailrec
   final def procForSemi(in: Reader[Char]): (Option[Token], Reader[Char]) = {
     if (in.atEnd)
-      (Some(Keyword(";")), in)
+      (None, in) //(Some(Keyword(";")), in) //Apr 24, 2011:  I see no reason why ; before EOF. Change grammar.
     else if (in.first == ' ' || in.first == '\t' || in.first == '\r')
       procForSemi(in.rest)
     else in match {
