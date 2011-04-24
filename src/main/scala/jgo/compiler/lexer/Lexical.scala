@@ -8,7 +8,7 @@ import combinator._
 import scala.annotation.tailrec
 
 //portions of this object taken from scala.util.parsing.combinator.lexical.{Lexical, StdLexical}
-object Lexical extends Scanners {
+object Lexical {
   
   private implicit def extractor2Predicate(ex: CharExtractor): Char => Boolean =
     ex.unapply(_).isDefined
