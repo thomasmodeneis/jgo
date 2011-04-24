@@ -17,66 +17,99 @@ trait ExprUtils {
   }
   
   def ifNumericE(expr: Expr)(e: => Expr): Expr = expr match {
-    case e OfType (t: NumericType) => e
-    case _ => badExpr("operand type %s is not numeric", expr.t)
+    case HasType(t: NumericType) => e
+    case _ =>
+      badExpr("operand type %s is not numeric", expr.t)
   }
   def ifNumeric(expr: Expr)(f: (CodeBuilder, NumericType, Type) => Expr): Expr = expr match {
-    case e OfType (t: NumericType) => f(expr.eval, t, expr.t)
-    case _ => badExpr("operand type %s is not numeric", expr.t)
+    case HasType(t: NumericType) => f(expr.eval, t, expr.t)
+    case _ =>
+      badExpr("operand type %s is not numeric", expr.t)
   }
   def ifIntegral(expr: Expr)(f: (CodeBuilder, IntegralType, Type) => Expr): Expr = expr match {
-    case e OfType (t: IntegralType) => f(expr.eval, t, expr.t)
-    case _ => badExpr("operand type %s is not integral", expr.t)
+    case HasType(t: IntegralType) => f(expr.eval, t, expr.t)
+    case _ =>
+      badExpr("operand type %s is not integral", expr.t)
   }
   def ifUnsigned(expr: Expr)(f: (CodeBuilder, UnsignedType, Type) => Expr): Expr = expr match {
-    case e OfType (t: UnsignedType) => f(expr.eval, t, expr.t)
-    case _ => badExpr("operand type %s is not unsigned", expr.t)
+    case HasType(t: UnsignedType) => f(expr.eval, t, expr.t)
+    case _ =>
+      badExpr("operand type %s is not unsigned", expr.t)
   }
   
   
   def ifPtr(expr: Expr)(f: (CodeBuilder, Type) => Expr): Expr = expr match {
-    case e OfType PointerType(elemT) => f(expr.eval, elemT)
-    case _ => badExpr("operand type %s is not a pointer type", expr.t)
+    case HasType(PointerType(elemT)) => f(expr.eval, elemT)
+    case _ =>
+      badExpr("operand type %s is not a pointer type", expr.t)
   }
   def ifArray(expr: Expr)(f: (CodeBuilder, Type) => Expr): Expr = expr match {
-    case e OfType ArrayType(_, elemT) => f(expr.eval, elemT)
-    case _ => badExpr("operand type %s is not an array type", expr.t)
+    case HasType(ArrayType(_, elemT)) => f(expr.eval, elemT)
+    case _ =>
+      badExpr("operand type %s is not an array type", expr.t)
   }
   def ifSlice(expr: Expr)(f: (CodeBuilder, Type) => Expr): Expr = expr match {
-    case e OfType SliceType(elemT) => f(expr.eval, elemT)
-    case _ => badExpr("operand type %s is not a slice type", expr.t)
+    case HasType(SliceType(elemT)) => f(expr.eval, elemT)
+    case _ =>
+      badExpr("operand type %s is not a slice type", expr.t)
   }
   def ifChan(expr: Expr)(f: (CodeBuilder, Type) => Expr): Expr = expr match {
-    case e OfType ChanType(elemT, _, _) => f(expr.eval, elemT)
-    case _ => badExpr("operand type %s is not a channel type", expr.t)
+    case HasType(ChanType(elemT, _, _)) => f(expr.eval, elemT)
+    case _ =>
+      badExpr("operand type %s is not a channel type", expr.t)
   }
   
   def ifSameNumericE(e1: Expr, e2: Expr)(e: => Expr): Expr =
-    if (e1.t != e2.t)
+    //don't report the same error twice
+    if (e1.t == TypeError && e2.t != TypeError)
+      DummyExpr(e2.t)
+    else if (e1.t != TypeError && e2.t == TypeError)
+      DummyExpr(e1.t)
+    else if (e1.t != e2.t)
       badExpr("operands have differing types %s and %s", e1.t, e2.t)
     else
       ifNumericE(e2)(e)
   
   def ifSameNumeric(e1: Expr, e2: Expr)(f: (CodeBuilder, CodeBuilder, NumericType, Type) => Expr): Expr =
-    if (e1.t != e2.t)
+    //don't report the same error twice
+    if (e1.t == TypeError && e2.t != TypeError)
+      DummyExpr(e2.t)
+    else if (e1.t != TypeError && e2.t == TypeError)
+      DummyExpr(e1.t)
+    else if (e1.t != e2.t)
       badExpr("operands have differing types %s and %s", e1.t, e2.t)
     else
       ifNumeric(e2) { f(e1.eval, _, _, _) }
   
   def ifSameIntegral(e1: Expr, e2: Expr)(f: (CodeBuilder, CodeBuilder, IntegralType, Type) => Expr): Expr =
-    if (e1.t != e2.t)
+    //don't report the same error twice
+    if (e1.t == TypeError && e2.t != TypeError)
+      DummyExpr(e2.t)
+    else if (e1.t != TypeError && e2.t == TypeError)
+      DummyExpr(e1.t)
+    else if (e1.t != e2.t)
       badExpr("operands have differing types %s and %s", e1.t, e2.t)
     else
       ifIntegral(e2) { f(e1.eval, _, _, _) }
   
   def ifSameUnsigned(e1: Expr, e2: Expr)(f: (CodeBuilder, CodeBuilder, UnsignedType, Type) => Expr): Expr =
-    if (e1.t != e2.t)
+    //don't report the same error twice
+    if (e1.t == TypeError && e2.t != TypeError)
+      DummyExpr(e2.t)
+    else if (e1.t != TypeError && e2.t == TypeError)
+      DummyExpr(e1.t)
+    else if (e1.t != e2.t)
       badExpr("operands have differing types %s and %s", e1.t, e2.t)
     else
       ifUnsigned(e2) { f(e1.eval, _, _, _) }
   
   def ifSame(e1: Expr, e2: Expr)(e: => Expr): Expr =
-    if (e1.t != e2.t)
+    //don't report the same error twice
+    if (e1.t == TypeError && e2.t != TypeError)
+      DummyExpr(e2.t)
+    else if (e1.t != TypeError && e2.t == TypeError)
+      DummyExpr(e1.t)
+    else if (e1.t != e2.t)
       badExpr("operands have differing types %s and %s", e1.t, e2.t)
     else
       e

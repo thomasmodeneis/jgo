@@ -32,14 +32,14 @@ sealed abstract class BoolTree {
   
   def mkIf(ifBranch: CodeBuilder): CodeBuilder = {
     val end = new Label("end if")
-    val t   = new Label("if: true branch")
+    val t   = new Label("if branch")
     code(t, end) |+| Lbl(t) |+| ifBranch |+| Lbl(end)
   }
   
   def mkIfElse(ifBranch: CodeBuilder, elseBranch: CodeBuilder): CodeBuilder = {
     val end = new Label("end if-else")
-    val t   = new Label("if-else: true branch")
-    val f   = new Label("if-else: false branch")
+    val t   = new Label("if branch")
+    val f   = new Label("else branch")
     code(t, f) |+| Lbl(f) |+| elseBranch |+| Goto(end) |+| Lbl(t) |+| ifBranch |+| Lbl(end)
   }
   

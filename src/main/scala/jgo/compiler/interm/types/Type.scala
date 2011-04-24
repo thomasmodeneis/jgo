@@ -4,7 +4,7 @@ package types
 
 import member._
 
-trait Type extends Equals with Membered {
+trait Type extends Membered {
   /**
    * Indicates whether this type is an interface type or pointer thereto.
    */
@@ -19,17 +19,9 @@ trait Type extends Equals with Membered {
   val members: Map[String, Member] = Map()
   
   /**
-   * States whether or not this type is identical to the given type,
-   * behaving just like a call to ==.
+   * States whether this type is identical to the given type.
    */
-  //final def === (other: Type): Boolean =
-  //  this == other
-  
-  abstract override def equals(other: Any) = other match {
-    case TypeError  => true
-    case that: Type => (that canEqual this) && super.equals(that)
-    case _ => false
-  }
+  final def === (other: Type): Boolean = Type.identical(this, other)
   
   /**
    * States whether values of this type and values of the specified type are
@@ -55,8 +47,14 @@ trait Type extends Equals with Membered {
 }
 
 object Type {
+  def identical(t1: Type, t2: Type): Boolean = (t1, t2) match {
+    case (TypeError, _) => true
+    case (_, TypeError) => true
+    case (a, b) => a == b
+  }
+  
   def canHold(t1: Type, t2: Type): Boolean =
-    t1 == t2 || //a TypeError is equal to any type, so...
+    identical(t1, t2) || //a TypeError is identical to any type, so...
     (
       !t1.isInstanceOf[TypeName] &&
       !t2.isInstanceOf[TypeName] && {

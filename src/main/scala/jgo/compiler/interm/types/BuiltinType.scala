@@ -53,6 +53,6 @@ case object TypeError extends BuiltinRefType with Named {
   //Also, this totally breaks the transitivity of ==.
   //This is the conceptually correct behavior, actually!
   //Just don't go putting TypeErrors in a HashSet or something...
-  override def equals(other: Any): Boolean = other.isInstanceOf[Type]
+  //override def equals(other: Any): Boolean = other.isInstanceOf[Type]
   val name = "<error>"
 }

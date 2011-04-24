@@ -27,7 +27,7 @@ case class SliceArray(t: Type, bounds: SliceBounds) extends Instr
 case class SliceSlice(t: Type, bounds: SliceBounds) extends Instr
 case class Substring(bounds: SliceBounds)           extends Instr
 
-case class Unbox(t: PrimitiveType)
+case class Unbox(t: Type) extends Instr
 
 case class Cast(oldType: Type, newType: Type) extends Instr
 case class TypeAssert(t: Type)                extends Instr
@@ -90,23 +90,29 @@ case object MapPut                extends Instr
 case object ChanSend extends Instr
 case object ChanRecv extends Instr
 
-case class BranchTrue(target: Label)  extends Instr
-case class BranchFalse(target: Label) extends Instr
 
-case class BranchBoolEq(target: Label) extends Instr
-case class BranchBoolNe(target: Label) extends Instr
+sealed abstract class ControlFlow(name: String) extends Instr {
+  val target: Label
+  override def toString = name + ":  " + target
+}
 
-case class BranchObjEq(target: Label) extends Instr
-case class BranchObjNe(target: Label) extends Instr
+case class Lbl(l: Label) extends Instr { override def toString = "--" + l + "--" }
 
+case class Goto(target: Label) extends ControlFlow("goto")
 
-case class Goto(target: Label) extends Instr
-case class Lbl(l: Label)       extends Instr
+case class BranchTrue(target: Label)  extends ControlFlow("if true")
+case class BranchFalse(target: Label) extends ControlFlow("if false")
+
+case class BranchBoolEq(target: Label) extends ControlFlow("if == bool")
+case class BranchBoolNe(target: Label) extends ControlFlow("if != bool")
+
+case class BranchObjEq(target: Label) extends ControlFlow("if == obj")
+case class BranchObjNe(target: Label) extends ControlFlow("if != obj")
 
 case class Compare(t: Arith) extends Instr
-case class BranchEq(target: Label)  extends Instr
-case class BranchNe(target: Label)  extends Instr
-case class BranchLt(target: Label)  extends Instr
-case class BranchLeq(target: Label) extends Instr
-case class BranchGt(target: Label)  extends Instr
-case class BranchGeq(target: Label) extends Instr
+case class BranchEq(target: Label)  extends ControlFlow("if == num")
+case class BranchNe(target: Label)  extends ControlFlow("if != num")
+case class BranchLt(target: Label)  extends ControlFlow("if <")
+case class BranchLeq(target: Label) extends ControlFlow("if <=")
+case class BranchGt(target: Label)  extends ControlFlow("if >")
+case class BranchGeq(target: Label) extends ControlFlow("if >=")

@@ -45,8 +45,11 @@ sealed abstract class Code extends LinearSeqOptimized[Instr, Code] with Equals {
     if (isEmpty)
       return ""
     val sb = new StringBuilder("\n")
-    for (instr <- this)
+    for (instr <- this) {
+      if (instr.isInstanceOf[Lbl])
+        sb append "\n"
       sb append instr append "\n"
+    }
     sb.result
   }
 }

@@ -71,6 +71,18 @@ case object ExprError extends LvalExpr {
   override val addressable  = true
 }
 
+case class DummyExpr(typeOf: Type) extends Expr {
+  def eval = CodeBuilder()
+}
+
+case class DummyLval(typeOf: Type) extends LvalExpr {
+  def load                            = CodeBuilder()
+  def store(v: CodeBuilder)           = CodeBuilder()
+  def storePrefix(value: CodeBuilder) = CodeBuilder()
+  def storeSuffix: CodeBuilder        = CodeBuilder()
+  override val addressable  = true
+}
+
 case class SimpleExpr(eval: CodeBuilder, typeOf: Type) extends Expr
 
 case class IntConstExpr(value: BigInt, typeOf: IntegralType) extends Expr {

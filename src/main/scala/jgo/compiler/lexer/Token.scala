@@ -17,12 +17,11 @@ case class ErrorToken(msg: String) extends Token {
   override def toString = "* lexical error: " + msg
 }
 
-case class Keyword(chars: String) extends Token {
-  override def toString = "`" + chars + "'"
-}
+case class Keyword(chars: String) extends Token
 
 case class Identifier(name: String) extends Token {
   val chars = name
+  override def toString = "`" + chars + "'"
 }
 
 class IntLit private(val chars: String, val value: BigInt, val radix: Int) extends Token {

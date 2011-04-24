@@ -11,7 +11,7 @@ import bool._
 
 trait Expressions extends PrimaryExprs with ExprUtils {
   lazy val expression: PP[Expr] =                       "expression" $
-    orExpr  ^^ { e => println(e); e }
+    orExpr
   
   lazy val orExpr: PP[Expr] =                //"or-expression: prec 1" $
     ( orExpr ~ ("||" ~> andExpr)   ^^ or
@@ -53,10 +53,10 @@ trait Expressions extends PrimaryExprs with ExprUtils {
     )
   
   lazy val unaryExpr: PP[Expr] =          "unary expression: prec 6" $
-    (("+"  ~> unaryExpr) ^^ { ifNumeric(_) { (code, underlNumericT, actualT) => SimpleExpr(code, actualT) } }
-    | "-"  ~> unaryExpr  ^^ { ifNumeric(_) { (c, n, t) => SimpleExpr(c |+| Neg(n), t) } }
-    | "^"  ~> unaryExpr  ^^ { ifIntegral(_) { (c, i, t) => SimpleExpr(c |+| BitwiseNot(i), t) } }
-    | "!"  ~> unaryExpr  //^^# (Not(_))
+    (("+"  ~> unaryExpr) ^^ pos
+    | "-"  ~> unaryExpr  ^^ neg
+    | "^"  ~> unaryExpr  ^^ compl
+    | "!"  ~> unaryExpr  ^^ not
     | "<-" ~> unaryExpr  ^^ chanRecv
     | "&"  ~> unaryExpr  //^^# (AddrOf(_))
     | "*"  ~> unaryExpr  ^^ deref
@@ -119,9 +119,13 @@ trait Expressions extends PrimaryExprs with ExprUtils {
   
   private def pos(expr: Expr): Expr      = ifNumeric(expr)((_, _, _) => SimpleExpr(expr.eval, expr.t))
   private def neg(expr: Expr): Expr      = ifNumeric(expr)(simple(Neg(_)))
-  //private def not(expr: Expr): Expr      = ifNumeric(expr)(simple)
   private def compl(expr: Expr): Expr    = ifIntegral(expr)(simple(BitwiseNot(_)))
   //private def addrOf(expr: Expr): Expr   = ifNumeric(expr)(simple(Neg(_)))
   private def deref(expr: Expr): Expr    = PtrLval(ifPtr(expr)(simple(Deref)))
-  private def chanRecv(expr: Expr): Expr = ifChan(expr)(simple(Deref))
+  private def chanRecv(expr: Expr): Expr = ifChan(expr)(simple(ChanRecv))
+  
+  private def not(expr: Expr): Expr = expr match {
+    case b: BoolExpr => Not(b)
+    case _ => badExpr("operand of ! has type %s; must be of boolean type", expr.t)
+  }
 }
