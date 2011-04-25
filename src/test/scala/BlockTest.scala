@@ -70,8 +70,26 @@ object BlockTest {
     test("""
 {
   var x, y int //literals not yet supported in the grammar
-  b := x < y && x > y || x == y || x != y
-  b2 := !!!!!!!!b
+  b0 := x < y
+  
+  b1 := x < y && x < y
+  b2 := x < y || x < y
+  
+  ba := x < y && x < y && x < y
+  bb := x < y || x < y || x < y
+  
+  b3 := (x < y && x < y) || x < y
+  b4 := (x < y || x < y) && x < y
+  
+  b5 := x < y && (x < y || x < y)
+  b6 := x < y || (x < y && x < y)
+  
+  b7 := (x < y || x < y) && (x < y || x < y)
+  b8 := (x < y && x < y) || (x < y && x < y)
+  
+  b := x < y && x > y || x == y || x != y && !(x == y)
+  
+  //b2 := !!!!!!!!b
 }""")
     test("""
 {
@@ -125,7 +143,7 @@ object BlockTest {
       println()
       println()
       
-      val bl = new BlockLang(sc) with TracePrintingParsers
+      val bl = new BlockLang(sc) //with TracePrintingParsers
       if (bl.hasErrs) {
         println("compilation errors:")
         bl.errors foreach { err => println(err.longString) }
