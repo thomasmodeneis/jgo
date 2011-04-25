@@ -10,7 +10,9 @@ import coll.{mutable => mut}
 import coll.{generic => gen}
 
 object CodeBuilder {
-  val empty = new CodeBuilder
+  def empty =
+    new CodeBuilder
+  
   def apply(elems: Instr*): CodeBuilder = {
     val cb = new CodeBuilder
     for (elem <- elems)
@@ -96,9 +98,8 @@ class CodeBuilder extends mut.Builder[Instr, Code] with Expendable {
       case lst: (:::) =>
         lst.tl = other.first
         last   = other.last
-        other.expend()
+        other.expend()   //no longer safe for other to be used
         this
-      case x => println(x); this
     }
   }
   
