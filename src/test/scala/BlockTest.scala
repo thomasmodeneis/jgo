@@ -125,7 +125,7 @@ object BlockTest {
       println()
       println()
       
-      val bl = new BlockLang(sc) //with TracePrintingParsers
+      val bl = new BlockLang(sc) with TracePrintingParsers
       if (bl.hasErrs) {
         println("compilation errors:")
         bl.errors foreach { err => println(err.longString) }
