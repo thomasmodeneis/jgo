@@ -3,6 +3,17 @@ package interm
 
 import java.lang.Integer.toHexString
 
-class Label(val tag: String) {
-  override def toString = tag + " " + toHexString(hashCode & 0xffff)
+object LabelGroup {
+  private var curId: Long = 1
+  
+  object User extends LabelGroup(0)
+}
+
+class LabelGroup private(val id: Long){
+  def this() = { this(LabelGroup.curId); LabelGroup.curId += 1 }
+}
+
+class Label(val tag: String, val group: LabelGroup) {
+  def this(tag: String) = this(tag, new LabelGroup)
+  override def toString = group.id + " " + tag + " " + group.id
 }
