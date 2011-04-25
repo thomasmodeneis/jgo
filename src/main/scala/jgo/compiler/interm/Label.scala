@@ -15,5 +15,5 @@ class LabelGroup private(val id: Long){
 
 class Label(val tag: String, val group: LabelGroup) {
   def this(tag: String) = this(tag, new LabelGroup)
-  override def toString = group.id + " " + tag + " " + group.id
+  override def toString = tag + " " + group.id
 }

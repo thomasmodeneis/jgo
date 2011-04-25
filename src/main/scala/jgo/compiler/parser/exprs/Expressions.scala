@@ -79,7 +79,7 @@ trait Expressions extends PrimaryExprs with ExprUtils {
   private def compEq(e1: Expr, e2: Expr): Expr = ifSame(e1, e2) {
     e1.t.underlying match {
       case _: NumericType => NumEquals(e1, e2)
-      case Bool           => BoolEquals(e1, e2)
+      case BoolType       => BoolEquals(e1, e2)
       case _              => ObjEquals(e1, e2)
     }
   }
@@ -87,7 +87,7 @@ trait Expressions extends PrimaryExprs with ExprUtils {
   private def compNe(e1: Expr, e2: Expr): Expr = ifSame(e1, e2) {
     e1.t.underlying match {
       case _: NumericType => NumNotEquals(e1, e2)
-      case Bool           => BoolNotEquals(e1, e2)
+      case BoolType       => BoolNotEquals(e1, e2)
       case _              => ObjNotEquals(e1, e2)
     }
   }

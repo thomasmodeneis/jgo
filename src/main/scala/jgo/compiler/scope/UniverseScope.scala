@@ -13,10 +13,10 @@ object UniverseScope extends MapScope {
   
   protected val bindings = Map[String, Symbol] (
     "string"     -> StringType,
-    "bool"       -> Bool,
+    "bool"       -> BoolType,
     "byte"       -> Uint8,
-    "int"        -> Int32,
-    "uint"       -> Uint32,
+    "int"        -> new TypeName("int", Int32),
+    "uint"       -> new TypeName("uint", Uint32),
     
     "uint8"      -> Uint8,
     "uint16"     -> Uint16,

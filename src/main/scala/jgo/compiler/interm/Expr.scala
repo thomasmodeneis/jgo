@@ -100,7 +100,7 @@ case class FuncExpr(f: Function) extends Expr {
 }
 
 case class BoolExpr(tree: BoolTree) extends Expr {
-  val typeOf            = Bool
+  val typeOf            = BoolType
   override def callable = false
   def eval = tree.evalAsBool
   

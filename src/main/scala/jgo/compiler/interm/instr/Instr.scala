@@ -91,15 +91,16 @@ case object ChanSend extends Instr
 case object ChanRecv extends Instr
 
 
-sealed abstract class ControlFlow(name: String) extends Instr {
-  val target: Label
-  override def toString = name + ":  " + target
-}
-
 case class Lbl(l: Label) extends Instr { override def toString = "--" + l + "--" }
 
-case class Goto(target: Label) extends ControlFlow("goto")
+sealed abstract class ControlFlow(name: String) extends Instr {
+  val target: Label
+  override def toString = name + ":  [" + target + "]"
+}
+case class Goto(target: Label)                     extends ControlFlow("goto")
+case class Branch(test: BranchTest, target: Label) extends ControlFlow(test + " branch")
 
+/*
 case class BranchTrue(target: Label)  extends ControlFlow("if true")
 case class BranchFalse(target: Label) extends ControlFlow("if false")
 
@@ -109,6 +110,7 @@ case class BranchBoolNe(target: Label) extends ControlFlow("if != bool")
 case class BranchObjEq(target: Label) extends ControlFlow("if == obj")
 case class BranchObjNe(target: Label) extends ControlFlow("if != obj")
 
+@deprecated
 case class Compare(t: Arith) extends Instr
 case class BranchEq(target: Label)  extends ControlFlow("if == num")
 case class BranchNe(target: Label)  extends ControlFlow("if != num")
@@ -116,3 +118,4 @@ case class BranchLt(target: Label)  extends ControlFlow("if <")
 case class BranchLeq(target: Label) extends ControlFlow("if <=")
 case class BranchGt(target: Label)  extends ControlFlow("if >")
 case class BranchGeq(target: Label) extends ControlFlow("if >=")
+*/

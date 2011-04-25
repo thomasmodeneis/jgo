@@ -13,7 +13,7 @@ sealed trait NumericType  extends PrimitiveType with AddableType
 sealed trait IntegralType extends NumericType
 sealed trait UnsignedType extends IntegralType
 
-case object Bool extends PrimitiveType  { val name = "bool" }
+case object BoolType extends PrimitiveType  { val name = "bool" }
 
 case object Uint8  extends UnsignedType { val name = "uint8" }
 case object Uint16 extends UnsignedType { val name = "uint16" }

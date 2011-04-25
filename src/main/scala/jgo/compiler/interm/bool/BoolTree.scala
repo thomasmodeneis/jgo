@@ -15,9 +15,11 @@ object BoolTree {
 
 sealed abstract class BoolTree {
   def evalAsBool: CodeBuilder = {
-    val end = new Label("end pushBool")
-    val t   = new Label("push true")
-    val f   = new Label("push false")
+    val g = new LabelGroup
+    
+    val end = new Label("end eval as bool", g)
+    val t   = new Label("push true", g)
+    val f   = new Label("push false", g)
     
     code(t, f) |+|
     Lbl(f) |+| BoolConst(false) |+| Goto(end) |+|
@@ -26,27 +28,31 @@ sealed abstract class BoolTree {
   }
   
   def branchTo(lbl: Label): CodeBuilder = {
-    val end = new Label("end branchTo")
+    val g   = new LabelGroup
+    val end = new Label("end branchTo", g)
     code(lbl, end)
   }
   
   def mkIf(ifBranch: CodeBuilder): CodeBuilder = {
-    val end = new Label("end if")
-    val t   = new Label("if branch")
+    val g   = new LabelGroup
+    val end = new Label("end if", g)
+    val t   = new Label("if branch", g)
     code(t, end) |+| Lbl(t) |+| ifBranch |+| Lbl(end)
   }
   
   def mkIfElse(ifBranch: CodeBuilder, elseBranch: CodeBuilder): CodeBuilder = {
-    val end = new Label("end if-else")
-    val t   = new Label("if branch")
-    val f   = new Label("else branch")
+    val g   = new LabelGroup
+    val end = new Label("end if-else", g)
+    val t   = new Label("if branch", g)
+    val f   = new Label("else branch", g)
     code(t, f) |+| Lbl(f) |+| elseBranch |+| Goto(end) |+| Lbl(t) |+| ifBranch |+| Lbl(end)
   }
   
   def mkWhile(loopBody: CodeBuilder): CodeBuilder = {
-    val end  = new Label("end of loop")
-    val top  = new Label("top of loop")
-    val cond = new Label("condition of loop")
+    val g    = new LabelGroup
+    val end  = new Label("end of loop", g)
+    val top  = new Label("top of loop", g)
+    val cond = new Label("cond of loop", g)
     Goto(cond) |+|
     Lbl(top)   |+| loopBody |+|
     Lbl(cond)  |+| code(top, end) |+|

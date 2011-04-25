@@ -4,9 +4,13 @@ package instr
 
 sealed abstract class StackType
 
-case object Ref extends StackType
+case object Obj  extends StackType
 
-sealed abstract class Arith    extends StackType
+sealed abstract class Prim extends StackType
+
+case object Bool extends Prim
+
+sealed abstract class Arith    extends Prim
 sealed abstract class Floating extends Arith
 sealed abstract class Integral extends Arith
 sealed abstract class Unsigned extends Integral
