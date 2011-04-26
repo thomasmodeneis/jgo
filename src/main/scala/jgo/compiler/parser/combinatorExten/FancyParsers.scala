@@ -1,7 +1,7 @@
 package jgo.compiler.parser.combinatorExten
 
 import scala.util.parsing.combinator._
-import scala.util.parsing.input.Positional
+import scala.util.parsing.input.{Position, Positional}
 
 trait FancyParsers extends Parsers with ImplicitConversions {
   /*
@@ -27,7 +27,12 @@ trait FancyParsers extends Parsers with ImplicitConversions {
   implicit def parser2Fancy[T](p: Parser[T]): FancyParserOps[T]      = new FancyParserOps(p)
 //  implicit def string2parser(str: String):    Parser[String]        
   
+  def pos(p: Parser[_]): Parser[Position] = Parser {
+    in =>
+    p(in) map { _ => in.pos }
+  }
   
+  //We override nameize in TracePrintingParsers.
   protected def nameize[T](p: Parser[T], name: String): Parser[T] = p named name
   final class ParserName(val name: String) {
     def $ [T] (p: Parser[T]): Parser[T] = nameize(p, name)
