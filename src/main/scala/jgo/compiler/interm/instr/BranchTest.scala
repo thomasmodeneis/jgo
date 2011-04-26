@@ -19,44 +19,42 @@ sealed abstract class BranchTest {
    */
   val t: StackType
   
-  protected def strPrefix: String
-  protected def strBody:   String
+  protected[instr] def prefix: String
+  protected[instr] def name:   String
   
-  final override val toString = strPrefix + " " + strBody
+  final override val toString = prefix + " " + name + " " + t
 }
 
 case class IfNot(cond: SimpleTest) extends BranchTest {
-  protected def strPrefix = "ifNot"
-  protected def strBody   = cond.strBody
+  protected[instr] def prefix = "ifNot"
+  protected[instr] def name   = cond.name
   
   val arity = cond.arity
   val t     = cond.t
 }
 
-sealed abstract class SimpleTest private[instr] (val arity: Int, body: String) extends BranchTest {
-  protected[instr] def strPrefix = "if"
-  protected[instr] def strBody   = body + " " + t
+sealed abstract class SimpleTest(val arity: Int) extends BranchTest {
+  protected[instr] def prefix = "if"
 }
-
-private[instr] sealed abstract class EasyTest(val t: StackType, a: Int, b: String) extends SimpleTest(a, b)
-
-case object IsTrue  extends EasyTest(Bool, 1, "true")
-case object IsFalse extends EasyTest(Bool, 1, "true")
-
-case object BoolEq extends EasyTest(Bool, 2, "==")
-case object BoolNe extends EasyTest(Bool, 2, "!=")
-
-case object ObjEq extends EasyTest(Obj, 2, "==")
-case object ObjNe extends EasyTest(Obj, 2, "!=")
+sealed abstract class Comparison extends SimpleTest(2)
+sealed abstract class Check      extends SimpleTest(1)
 
 
-private[instr] sealed abstract class ArithTest(body: String) extends SimpleTest(2, body)
+case object IsTrue  extends Check { val t = Bool; def name = "is true"  }
+case object IsFalse extends Check { val t = Bool; def name = "is false" }
 
-case class NumEq(t: Arith)  extends ArithTest("==")
-case class NumNe(t: Arith)  extends ArithTest("!=")
-case class NumLt(t: Arith)  extends ArithTest(">")
-case class NumLeq(t: Arith) extends ArithTest("<=")
-case class NumGt(t: Arith)  extends ArithTest(">")
-case class NumGeq(t: Arith) extends ArithTest(">=")
+case object BoolEq extends Comparison { val t = Bool; def name = "==" }
+case object BoolNe extends Comparison { val t = Bool; def name = "!=" }
+
+case object ObjEq extends Comparison { val t = Obj; def name = "==" }
+case object ObjNe extends Comparison { val t = Obj; def name = "!=" }
+
+
+case class NumEq(t: Arith)  extends Comparison { def name = "==" }
+case class NumNe(t: Arith)  extends Comparison { def name = "!=" }
+case class NumLt(t: Arith)  extends Comparison { def name = "<"  }
+case class NumLeq(t: Arith) extends Comparison { def name = "<=" }
+case class NumGt(t: Arith)  extends Comparison { def name = ">"  }
+case class NumGeq(t: Arith) extends Comparison { def name = ">=" }
 
 

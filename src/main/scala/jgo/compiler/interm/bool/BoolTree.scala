@@ -8,6 +8,19 @@ import codeseq._
 
 import TypeConversions._
 
+private sealed abstract class CodeParam
+private sealed abstract class ProperParam { def code: CodeBuilder }
+private case class  Push(b: Boolean, end: Label) extends CodeParam
+private case class  Jump(target: Label)          extends CodeParam
+private case object Fall                         extends CodeParam
+
+private object ProperParam {
+  def unapply(p: CodeParam): Option[CodeBuilder] = p match {
+    case proper: ProperParam => Some(proper.code)
+    case _ => None
+  }
+}
+
 object BoolTree {
   implicit def toExpr(tree: BoolTree): Expr     = BoolExpr(tree)
   implicit def toTree(expr: BoolExpr): BoolTree = expr.tree
@@ -88,34 +101,32 @@ case class Or(b1: BoolTree, b2: BoolTree) extends BoolTree {
   }
 }
 
-private[bool] sealed abstract class Comparison(branch: Label => Instr) extends BoolTree with Typed {
-  val e1, e2: Expr
-  require(e1.t == e2.t)
-  val typeOf = e1.t
-  protected[bool] def comp = e1.eval |+| e2.eval
+private[bool] sealed abstract class CompTree extends BoolTree {
+  protected val e1, e2: Expr
+  protected val comp: Comparison
+  
+  protected[bool] def cat = e1.eval |+| e2.eval
   
   protected[bool] def code(trueBr: Label, falseBr: Label): CodeBuilder =
-    comp |+| branch(trueBr) |+| Goto(falseBr)
+    cat |+| Branch(comp, trueBr) |+| Goto(falseBr)
 }
 
-case class ObjEquals(e1: Expr, e2: Expr)    extends Comparison(BranchObjEq)
-case class ObjNotEquals(e1: Expr, e2: Expr) extends Comparison(BranchObjNe)
+case class ObjEquals(e1: Expr, e2: Expr)    extends CompTree { val comp = ObjEq }
+case class ObjNotEquals(e1: Expr, e2: Expr) extends CompTree { val comp = ObjNe }
 
-case class BoolEquals(e1: Expr, e2: Expr)    extends Comparison(BranchBoolEq)
-case class BoolNotEquals(e1: Expr, e2: Expr) extends Comparison(BranchBoolNe)
+case class BoolEquals(e1: Expr, e2: Expr)    extends CompTree { val comp = BoolEq }
+case class BoolNotEquals(e1: Expr, e2: Expr) extends CompTree { val comp = BoolNe }
 
 
-private[bool] sealed abstract class NumericComparison(branch: Label => Instr) extends Comparison(branch) {
-  require(isOfType[NumericType])
-  val numerT: NumericType     = t.underlying.asInstanceOf[NumericType]
-  override protected[bool] def comp = e1.eval |+| e2.eval |+| Compare(numerT)
+private[bool] sealed abstract class ArithCompTree(cmp: Arith => Comparison) extends CompTree {
+  private val arith: Arith = e1.t.underlying.asInstanceOf[NumericType] //make better upon restruct of Expr
+  protected val comp = cmp(arith)
 }
 
-case class NumEquals(e1: Expr, e2: Expr)     extends NumericComparison(BranchEq)
-case class NumNotEquals(e1: Expr, e2: Expr)  extends NumericComparison(BranchNe)
-
-case class LessThan(e1: Expr, e2: Expr)      extends NumericComparison(BranchLt)
-case class GreaterThan(e1: Expr, e2: Expr)   extends NumericComparison(BranchGt)
-case class LessEquals(e1: Expr, e2: Expr)    extends NumericComparison(BranchLeq)
-case class GreaterEquals(e1: Expr, e2: Expr) extends NumericComparison(BranchGeq)
+case class NumEquals(e1: Expr, e2: Expr)     extends ArithCompTree(NumEq)
+case class NumNotEquals(e1: Expr, e2: Expr)  extends ArithCompTree(NumNe)
+case class LessThan(e1: Expr, e2: Expr)      extends ArithCompTree(NumLt)
+case class GreaterThan(e1: Expr, e2: Expr)   extends ArithCompTree(NumGt)
+case class LessEquals(e1: Expr, e2: Expr)    extends ArithCompTree(NumLeq)
+case class GreaterEquals(e1: Expr, e2: Expr) extends ArithCompTree(NumGeq)
 
