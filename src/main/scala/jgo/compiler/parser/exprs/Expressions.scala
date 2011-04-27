@@ -105,23 +105,23 @@ trait Expressions extends PrimaryExprs with ExprUtils {
       case _ OfType (t: NumericType) => SimpleExpr(e1.eval |+| e2.eval |+| Add(t), e1.t)
       case _ => badExpr("operand type %s not numeric or string type", e1.t)
     }
-  //Get ready for procedural abstraction, functional programming style!
-  private def minus(e1: Expr, e2: Expr): Expr     = ifSameNumeric(e1, e2)(encat(simple(Sub(_))))
-  private def times(e1: Expr, e2: Expr): Expr     = ifSameNumeric(e1, e2)(encat(simple(Mul(_))))
-  private def div(e1: Expr, e2: Expr): Expr       = ifSameNumeric(e1, e2)(encat(simple(Div(_))))
-  private def mod(e1: Expr, e2: Expr): Expr       = ifSameIntegral(e1, e2)(encat(simple(Mod(_))))
-  private def bitAnd(e1: Expr, e2: Expr): Expr    = ifSameIntegral(e1, e2)(encat(simple(BitwiseAnd(_))))
+  //Get ready for procedural abstraction, functional programming style!  //Eh.
+  private def minus(e1: Expr, e2: Expr):     Expr = ifSameNumeric(e1, e2)(encat(simple(Sub(_))))
+  private def times(e1: Expr, e2: Expr):     Expr = ifSameNumeric(e1, e2)(encat(simple(Mul(_))))
+  private def div(e1: Expr, e2: Expr):       Expr = ifSameNumeric(e1, e2)(encat(simple(Div(_))))
+  private def mod(e1: Expr, e2: Expr):       Expr = ifSameIntegral(e1, e2)(encat(simple(Mod(_))))
+  private def bitAnd(e1: Expr, e2: Expr):    Expr = ifSameIntegral(e1, e2)(encat(simple(BitwiseAnd(_))))
   private def bitAndNot(e1: Expr, e2: Expr): Expr = ifSameIntegral(e1, e2)(encat(simple(BitwiseAndNot(_))))
-  private def bitOr(e1: Expr, e2: Expr): Expr     = ifSameIntegral(e1, e2)(encat(simple(BitwiseOr(_))))
-  private def bitXor(e1: Expr, e2: Expr): Expr    = ifSameIntegral(e1, e2)(encat(simple(BitwiseXor(_))))
-  private def shiftl(e1: Expr, e2: Expr): Expr    = ifValidShift(e1, e2)(encat(simple(ShiftL(_, _))))
-  private def shiftr(e1: Expr, e2: Expr): Expr    = ifValidShift(e1, e2)(encat(simple(ShiftR(_, _))))
+  private def bitOr(e1: Expr, e2: Expr):     Expr = ifSameIntegral(e1, e2)(encat(simple(BitwiseOr(_))))
+  private def bitXor(e1: Expr, e2: Expr):    Expr = ifSameIntegral(e1, e2)(encat(simple(BitwiseXor(_))))
+  private def shiftl(e1: Expr, e2: Expr):    Expr = ifValidShift(e1, e2)(encat(simple(ShiftL(_, _))))
+  private def shiftr(e1: Expr, e2: Expr):    Expr = ifValidShift(e1, e2)(encat(simple(ShiftR(_, _))))
   
-  private def pos(expr: Expr): Expr      = ifNumeric(expr)((_, _, _) => SimpleExpr(expr.eval, expr.t))
-  private def neg(expr: Expr): Expr      = ifNumeric(expr)(simple(Neg(_)))
-  private def compl(expr: Expr): Expr    = ifIntegral(expr)(simple(BitwiseNot(_)))
-  //private def addrOf(expr: Expr): Expr   = ifNumeric(expr)(simple(Neg(_)))
-  private def deref(expr: Expr): Expr    = PtrLval(ifPtr(expr)(simple(Deref)))
+  private def pos(expr: Expr):   Expr  = ifNumeric(expr)((_, _, _) => SimpleExpr(expr.eval, expr.t))
+  private def neg(expr: Expr):   Expr  = ifNumeric(expr)(simple(Neg(_)))
+  private def compl(expr: Expr): Expr  = ifIntegral(expr)(simple(BitwiseNot(_)))
+//private def addrOf(expr: Expr): Expr = ifNumeric(expr)(simple(Neg(_)))
+  private def deref(expr: Expr): Expr  = PtrLval(ifPtr(expr)(simple(Deref)))
   
   private def chanRecv(expr: Expr): Expr = expr match {
     case HasType(RecvChanType(t)) => SimpleExpr(expr.eval |+| ChanRecv, t)
