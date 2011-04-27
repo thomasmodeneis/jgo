@@ -122,7 +122,11 @@ trait Expressions extends PrimaryExprs with ExprUtils {
   private def compl(expr: Expr): Expr    = ifIntegral(expr)(simple(BitwiseNot(_)))
   //private def addrOf(expr: Expr): Expr   = ifNumeric(expr)(simple(Neg(_)))
   private def deref(expr: Expr): Expr    = PtrLval(ifPtr(expr)(simple(Deref)))
-  private def chanRecv(expr: Expr): Expr = ifChan(expr)(simple(ChanRecv))
+  
+  private def chanRecv(expr: Expr): Expr = expr match {
+    case HasType(RecvChanType(t)) => SimpleExpr(expr.eval |+| ChanRecv, t)
+    case HasType(t) => badExpr("operand of channel receive has type %s, which is not a receiving channel type", t)
+  }
   
   private def not(expr: Expr): Expr = expr match {
     case b: BoolExpr => Not(b)

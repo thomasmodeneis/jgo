@@ -105,13 +105,13 @@ trait SimpleStmts extends Expressions with Symbols with GrowablyScoped with Stmt
   }
   
   private def send(e1: Expr, e2: Expr): CodeBuilder = e1 match {
-    case HasType(ChanType(t, true, _)) =>
+    case HasType(SendChanType(t)) =>
       if (t <<= e2.t)
         e1.eval |+| e2.eval |+| ChanSend
       else
         badStmt("right operand of <- has type %s not assignable to left operand's element type %s", e2.t, t)
     case HasType(t) =>
-      badStmt("left operand of <- has type %s, which is not a receiving channel type", t)
+      badStmt("left operand of <- has type %s; must be a channel that can send", t)
   }
   
   private def incr(e: Expr): CodeBuilder = e match {
