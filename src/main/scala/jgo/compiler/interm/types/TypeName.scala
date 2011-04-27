@@ -10,6 +10,5 @@ class TypeName(val name: String, override val underlying: Type) extends Type wit
   val semantics        = underlying.semantics
   override val nilable = underlying.nilable
   
-  def canEqual(that: Any): Boolean =
-    that.isInstanceOf[TypeName]
+  override def toString = name
 }

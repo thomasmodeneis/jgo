@@ -15,8 +15,8 @@ object UniverseScope extends MapScope {
     "string"     -> StringType,
     "bool"       -> BoolType,
     "byte"       -> Uint8,
-    "int"        -> new TypeName("int", Int32),
-    "uint"       -> new TypeName("uint", Uint32),
+    "int"        -> IntType,
+    "uint"       -> UintType,
     
     "uint8"      -> Uint8,
     "uint16"     -> Uint16,

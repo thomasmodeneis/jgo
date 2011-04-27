@@ -118,7 +118,7 @@ trait TypeSyntax extends Symbols with TypeUtils {
   }
   
   private def chan(recv: Boolean, send: Boolean)(elemT: Type) =
-    ChanType(elemT, canReceive = recv, canSend = send)
+    ChanType(elemT, canRecv = recv, canSend = send)
   
   
   private def struct(decls: List[List[FieldDesc]]) = {
