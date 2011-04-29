@@ -37,8 +37,8 @@ sealed abstract class Messaged[+T] {
    * }}}
    * I'll get rid of this abomination as soon as I find a cleaner way of accomplishing that.
    */
-  final def map[M, T2](f: T => M)(implicit ev: M <:< Messaged[T2]): Messaged[T2] =
-    flatMap(ev compose f)
+  //final def map[M, T2](f: T => M)(implicit ev: M <:< Messaged[T2]): Messaged[T2] =
+    //flatMap(ev compose f)
   
   private[message] val e: List[ErrorMsg]
   private[message] val w: List[WarningMsg]
