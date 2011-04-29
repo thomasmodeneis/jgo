@@ -22,6 +22,8 @@ sealed abstract class Messaged[+T] {
   def map     [T2] (f: T => T2):           Messaged[T2]
   def flatMap [T2] (f: T => Messaged[T2]): Messaged[T2]
   
+  def filter(p: T => Boolean): Messaged[T]
+  
   /**
    * Performs a monadic bind, just like flatMap, not a functoric (?) map. 
    * Never use this function directly, lest you (and I) look like a moron.
@@ -69,6 +71,12 @@ extends Messaged[T] {
   def map    [T2](f: T => T2)           = new Result(f(result), w, n)
   def flatMap[T2](f: T => Messaged[T2]) = f(result).wnAppendedTo(w, n)
   
+  def filter(p: T => Boolean) =
+    if (p(result))
+      this
+    else
+      new Problem(Nil, w, n)
+  
   private[message] val e = Nil
   private[message] def wnAppendedTo(w0: List[WarningMsg], n0: List[NoteMsg]) =
     new Result(result, w ::: w0, n ::: n0)
@@ -96,6 +104,8 @@ extends Messaged[Nothing] {
   
   def map    [T2](f: Nothing => T2)           = this
   def flatMap[T2](f: Nothing => Messaged[T2]) = this
+  
+  def filter(p: Nothing => Boolean) = this
   
   private[message] def wnAppendedTo(w0: List[WarningMsg], n0: List[NoteMsg]) =
     new Problem(e, w ::: w0, n ::: n0)
