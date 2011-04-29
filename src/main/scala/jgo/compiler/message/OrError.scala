@@ -1,6 +1,4 @@
 package jgo.compiler
-package parser
-package combinatorExten
 package message
 
 import scala.util.parsing.input.{Position, Positional}

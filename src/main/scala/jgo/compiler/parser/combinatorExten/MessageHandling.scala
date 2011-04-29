@@ -2,9 +2,9 @@ package jgo.compiler
 package parser
 package combinatorExten
 
-import interm._
-import util._
-import message._
+import jgo.compiler.interm._
+import jgo.compiler.message._
+import jgo.compiler.util._
 
 import scala.collection.mutable.ListBuffer
 import scala.util.parsing.combinator.Parsers

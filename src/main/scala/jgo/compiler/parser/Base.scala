@@ -21,6 +21,8 @@ trait Base extends Tokens with PackratParsers with FancyParsers with MessageHand
   
   implicit def string2Fancy(str: String) = new FancyParserOps(str)
   
+  implicit def universalConv[A, B](p: Parser[A])(implicit ev: A => B): Parser[B] =
+    p map ev
   
   lazy val identList: P[List[String]] =  "identifier list" $
     rep1sep(ident, ",")

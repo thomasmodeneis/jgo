@@ -1,11 +1,7 @@
 package jgo.compiler
-package parser
-package combinatorExten
 package message
 
 import scala.util.parsing.input.{Position, Positional}
-
-sealed abstract trait PerhapsWithMsg[T]
 
 sealed abstract class Message(prefix: String) extends Positional {
   val msg: String
