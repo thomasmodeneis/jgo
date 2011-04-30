@@ -4,7 +4,7 @@ package interm
 import instr._
 import instr.TypeConversions._
 import types._
-import symbols._
+import symbol._
 import codeseq._
 import member._
 import bool._

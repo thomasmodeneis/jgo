@@ -9,7 +9,7 @@ import codeseq._
 import instr._
 import instr.TypeConversions._
 import types._
-import symbols._
+import symbol._
 
 trait SimpleStmts extends Expressions with Symbols with GrowablyScoped with StmtUtils {
   lazy val simpleStmt: P[CodeBuilder] =                           "simple statement" $ //was PP; not sure why

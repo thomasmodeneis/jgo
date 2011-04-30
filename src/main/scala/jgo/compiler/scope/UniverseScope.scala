@@ -3,7 +3,7 @@ package scope
 
 import interm._
 import interm.types._
-import interm.symbols._
+import interm.symbol._
 
 object UniverseScope extends MapScope {
   private implicit def t(p: (String, Type)): (String, TypeSymbol) =

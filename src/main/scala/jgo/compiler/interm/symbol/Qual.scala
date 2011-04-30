@@ -1,6 +1,6 @@
 /*package jgo.compiler
 package interm
-package symbols
+package symbol
 
 case class Qual [+S <: Symbol] (pkg: Package, sym: S) extends Symbol
 

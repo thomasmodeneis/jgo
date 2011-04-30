@@ -2,7 +2,7 @@ package jgo.compiler
 package interm
 package instr
 
-import symbols._
+import symbol._
 import types._
 import member._
 

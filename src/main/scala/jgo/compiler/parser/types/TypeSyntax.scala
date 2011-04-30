@@ -5,7 +5,7 @@ import parser.scoped._
 
 import interm._
 import types._
-import symbols._
+import symbol._
 
 trait TypeSyntax extends Symbols with TypeUtils {
   lazy val goType: P[Type] =                                                                "type" $
@@ -40,7 +40,7 @@ trait TypeSyntax extends Symbols with TypeUtils {
   lazy val structType: P[StructType] =                                               "struct type" $
     "struct" ~>! "{" ~> repWithSemi(structFieldDecl) <~ "}"  ^^ struct
   
-  lazy val structFieldDecl: P[List[FieldDesc]] =                               "struct field decl" $
+  private lazy val structFieldDecl: P[List[FieldDesc]] =                       "struct field decl" $
     ( identList ~ goType ~ stringLit.?  ^^ regularFieldDecl
     | "*" ~> typeSymbol  ~ stringLit.?  ^^ embeddedFieldDecl(true)
     |        typeSymbol  ~ stringLit.?  ^^ embeddedFieldDecl(false)
@@ -54,19 +54,19 @@ trait TypeSyntax extends Symbols with TypeUtils {
   lazy val functionType: P[FuncType] =                                             "function type" $
     "func" ~>! funcTypeParams ~ funcTypeResult.?  ^^ func
   
-  lazy val funcTypeParams: P[(List[Type], Boolean)] =                   "function-type parameters" $
+  private lazy val funcTypeParams: P[(List[Type], Boolean)] =           "function-type parameters" $
     "(" ~> repsep(funcTypeParamDecl, ",") <~ ")"  ^^ funcParams
   
   //This needs to be improved, and made more succinct.  Also, account for the fact that
   //"either all of the parameter names are present in a param list, or all are absent"
-  lazy val funcTypeParamDecl: P[(List[Type], Boolean)] =       "function parameter(s) declaration" $
+  private lazy val funcTypeParamDecl: P[(List[Type], Boolean)] =  "function parameter declaration" $
     ((identList <~ "...") ~ goType  ^^ funcParamIdentDecl(true)
     | identList ~ goType            ^^ funcParamIdentDecl(false)
     | "..." ~> goType               ^^ funcParamTypeDecl(true)
     | goType                        ^^ funcParamTypeDecl(false)
     )
   
-  lazy val funcTypeResult: P[List[Type]] =                                  "function-type result" $
+  private lazy val funcTypeResult: P[List[Type]] =                          "function-type result" $
     ( goType                                         ^^ enlist
     | "(" ~> repsep(funcTypeResultDecl, ",") <~ ")"  ^^ flatten
     )

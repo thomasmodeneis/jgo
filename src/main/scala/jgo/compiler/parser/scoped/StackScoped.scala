@@ -7,7 +7,7 @@ import scope._
 import interm._
 import codeseq._
 import instr.Undecl
-import symbols.LocalVar
+import symbol.LocalVar
 
 trait StackScoped extends GrowablyScoped {
   self: Base =>

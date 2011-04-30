@@ -1,7 +1,7 @@
 package jgo.compiler
 package scope
 
-import interm.symbols._
+import interm.symbol._
 
 import scala.{collection => coll}
 import scala.collection.{immutable => imm, mutable => mut, generic => gen}

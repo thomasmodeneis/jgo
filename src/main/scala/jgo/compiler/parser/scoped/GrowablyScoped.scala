@@ -4,7 +4,7 @@ package scoped
 
 import scope._
 import interm._
-import symbols._
+import symbol._
 
 trait GrowablyScoped extends Scoped {
   self: Base =>

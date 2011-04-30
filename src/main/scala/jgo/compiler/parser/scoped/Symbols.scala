@@ -3,7 +3,7 @@ package parser
 package scoped
 
 import scope._
-import interm.symbols._
+import interm.symbol._
 import interm.types._
 
 trait Symbols extends Base with Scoped {

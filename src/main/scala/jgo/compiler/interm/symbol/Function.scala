@@ -1,6 +1,6 @@
 package jgo.compiler
 package interm
-package symbols
+package symbol
 
 import types._
 
