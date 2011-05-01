@@ -29,17 +29,19 @@ private case class VarLval(v: Variable) extends LvalExpr {
   def storeSuffix                  =        StoreVar(v)
   
   override def addressable = true
+  override def mkPtr = MkPtrVar(v)
 }
 
-private case class PtrLval(ptr: Expr) extends LvalExpr {
+private case class PtrDerefLval(ptr: Expr) extends LvalExpr {
   val typeOf = ptr.t.underlying.asInstanceOf[PointerType].elemType
   
-  def load                        = ptr.eval       |+| Deref  //this needs to be fleshed out, so to speak, substantially
-  def store(v: CodeBuilder)       = ptr.eval |+| v |+| PutRef //yeah; codegen is going to need more info than this
+  def load                        = ptr.eval       |+| PtrGet(t)
+  def store(v: CodeBuilder)       = ptr.eval |+| v |+| PtrPut(t)
   def storePrefix(v: CodeBuilder) = ptr.eval |+| v
-  def storeSuffix                 =                    PutRef
+  def storeSuffix                 =                    PtrPut(t)
   
   override def addressable = true
+  override def mkPtr = ptr.eval |+| MkPtrPtr(t)
 }
 
 private case class FieldLval(obj: Expr, f: Field) extends LvalExpr {
@@ -51,6 +53,7 @@ private case class FieldLval(obj: Expr, f: Field) extends LvalExpr {
   def storeSuffix                 =                    PutField(f, this.typeOf)
   
   override def addressable = obj.addressable
+  override def mkPtr = obj.eval |+| MkPtrField(f)
 }
 
 private case class ArrayIndexLval(array: Expr, index: Expr, typeOf: Type) extends LvalExpr {
@@ -62,6 +65,7 @@ private case class ArrayIndexLval(array: Expr, index: Expr, typeOf: Type) extend
   def storeSuffix                 =                                     ArrayPut(this.typeOf)
   
   override def addressable = array.addressable
+  override def mkPtr = array.eval |+| index.eval |+| MkPtrArray(t)
 }
 
 private case class SliceIndexLval(slice: Expr, index: Expr, typeOf: Type) extends LvalExpr {
@@ -73,6 +77,7 @@ private case class SliceIndexLval(slice: Expr, index: Expr, typeOf: Type) extend
   def storeSuffix                 = SlicePut(this.typeOf)
   
   override def addressable = true
+  override def mkPtr = slice.eval |+| index.eval |+| MkPtrSlice(t)
 }
 
 private case class MapIndexLval(map: Expr, index: Expr, typeOf: Type) extends LvalExpr {

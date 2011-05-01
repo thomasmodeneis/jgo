@@ -4,7 +4,6 @@ package symbol
 
 import types._
 
-class Function(val name: String, val typeOf: Type) extends ValueSymbol {
-  require(typeOf.isInstanceOf[FuncType])
+class Function(val name: String, val typeOf: FuncType) extends ValueSymbol {
   override val callable = true
 }

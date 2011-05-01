@@ -17,10 +17,15 @@ trait Expr extends Typed {
   private[expr] def eval: CodeBuilder
   
   private[expr] def addressable = false
-    
-  private[expr] def call(args: List[Expr]): Either[String, Expr] =
-    for (resultT <- checkCall(funcType, args).right)
-    yield BasicExpr((args foldLeft eval) { _ |+| _.eval } |+| InvokeLambda(funcType.get), resultT)
+  
+  private[expr] def mkPtr: Expr = throw new UnsupportedOperationException(
+    "JGo internal implementation error:  "
+    + "calling mkPtr on an unsuitable Expr; "
+    + "addressable = " + addressable
+  )
+  
+  private[expr] def mkCall(args: List[Expr], resultT: Type): Expr =
+    BasicExpr((args foldLeft eval) { _ |+| _.eval } |+| InvokeLambda(funcType.get), resultT)
 }
 
 object Expr {

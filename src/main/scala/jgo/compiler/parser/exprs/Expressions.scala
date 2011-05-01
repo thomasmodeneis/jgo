@@ -126,7 +126,7 @@ trait Expressions extends PrimaryExprs with ExprUtils {
   
   private def pos(expr: Expr):   Expr  = ifNumeric(expr)((_, _, _) => SimpleExpr(expr.eval, expr.t))
   private def neg(expr: Expr):   Expr  = ifNumeric(expr)(simple(Neg(_)))
-  private def compl(expr: Expr): Expr  = ifIntegral(expr)(simple(BitwiseNot(_)))
+  private def compl(expr: Expr): Expr  = ifIntegral(expr)(simple(BitwiseCompl(_)))
 //private def addrOf(expr: Expr): Expr = ifNumeric(expr)(simple(Neg(_)))
   private def deref(expr: Expr): Expr  = PtrLval(ifPtr(expr)(simple(Deref)))
   

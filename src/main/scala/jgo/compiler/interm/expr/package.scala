@@ -1,14 +1,21 @@
 package jgo.compiler
 package interm
 
+import message._
+
 import types._
-import symbols._
+import symbol._
 import instr._
 import instr.TypeConversions._
 import codeseq._
 
+import scala.util.parsing.input.Position
+
 package object expr {
-  private def ordinal(n: Int): String = {
+  private[expr] type M[+T] = Messaged[T]
+  private[expr] type Pos   = Position
+  
+  private[expr] def ordinal(n: Int): String = {
     require(n >= 0)
     (n: @scala.annotation.switch) match {
       case  0 => "zeroth"
@@ -37,20 +44,22 @@ package object expr {
   }
   
   
-  private[expr] def checkCall(funcType: Option[FuncType], args: List[Expr]): Either[String, Type] = funcType match {
-    case None => Left("not of function type")
-    case Some(FuncType(_, List(res0, res1, _*), _)) => Left("polyadic results not currently supported")
-    case Some(FuncType(params, results, true))      => Left("variadic calls not yet supported")
+  private[expr] def checkCall(callee: Expr, args: List[Expr])(implicit pos: Pos): M[Type] = callee match {
+    case HasType(FuncType(_, List(res0, res1, _*), _)) => Problem("polyadic results not currently supported")
+    case HasType(FuncType(params, results, true))      => Problem("variadic calls not yet supported")
     
-    case Some(FuncType(params, results, false)) =>
+    case HasType(FuncType(params, results, false)) =>
       if (params.length != args.length)
-        Left("number (%d) of arguments passed unequal to number (%d) required" format (args.length, params.length))
+        Problem("number (%d) of arguments passed unequal to number (%d) required",
+                args.length, params.length)
       else {
-        for (((param, HasType(arg)), index) <- (params zip args).zipWithIndex)
-          if (!(param <<= arg))
-            return Left("%s argument has type %s not assignable to corresponding parameter type %s" format (ordinal(index + 1), arg, param))
-        Right(results.headOption getOrElse UnitType)
+        for (((param, HasType(arg)), index) <- (params zip args).zipWithIndex) if (!(param <<= arg))
+          return Problem("%s argument has type %s not assignable to corresponding parameter type %s",
+                         ordinal(index + 1), arg, param)
+        Result(results.headOption getOrElse UnitType)
       }
+    
+    case _ => Problem("callee has type %s; function type required", callee.t)
   }
   
   

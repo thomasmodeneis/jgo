@@ -12,8 +12,6 @@ import codeseq._
 import scala.util.parsing.input.Position
 
 trait Combinators {
-  private type M[+T] = Messaged[T]
-  
   def and(e1M: M[Expr], e2M: M[Expr]) (implicit pos: Position): M[Expr]
   def or (e1M: M[Expr], e2M: M[Expr]) (implicit pos: Position): M[Expr]
   def not(eM: M[Expr]) (implicit pos: Position): M[Expr]
@@ -39,7 +37,7 @@ trait Combinators {
   def bitXor   (e1M: M[Expr], e2M: M[Expr]) (implicit pos: Position): M[Expr]
   def shiftL   (e1M: M[Expr], e2M: M[Expr]) (implicit pos: Position): M[Expr]
   def shiftR   (e1M: M[Expr], e2M: M[Expr]) (implicit pos: Position): M[Expr]
-  def compl(eM: M[Expr]) (implicit pos: Position): M[Expr]
+  def bitCompl(eM: M[Expr]) (implicit pos: Position): M[Expr]
   
   def addrOf(eM: M[Expr]) (implicit pos: Position): M[Expr]
   def deref (eM: M[Expr]) (implicit pos: Position): M[Expr]
@@ -59,7 +57,8 @@ trait Combinators {
   
   def assign(leftM: M[Expr], rightM: M[Expr]) (implicit pos: Position): M[CodeBuilder]
   
-  def eval(eM: M[Expr]): M[CodeBuilder] = for (e <- eM) yield e.eval
+  def eval(eM: M[Expr]): M[CodeBuilder] =
+    for (e <- eM) yield e.eval
 }
 
 object Combinators //extends Combinators

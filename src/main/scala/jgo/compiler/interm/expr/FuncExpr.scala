@@ -9,11 +9,11 @@ import instr.TypeConversions._
 import codeseq._
 
 private case class FuncExpr(f: Function) extends Expr {
-  val typeOf = f.typeOf
+  val typeOf: FuncType = f.typeOf
   override def callable = true
   
   def eval = Func2Lambda(f)
-  override def call(args: List[Expr]): Either[String, Expr] =
-    for (resultT <- checkCall(funcType, args).right)
-    yield BasicExpr((args foldLeft CodeBuilder()) { _ |+| _.eval } |+| InvokeFunc(f), resultT)
+  
+  override def mkCall(args: List[Expr], resultT: Type): Expr =
+    BasicExpr((args foldLeft CodeBuilder()) { _ |+| _.eval } |+| InvokeFunc(f), resultT)
 }
