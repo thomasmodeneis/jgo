@@ -15,5 +15,5 @@ private case class FuncExpr(f: Function) extends Expr {
   def eval = Func2Lambda(f)
   override def call(args: List[Expr]): Either[String, Expr] =
     for (resultT <- checkCall(funcType, args).right)
-    yield SimpleExpr((args foldLeft CodeBuilder()) { _ |+| _.eval } |+| InvokeFunc(f), resultT)
+    yield BasicExpr((args foldLeft CodeBuilder()) { _ |+| _.eval } |+| InvokeFunc(f), resultT)
 }

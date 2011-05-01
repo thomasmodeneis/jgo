@@ -105,7 +105,14 @@ trait Expressions extends PrimaryExprs with ExprUtils {
       case _ OfType (t: NumericType) => SimpleExpr(e1.eval |+| e2.eval |+| Add(t), e1.t)
       case _ => badExpr("operand type %s not numeric or string type", e1.t)
     }
-  //Get ready for procedural abstraction, functional programming style!  //Eh.
+  //Get ready for procedural abstraction, functional programming style!  //Eh.  //May 1: BLEH!! UGH!
+  //[More May 1] eww.  Well, I suppose this is somewhat evocative of the kind of procedural
+  //abstraction you see in idiomatic Haskell programs, which I think is called "pointfree style."
+  //Wikipedia calls it "tacit programming" as well, a name in whose context all of the loud _s
+  //and screaming compiler errors on missing type annotations on inferred parameters become quite
+  //ironic.  Btw, if you're reading this, you've probably been following the revision history quite
+  //closely!  I intend to remove all of these processing functions (and this comment along with them)
+  //after implementing the equivalent ones in interm.expr.  Get ready for _monadic_ abstraction.
   private def minus(e1: Expr, e2: Expr):     Expr = ifSameNumeric(e1, e2)(encat(simple(Sub(_))))
   private def times(e1: Expr, e2: Expr):     Expr = ifSameNumeric(e1, e2)(encat(simple(Mul(_))))
   private def div(e1: Expr, e2: Expr):       Expr = ifSameNumeric(e1, e2)(encat(simple(Div(_))))

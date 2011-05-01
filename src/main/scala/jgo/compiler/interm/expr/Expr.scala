@@ -14,15 +14,15 @@ trait Expr extends Typed {
    * of the operand stack. This code is called the
    * <i>evaluation code</i> of this expression.
    */
-  def eval: CodeBuilder
+  private[expr] def eval: CodeBuilder
   
   private[expr] def addressable = false
     
-  def call(args: List[Expr]): Either[String, Expr] =
+  private[expr] def call(args: List[Expr]): Either[String, Expr] =
     for (resultT <- checkCall(funcType, args).right)
-    yield SimpleExpr((args foldLeft eval) { _ |+| _.eval } |+| InvokeLambda(funcType.get), resultT)
+    yield BasicExpr((args foldLeft eval) { _ |+| _.eval } |+| InvokeLambda(funcType.get), resultT)
 }
 
 object Expr {
-  def apply(eval: => CodeBuilder, t: Type): Expr = new SimpleExpr(eval, t)
+  def apply(eval: => CodeBuilder, t: Type): Expr = new BasicExpr(eval, t)
 }

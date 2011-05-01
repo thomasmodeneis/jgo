@@ -7,14 +7,14 @@ import instr._
 import instr.TypeConversions._
 import codeseq._
 
-private class SimpleExpr(evalCode: => CodeBuilder, val typeOf: Type) extends Expr {
+private class BasicExpr(evalCode: => CodeBuilder, val typeOf: Type) extends Expr {
   def eval = evalCode
 }
 
-private object SimpleExpr {
-  def apply(eval: => CodeBuilder, t: Type) = new SimpleExpr(eval, t)
+private object BasicExpr {
+  def apply(eval: => CodeBuilder, t: Type) = new BasicExpr(eval, t)
   def unapply(e: Expr): Option[(CodeBuilder, Type)] = e match {
-    case se: SimpleExpr => Some(se.eval, se.t)
+    case se: BasicExpr => Some(se.eval, se.t)
     case _ => None
   }
 }
