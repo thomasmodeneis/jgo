@@ -10,6 +10,8 @@ import instr._
 import instr.TypeConversions._
 import codeseq._
 
+import Utils._
+
 private trait BasicCombinators extends Combinators with ArithmeticTypeChecks {
   def plus(e1M: M[Expr], e2M: M[Expr]) (implicit pos: Pos): M[Expr] = for {
     (e1, e2) <- together(e1M, e2M)
