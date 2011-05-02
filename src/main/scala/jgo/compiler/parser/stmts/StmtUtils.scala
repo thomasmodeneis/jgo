@@ -18,9 +18,7 @@ trait StmtUtils {
   def checkArity(left: List[_], right: List[Expr]): Boolean = {
     val (lLen, rLen) = (left length, right length)
     if (lLen != rLen) {
-      recordErr("Arity (%d) of left side of assignment unequal to arity (%d) of right side",
-        lLen.asInstanceOf[AnyRef],
-        rLen.asInstanceOf[AnyRef])
+      recordErr("Arity (%d) of left side of assignment unequal to arity (%d) of right side", lLen, rLen)
       false
     }
     else
