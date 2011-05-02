@@ -133,6 +133,7 @@ case class VarLval(v: Variable) extends LvalExpr {
   override def addressable = true
 }
 
+/*
 case class PtrLval(ptr: Expr) extends LvalExpr {
   val typeOf = ptr.t.underlying.asInstanceOf[PointerType].elemType
   
@@ -143,6 +144,7 @@ case class PtrLval(ptr: Expr) extends LvalExpr {
   
   override def addressable = true
 }
+*/
 
 case class FieldLval(obj: Expr, f: Field) extends LvalExpr {
   val typeOf = f.t

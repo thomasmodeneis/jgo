@@ -55,7 +55,7 @@ trait Combinators {
   def incr(eM: M[Expr]) (implicit pos: Position): M[CodeBuilder]
   def decr(eM: M[Expr]) (implicit pos: Position): M[CodeBuilder]
   
-  def assign(leftM: M[Expr], rightM: M[Expr]) (implicit pos: Position): M[CodeBuilder]
+  def assign(leftM: M[List[Expr]], rightM: M[List[Expr]]) (implicit pos: Position): M[CodeBuilder]
   
   def eval(eM: M[Expr]): M[CodeBuilder] =
     for (e <- eM) yield e.eval

@@ -59,7 +59,7 @@ trait Expressions extends PrimaryExprs with ExprUtils {
     | "!"  ~> unaryExpr  ^^ not
     | "<-" ~> unaryExpr  ^^ chanRecv
     | "&"  ~> unaryExpr  //^^# (AddrOf(_))
-    | "*"  ~> unaryExpr  ^^ deref
+    | "*"  ~> unaryExpr  //^^ deref
     | primaryExpr
     )
     
@@ -128,7 +128,7 @@ trait Expressions extends PrimaryExprs with ExprUtils {
   private def neg(expr: Expr):   Expr  = ifNumeric(expr)(simple(Neg(_)))
   private def compl(expr: Expr): Expr  = ifIntegral(expr)(simple(BitwiseCompl(_)))
 //private def addrOf(expr: Expr): Expr = ifNumeric(expr)(simple(Neg(_)))
-  private def deref(expr: Expr): Expr  = PtrLval(ifPtr(expr)(simple(Deref)))
+//private def deref(expr: Expr): Expr  = PtrLval(ifPtr(expr)(simple(Deref)))
   
   private def chanRecv(expr: Expr): Expr = expr match {
     case HasType(RecvChanType(t)) => SimpleExpr(expr.eval |+| ChanRecv, t)

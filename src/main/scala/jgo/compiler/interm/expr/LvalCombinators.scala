@@ -60,10 +60,16 @@ private trait LvalCombinators extends Combinators with ArithmeticTypeChecks {
   }
   
   
-  private def lvalues(es: List[Expr], desc: String) (implicit pos: Pos): M[List[LvalExpr]] = for {
-    (e, i) <- es.zipWithIndex
-    l <- lval(e, "%s term of %s".format(ordinal(i + 1), desc))
-  } yield l //the implicit conversion Messaged.lsM2mLs lifts this List[M[LvalExpr]] to M[List[..]]
+  
+  private def lvalues(es: List[Expr], desc: String) (implicit pos: Pos): M[List[LvalExpr]] =
+    for {
+      (e, i) <- es.zipWithIndex
+    } yield for {
+      l <- lval(e, "%s term of %s".format(ordinal(i + 1), desc))
+    } yield l
+    
+    //the implicit conversion Messaged.lsM2mLs lifts that List[M[LvalExpr]] to M[List[..]]
+    
   private def zipAndCheckArity[A](as: List[A], bs: List[Expr]) (implicit pos: Pos): M[List[(A, Expr)]] = {
     var res: List[(A, Expr)] = Nil
     var (curA, curB) = (as, bs)
