@@ -151,10 +151,18 @@ object Messaged {
     case _ => new Problem(e(a, b), w(a, b), n(a, b))
   }
   
+  def together[A, B, C](a: Messaged[A], b: Messaged[B], c: Messaged[C]): Messaged[(A, B, C)] = (a, b, c) match {
+    case (r1: Result[_], r2: Result[_], r3: Result[_]) => new Result((r1.result, r2.result, r3.result), w(r1, r2, r3), n(r1, r2, r3))
+    case _ => new Problem(e(a, b, c), w(a, b, c), n(a, b, c))
+  }
   
   @inline private def e[A, B](a: Messaged[A], b: Messaged[B]) = b.e ::: a.e
   @inline private def w[A, B](a: Messaged[A], b: Messaged[B]) = b.w ::: a.w
   @inline private def n[A, B](a: Messaged[A], b: Messaged[B]) = b.n ::: a.n
+  
+  @inline private def e[A, B, C](a: Messaged[A], b: Messaged[B], c: Messaged[C]) = c.e ::: b.e ::: a.e
+  @inline private def w[A, B, C](a: Messaged[A], b: Messaged[B], c: Messaged[C]) = c.w ::: b.w ::: a.w
+  @inline private def n[A, B, C](a: Messaged[A], b: Messaged[B], c: Messaged[C]) = c.n ::: b.n ::: a.n
 }
 
 object Result {

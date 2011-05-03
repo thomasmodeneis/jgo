@@ -50,13 +50,13 @@ private trait LvalCombinators extends Combinators with ArithmeticTypeChecks {
         if (isIntegral) Result(SliceIndexLval(arr, indx, elemT))
         else Problem("index type %s is inappropriate for a slice; integral type required", indx.t)
       case HasType(StringType) =>
-        if (isIntegral) Result(arr.eval |+| indx.eval |+| StrIndx)
+        if (isIntegral) Result(BasicExpr(arr.eval |+| indx.eval |+| StrIndex, Uint8))
         else Problem("index type %s is inappropriate for a string; integral type required", indx.t)
-      case HasType(MapType(k, v)) =>
-        if (k <<= indx.t) Result(MapIndexLval(arr, indx, elemT))
+      case HasType(MapType(keyT, valT)) =>
+        if (keyT <<= indx.t) Result(MapIndexLval(arr, indx, valT))
         else Problem(
           "index type %s is inappropriate for a map of type %s; must be assignable to key type %s",
-          indx.t, arr.t, k
+          indx.t, arr.t, keyT
         )
     }
   }
@@ -67,16 +67,16 @@ private trait LvalCombinators extends Combinators with ArithmeticTypeChecks {
   
   
   private def mkSlice(arr: Expr, low: Option[Expr], high: Option[Expr]) (implicit pos: Pos): M[Expr] = {
+  }
+  def slice(arrM: M[Expr], lowM: M[Option[Expr]], highM: M[Option[Expr]]) (implicit pos: Pos): M[Expr] = for {
+    (arr, low, high) <- together(arrM, lowM, highM)
+  } yield {
     val (bounds, boundsStackingCode) = (low, high) match {
       case (Some(e1), Some(e2)) => (e1.eval |+| e2.eval, BothBounds)
       case (Some(e1), None)     => (e1.eval            , LowBound)
       case (None,     Some(e2)) => (            e2.eval, HighBound)
       case (None,     None)     => (CodeBuilder(),       NoBounds)
     }
-  }
-  def slice(arrM: M[Expr], lowM: M[Option[Expr]], highM: M[Option[Expr]]) (implicit pos: Pos): M[Expr] = {
-    val bounds = 
-    @inline def checkSlice(e: Expr) = e match { case s: SliceType => s
   }
   
   def incr(eM: M[Expr]) (implicit pos: Pos): M[CodeBuilder] = for {
