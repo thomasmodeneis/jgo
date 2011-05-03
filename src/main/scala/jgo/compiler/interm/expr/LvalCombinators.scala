@@ -38,7 +38,17 @@ private trait LvalCombinators extends Combinators with ArithmeticTypeChecks {
   
   def select(objM: M[Expr], selector: String) (implicit pos: Pos): M[Expr]
   
-  def subscript(arrM: M[Expr], indxM: M[Expr]) (implicit pos: Pos): M[Expr]
+  
+  private def validIndex(arr: Expr, indx: Expr) = arr match {
+    case _: ArrayIndexLval |
+            validIndex(arr: Expr, indx: Expr) |
+            case _: SliceIndexLval
+  }
+  
+  def subscript(arrM: M[Expr], indxM: M[Expr]) (implicit pos: Pos): M[Expr] = for {
+    (arr, indx) <- together(arrM, indxM)
+    
+  }
   def slice(arrM: M[Expr], lowM: M[Option[Expr]], highM: M[Option[Expr]]) (implicit pos: Pos): M[Expr]
   
   def incr(eM: M[Expr]) (implicit pos: Pos): M[CodeBuilder] = for {

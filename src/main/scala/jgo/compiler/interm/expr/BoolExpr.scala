@@ -14,7 +14,7 @@ sealed abstract class BoolExpr extends Expr {
   def eval = Return //placeholder
   
   private[expr] def code(trueBr: Label, falseBr: Label):  CodeBuilder
-  private[expr] def push(tr: Bool, fl: Bool, end: Label): CodeBuilder
+  private[expr] def push(tr: Boolean, fl: Boolean, end: Label): CodeBuilder
   
   def branchTo(lbl: Label): CodeBuilder = {
     val g   = new LabelGroup
