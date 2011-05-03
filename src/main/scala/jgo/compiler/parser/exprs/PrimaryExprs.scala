@@ -93,7 +93,7 @@ trait PrimaryExprs extends Operands with TypeSyntax with Scoped with ExprUtils {
       case HasType(ArrayType(_, t)) => SimpleExpr(stackingCode |+| SliceArray(t, boundsInfo), t)
       case HasType(SliceType(t))    => SimpleExpr(stackingCode |+| SliceSlice(t, boundsInfo), t)
       case HasType(StringType)      => SimpleExpr(stackingCode |+| Substring(boundsInfo), StringType)
-      case _ => badExpr("Cannot slice a value of type %s; must be of array, slice, or string type", base.t)
+      case _ => badExpr("cannot slice a value of type %s; must be of array, slice, or string type", base.t)
     }
   }
 }

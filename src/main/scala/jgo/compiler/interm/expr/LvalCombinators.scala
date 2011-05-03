@@ -65,19 +65,26 @@ private trait LvalCombinators extends Combinators with ArithmeticTypeChecks {
     result <- mkIndex(arr, indx)
   } yield result
   
-  
-  private def mkSlice(arr: Expr, low: Option[Expr], high: Option[Expr]) (implicit pos: Pos): M[Expr] = {
-  }
-  def slice(arrM: M[Expr], lowM: M[Option[Expr]], highM: M[Option[Expr]]) (implicit pos: Pos): M[Expr] = for {
-    (arr, low, high) <- together(arrM, lowM, highM)
-  } yield {
-    val (bounds, boundsStackingCode) = (low, high) match {
-      case (Some(e1), Some(e2)) => (e1.eval |+| e2.eval, BothBounds)
-      case (Some(e1), None)     => (e1.eval            , LowBound)
-      case (None,     Some(e2)) => (            e2.eval, HighBound)
-      case (None,     None)     => (CodeBuilder(),       NoBounds)
-    }
-  }
+  def slice(arrM: M[Expr], lowM: M[Option[Expr]], highM: M[Option[Expr]]) (implicit pos: Pos): M[Expr] =
+    for {
+      (arr, low, high) <- together(arrM, lowM, highM)
+      _ <- together(
+        for (l <- low)  yield integral(l, "lower bound of slice"), //these Option[M[Expr]]'s are implicitly
+        for (h <- high) yield integral(h, "upper bound of slice")  //converted to M[Option[Expr]]'s
+      )
+      (stackingCode, boundsInfo) = (low, high) match {
+        case (Some(e1), Some(e2)) => (e1.eval |+| e2.eval, BothBounds)
+        case (Some(e1), None)     => (e1.eval            , LowBound)
+        case (None,     Some(e2)) => (            e2.eval, HighBound)
+        case (None,     None)     => (CodeBuilder(),       NoBounds)
+      }
+      result: Expr <- arr match {
+        case HasType(ArrayType(_, t)) => Result(BasicExpr(stackingCode |+| SliceArray(t, boundsInfo), t))
+        case HasType(SliceType(t))    => Result(BasicExpr(stackingCode |+| SliceSlice(t, boundsInfo), t))
+        case HasType(StringType)      => Result(BasicExpr(stackingCode |+| Substring(boundsInfo), StringType))
+        case _ => Problem("cannot slice a value of type %s; array, slice, or string type required", arr.t)
+      }
+    } yield result
   
   def incr(eM: M[Expr]) (implicit pos: Pos): M[CodeBuilder] = for {
     e <- eM
@@ -137,7 +144,6 @@ private trait LvalCombinators extends Combinators with ArithmeticTypeChecks {
         )
     Result(())
   }
-  
   def assign(leftM: M[List[Expr]], rightM: M[List[Expr]]) (implicit pos: Pos): M[CodeBuilder] = for {
     (left0, right) <- together(leftM, rightM)
     left <- lvalues(left0, "left side of assignment")

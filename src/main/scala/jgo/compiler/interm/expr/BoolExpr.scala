@@ -48,3 +48,59 @@ sealed abstract class BoolExpr extends Expr {
     Lbl(end)
   }
 }
+
+cprivate ase object TrueTree extends BoolExpr {
+  def code(tr: Label, fl: Label): CodeBuilder = Goto(tr)
+}
+private case object FalseTree extends BoolExpr {
+  def code(tr: Label, fl: Label): CodeBuilder = Goto(fl)
+}
+
+private case class Not(b: BoolExpr) extends BoolExpr {
+  def code(trueBr: Label, falseBr: Label): CodeBuilder =
+    b.code(falseBr, trueBr)
+}
+
+private case class And(b1: BoolExpr, b2: BoolExpr) extends BoolExpr {
+  def code(trueBr: Label, falseBr: Label): CodeBuilder = {
+    val btwn = new Label("between and")
+    b1.code(btwn, falseBr) |+| Lbl(btwn) |+| b2.code(trueBr, falseBr)
+  }
+}
+
+private case class Or(b1: BoolExpr, b2: BoolExpr) extends BoolExpr {
+  def code(trueBr: Label, falseBr: Label): CodeBuilder = {
+    val btwn = new Label("between or")
+    b1.code(trueBr, btwn) |+| Lbl(btwn) |+| b2.code(trueBr, falseBr)
+  }
+}
+
+private sealed abstract class CompExpr extends BoolExpr {
+  protected val e1, e2: Expr
+  protected val comp: Comparison
+  
+  def cat = e1.eval |+| e2.eval
+  
+  def code(trueBr: Label, falseBr: Label): CodeBuilder =
+    cat |+| Branch(comp, trueBr) |+| Goto(falseBr)
+}
+
+case class ObjEquals(e1: Expr, e2: Expr)    extends CompExpr { val comp = ObjEq }
+case class ObjNotEquals(e1: Expr, e2: Expr) extends CompExpr { val comp = ObjNe }
+
+case class BoolEquals(e1: Expr, e2: Expr)    extends CompExpr { val comp = BoolEq }
+case class BoolNotEquals(e1: Expr, e2: Expr) extends CompExpr { val comp = BoolNe }
+
+
+private sealed abstract class ArithCompExpr(cmp: Arith => Comparison) extends CompExpr {
+  private val arith: Arith = e1.t.underlying.asInstanceOf[NumericType] //make better upon restruct of Expr
+  protected val comp = cmp(arith)
+}
+
+case class NumEquals(e1: Expr, e2: Expr)     extends ArithCompExpr(NumEq)
+case class NumNotEquals(e1: Expr, e2: Expr)  extends ArithCompExpr(NumNe)
+case class LessThan(e1: Expr, e2: Expr)      extends ArithCompExpr(NumLt)
+case class GreaterThan(e1: Expr, e2: Expr)   extends ArithCompExpr(NumGt)
+case class LessEquals(e1: Expr, e2: Expr)    extends ArithCompExpr(NumLeq)
+case class GreaterEquals(e1: Expr, e2: Expr) extends ArithCompExpr(NumGeq)
+
