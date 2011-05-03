@@ -49,7 +49,7 @@ trait Combinators {
   def call      (funcM: M[Expr], argsM:    M[List[Expr]]) (implicit pos: Position): M[Expr]
   def typeAssert(eM:    M[Expr], tM:       M[Type])       (implicit pos: Position): M[Expr]
   
-  def subscript(arrM: M[Expr], indxM: M[Expr]) (implicit pos: Position): M[Expr]
+  def index(arrM: M[Expr], indxM: M[Expr]) (implicit pos: Position): M[Expr]
   def slice(arrM: M[Expr], lowM: M[Option[Expr]], highM: M[Option[Expr]]) (implicit pos: Position): M[Expr]
   
   def incr(eM: M[Expr]) (implicit pos: Position): M[CodeBuilder]

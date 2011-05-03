@@ -39,17 +39,45 @@ private trait LvalCombinators extends Combinators with ArithmeticTypeChecks {
   def select(objM: M[Expr], selector: String) (implicit pos: Pos): M[Expr]
   
   
-  private def validIndex(arr: Expr, indx: Expr) = arr match {
-    case _: ArrayIndexLval |
-            validIndex(arr: Expr, indx: Expr) |
-            case _: SliceIndexLval
-  }
-  
-  def subscript(arrM: M[Expr], indxM: M[Expr]) (implicit pos: Pos): M[Expr] = for {
-    (arr, indx) <- together(arrM, indxM)
+  private def mkIndex(arr: Expr, indx: Expr) (implicit pos: Pos) = {
+    @inline def isIntegral = indx.isOfType[IntegralType]
     
+    arr match {
+      case HasType(ArrayType(_, elemT)) =>
+        if (isIntegral) Result(ArrayIndexLval(arr, indx, elemT))
+        else Problem("index type %s is inappropriate for an array; integral type required", indx.t)
+      case HasType(SliceType(elemT)) =>
+        if (isIntegral) Result(SliceIndexLval(arr, indx, elemT))
+        else Problem("index type %s is inappropriate for a slice; integral type required", indx.t)
+      case HasType(StringType) =>
+        if (isIntegral) Result(arr.eval |+| indx.eval |+| StrIndx)
+        else Problem("index type %s is inappropriate for a string; integral type required", indx.t)
+      case HasType(MapType(k, v)) =>
+        if (k <<= indx.t) Result(MapIndexLval(arr, indx, elemT))
+        else Problem(
+          "index type %s is inappropriate for a map of type %s; must be assignable to key type %s",
+          indx.t, arr.t, k
+        )
+    }
   }
-  def slice(arrM: M[Expr], lowM: M[Option[Expr]], highM: M[Option[Expr]]) (implicit pos: Pos): M[Expr]
+  def index(arrM: M[Expr], indxM: M[Expr]) (implicit pos: Pos): M[Expr] = for {
+    (arr, indx) <- together(arrM, indxM)
+    result <- mkIndex(arr, indx)
+  } yield result
+  
+  
+  private def mkSlice(arr: Expr, low: Option[Expr], high: Option[Expr]) (implicit pos: Pos): M[Expr] = {
+    val (bounds, boundsStackingCode) = (low, high) match {
+      case (Some(e1), Some(e2)) => (e1.eval |+| e2.eval, BothBounds)
+      case (Some(e1), None)     => (e1.eval            , LowBound)
+      case (None,     Some(e2)) => (            e2.eval, HighBound)
+      case (None,     None)     => (CodeBuilder(),       NoBounds)
+    }
+  }
+  def slice(arrM: M[Expr], lowM: M[Option[Expr]], highM: M[Option[Expr]]) (implicit pos: Pos): M[Expr] = {
+    val bounds = 
+    @inline def checkSlice(e: Expr) = e match { case s: SliceType => s
+  }
   
   def incr(eM: M[Expr]) (implicit pos: Pos): M[CodeBuilder] = for {
     e <- eM
