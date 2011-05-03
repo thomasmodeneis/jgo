@@ -7,14 +7,26 @@ import instr._
 import instr.TypeConversions._
 import codeseq._
 
+private object BoolExpr {
+  def jumpOrFall(target: Target) = target match {
+    case Jump(lbl) => Goto(lbl)
+    case Fall      => CodeBuilder.empty
+  }
+  
+  sealed abstract class Target
+  case class  Jump(lbl: Label) extends Target
+  case object Fall             extends Target
+  implicit def lbl2target(lbl: Label): Target = Jump(lbl)
+}
+import BoolExpr._
 
 sealed abstract class BoolExpr extends Expr {
   val typeOf            = BoolType
   override def callable = false
   def eval = Return //placeholder
   
-  private[expr] def code(trueBr: Label, falseBr: Label):  CodeBuilder
-  private[expr] def push(tr: Boolean, fl: Boolean, end: Label): CodeBuilder
+  private[expr] def code(trueBr: Target, falseBr: Target):  CodeBuilder
+  private[expr] def push(tr: Boolean, fl: Boolean, end: Target): CodeBuilder
   
   def branchTo(lbl: Label): CodeBuilder = {
     val g   = new LabelGroup
@@ -49,13 +61,6 @@ sealed abstract class BoolExpr extends Expr {
   }
 }
 
-cprivate ase object TrueTree extends BoolExpr {
-  def code(tr: Label, fl: Label): CodeBuilder = Goto(tr)
-}
-private case object FalseTree extends BoolExpr {
-  def code(tr: Label, fl: Label): CodeBuilder = Goto(fl)
-}
-
 private case class Not(b: BoolExpr) extends BoolExpr {
   def code(trueBr: Label, falseBr: Label): CodeBuilder =
     b.code(falseBr, trueBr)
@@ -79,10 +84,8 @@ private sealed abstract class CompExpr extends BoolExpr {
   protected val e1, e2: Expr
   protected val comp: Comparison
   
-  def cat = e1.eval |+| e2.eval
-  
-  def code(trueBr: Label, falseBr: Label): CodeBuilder =
-    cat |+| Branch(comp, trueBr) |+| Goto(falseBr)
+  private[expr] def code(trueBr: Label, falseBr: Label): CodeBuilder =
+    e1.eval |+| e2.eval |+| Branch(comp, trueBr) |+| Goto(falseBr)
 }
 
 case class ObjEquals(e1: Expr, e2: Expr)    extends CompExpr { val comp = ObjEq }
