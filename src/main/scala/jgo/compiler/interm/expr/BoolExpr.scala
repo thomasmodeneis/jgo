@@ -76,7 +76,7 @@ private case class And(b1: BoolExpr, b2: BoolExpr) extends BoolExpr {
 private case class Or(b1: BoolExpr, b2: BoolExpr) extends BoolExpr {
   def code(trueBr: Label, falseBr: Label): CodeBuilder = {
     val btwn = new Label("between or")
-    b1.code(trueBr, btwn) |+| Lbl(btwn) |+| b2.code(trueBr, falseBr)
+    b1.code(trueBr, Fall) |+| Lbl(btwn) |+| b2.code(trueBr, falseBr)
   }
 }
 
