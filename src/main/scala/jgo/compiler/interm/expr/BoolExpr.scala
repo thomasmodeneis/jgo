@@ -27,16 +27,15 @@ import BoolExpr._
 sealed abstract class BoolExpr extends Expr {
   val typeOf            = BoolType
   override def callable = false
-  def eval = pushBool(true, Fall)
   
   private[expr] def branch(trueBr: Target, falseBr: Target): CodeBuilder
   
-  private[expr] def pushBool(parity: Boolean, end: Target): CodeBuilder = {
-    val g    = new LabelGroup
-    val tLbl = new Label("push parity", g)
-    val fLbl = new Label("push !parity", g)
+  def eval = {
+    val g   = new LabelGroup
+    val tr  = new Label("push true", g)
+    val end = new Label("end of push bool", g)
     
-    branch(tLbl, Fall) |+| Lbl(fLbl) |+| PushBool(true)
+    branch(tr, Fall) |+| BoolConst(false) |+| Goto(end) |+| Lbl(tr) |+| BoolConst(true) |+| Lbl(end)
   }
   
   def branchTo(lbl: Label): CodeBuilder = {
