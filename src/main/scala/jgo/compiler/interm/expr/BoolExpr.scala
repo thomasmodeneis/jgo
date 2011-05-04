@@ -8,14 +8,16 @@ import instr.TypeConversions._
 import codeseq._
 
 private object BoolExpr {
-  def jumpOrFall(target: Target) = target match {
-    case Jump(lbl) => Goto(lbl)
-    case Fall      => CodeBuilder.empty
+  sealed abstract class Target {
+    def replaceFall(end: Label): Target = this match {
+      case j: Jump => j
+      case Fall    => Jump(end)
+    }
   }
   
-  sealed abstract class Target
   case class  Jump(lbl: Label) extends Target
   case object Fall             extends Target
+  
   implicit def lbl2target(lbl: Label): Target = Jump(lbl)
 }
 import BoolExpr._
@@ -26,19 +28,19 @@ sealed abstract class BoolExpr extends Expr {
   def eval = Return //placeholder
   
   private[expr] def code(trueBr: Target, falseBr: Target):  CodeBuilder
-  //private[expr] def push(inverted: Boolean, end: Target): CodeBuilder
+  //private[expr] def push(pairity: Boolean, end: Target): CodeBuilder
   
   def branchTo(lbl: Label): CodeBuilder = {
     val g   = new LabelGroup
     val end = new Label("end branchTo", g)
-    code(lbl, end)
+    code(lbl, Fall)
   }
   
   def mkIf(ifBranch: CodeBuilder): CodeBuilder = {
     val g   = new LabelGroup
     val end = new Label("end if", g)
     val t   = new Label("if branch", g)
-    code(t, end) |+| Lbl(t) |+| ifBranch |+| Lbl(end)
+    code(Fall, end) |+| Lbl(t) |+| ifBranch |+| Lbl(end)
   }
   
   def mkIfElse(ifBranch: CodeBuilder, elseBranch: CodeBuilder): CodeBuilder = {
@@ -46,7 +48,7 @@ sealed abstract class BoolExpr extends Expr {
     val end = new Label("end if-else", g)
     val t   = new Label("if branch", g)
     val f   = new Label("else branch", g)
-    code(t, f) |+| Lbl(f) |+| elseBranch |+| Goto(end) |+| Lbl(t) |+| ifBranch |+| Lbl(end)
+    code(t, Fall) |+| Lbl(f) |+| elseBranch |+| Goto(end) |+| Lbl(t) |+| ifBranch |+| Lbl(end)
   }
   
   def mkWhile(loopBody: CodeBuilder): CodeBuilder = {
@@ -56,35 +58,48 @@ sealed abstract class BoolExpr extends Expr {
     val cond = new Label("cond of loop", g)
     Goto(cond) |+|
     Lbl(top)   |+| loopBody |+|
-    Lbl(cond)  |+| code(top, end) |+|
+    Lbl(cond)  |+| code(top, Fall) |+|
     Lbl(end)
   }
 }
 
 private case class Not(b: BoolExpr) extends BoolExpr {
-  def code(trueBr: Label, falseBr: Label): CodeBuilder =
+  def code(trueBr: Target, falseBr: Target): CodeBuilder =
     b.code(falseBr, trueBr)
 }
 
 private case class And(b1: BoolExpr, b2: BoolExpr) extends BoolExpr {
-  def code(trueBr: Label, falseBr: Label): CodeBuilder = {
-    val btwn = new Label("between and")
-    b1.code(btwn, falseBr) |+| Lbl(btwn) |+| b2.code(trueBr, falseBr)
+  def code(trueBr: Target, falseBr: Target): CodeBuilder = {
+    val g    = new LabelGroup
+    val btwn = new Label("between and", g)
+    val end  = new Label("end and", g)
+    
+    b1.code(Fall, falseBr.replaceFall(end)) |+| Lbl(btwn) |+| b2.code(trueBr, falseBr)
   }
 }
 
 private case class Or(b1: BoolExpr, b2: BoolExpr) extends BoolExpr {
-  def code(trueBr: Label, falseBr: Label): CodeBuilder = {
-    val btwn = new Label("between or")
-    b1.code(trueBr, Fall) |+| Lbl(btwn) |+| b2.code(trueBr, falseBr)
+  def code(trueBr: Target, falseBr: Target): CodeBuilder = {
+    val g    = new LabelGroup
+    val btwn = new Label("between or", g)
+    val end  = new Label("end or", g)
+    
+    b1.code(trueBr.replaceFall(end), Fall) |+| Lbl(btwn) |+| b2.code(trueBr, falseBr)
   }
 }
 
 private sealed abstract class CompExpr(comp: Comparison) extends BoolExpr {
   protected val e1, e2: Expr
   
-  private[expr] def code(trueBr: Label, falseBr: Label): CodeBuilder =
-    e1.eval |+| e2.eval |+| Branch(comp, trueBr) |+| Goto(falseBr)
+  private val stackingCode = e1.eval |+| e2.eval
+  
+  private[expr] def code(trueBr: Target, falseBr: Target): CodeBuilder = (trueBr, falseBr) match {
+    case (Jump(tLbl), Jump(fLbl)) => e1.eval |+| e2.eval |+| Branch(comp, tLbl) |+| Goto(fLbl)
+    case (Jump(tLbl), Fall)       => e1.eval |+| e2.eval |+| Branch(comp, tLbl)
+    case (Fall,       Jump(fLbl)) => e1.eval |+| e2.eval |+| Branch(IfNot(comp), fLbl)
+    
+    case (Fall, Fall) => throw new AssertionError("impl error: no reason why both branches should be Fall")
+  }
 }
 
 private case class ObjEquals   (e1: Expr, e2: Expr) extends CompExpr(ObjEq)
