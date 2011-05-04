@@ -12,7 +12,7 @@ import codeseq._
 
 import Utils._
 
-private trait LvalCombinators extends Combinators with ArithmeticTypeChecks {
+private trait LvalCombinators extends Combinators with TypeChecks {
   private def lval(e: Expr, desc: String) (implicit pos: Pos): M[LvalExpr] = e match {
     case l: LvalExpr => Result(l)
     case _ => Problem("lvalue expected for %s", desc)

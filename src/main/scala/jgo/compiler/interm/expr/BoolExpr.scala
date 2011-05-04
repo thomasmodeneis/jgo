@@ -71,12 +71,12 @@ sealed abstract class BoolExpr extends Expr {
   }
 }
 
-private case class Not(b: BoolExpr) extends BoolExpr {
+private class Not(b: BoolExpr) extends BoolExpr {
   def branch(trueBr: Target, falseBr: Target): CodeBuilder =
     b.branch(falseBr, trueBr)
 }
 
-private case class And(b1: BoolExpr, b2: BoolExpr) extends BoolExpr {
+private class And(b1: BoolExpr, b2: BoolExpr) extends BoolExpr {
   def branch(trueBr: Target, falseBr: Target): CodeBuilder = {
     val g    = new LabelGroup
     val btwn = new Label("between and", g)

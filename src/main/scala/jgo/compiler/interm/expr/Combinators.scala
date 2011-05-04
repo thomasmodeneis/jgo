@@ -46,7 +46,7 @@ trait Combinators {
   def chanSend(chanM: M[Expr], eM: M[Expr]) (implicit pos: Position): M[CodeBuilder]
   
   def select    (objM:  M[Expr], selector: String)        (implicit pos: Position): M[Expr]
-  def call      (funcM: M[Expr], argsM:    M[List[Expr]]) (implicit pos: Position): M[Expr]
+  def invoke    (funcM: M[Expr], argsM:    M[List[Expr]]) (implicit pos: Position): M[Expr]
   def typeAssert(eM:    M[Expr], tM:       M[Type])       (implicit pos: Position): M[Expr]
   
   def index(arrM: M[Expr], indxM: M[Expr]) (implicit pos: Position): M[Expr]

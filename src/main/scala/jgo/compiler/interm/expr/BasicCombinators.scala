@@ -12,7 +12,7 @@ import codeseq._
 
 import Utils._
 
-private trait BasicCombinators extends Combinators with ArithmeticTypeChecks {
+private trait BasicCombinators extends Combinators with TypeChecks {
   def plus(e1M: M[Expr], e2M: M[Expr]) (implicit pos: Pos): M[Expr] = for {
     (e1, e2) <- together(e1M, e2M)
     ut <- sameAddable(e1, e2, "left operand", "right operand")
@@ -90,15 +90,6 @@ private trait BasicCombinators extends Combinators with ArithmeticTypeChecks {
   } yield BasicExpr(e.eval |+| BitwiseCompl(ut), e.t)
   
   
-  private def recvChanT(e: Expr) (implicit pos: Pos): M[Type] = e match {
-    case HasType(RecvChanType(t)) => Result(t)
-    case _ => Problem("operand of channel receive has type %s; receiving chan type required", e.t)
-  }
-  private def sendChanT(e: Expr) (implicit pos: Pos): M[Type] = e match {
-    case HasType(SendChanType(t)) => Result(t)
-    case _ => Problem("left operand of channel send has type %s; sending chan type required", e.t)
-  }
-  
   def chanRecv(chanM: M[Expr]) (implicit pos: Pos): M[Expr] =
     for (chan <- chanM; t <- recvChanT(chan))
     yield BasicExpr(chan.eval |+| ChanRecv, t)
@@ -130,7 +121,7 @@ private trait BasicCombinators extends Combinators with ArithmeticTypeChecks {
     
     case _ => Problem("callee has type %s; function type required", callee.t)
   }
-  def call(calleeM: M[Expr], argsM: M[List[Expr]]) (implicit pos: Pos): M[Expr] = for {
+  def invoke(calleeM: M[Expr], argsM: M[List[Expr]]) (implicit pos: Pos): M[Expr] = for {
     callee <- calleeM
     args <- argsM
     resultT <- checkCall(callee, args)
