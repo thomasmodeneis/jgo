@@ -13,6 +13,8 @@ private object BoolExpr {
       case j: Jump => j
       case Fall    => Jump(end)
     }
+    
+    def isJump = this.isInstanceOf[Jump]
   }
   
   case class  Jump(lbl: Label) extends Target
@@ -25,22 +27,29 @@ import BoolExpr._
 sealed abstract class BoolExpr extends Expr {
   val typeOf            = BoolType
   override def callable = false
-  def eval = Return //placeholder
+  def eval = pushBool(true, Fall)
   
-  private[expr] def code(trueBr: Target, falseBr: Target):  CodeBuilder
-  //private[expr] def push(pairity: Boolean, end: Target): CodeBuilder
+  private[expr] def branch(trueBr: Target, falseBr: Target): CodeBuilder
+  
+  private[expr] def pushBool(parity: Boolean, end: Target): CodeBuilder = {
+    val g    = new LabelGroup
+    val tLbl = new Label("push parity", g)
+    val fLbl = new Label("push !parity", g)
+    
+    branch(tLbl, Fall) |+| Lbl(fLbl) |+| PushBool(true)
+  }
   
   def branchTo(lbl: Label): CodeBuilder = {
     val g   = new LabelGroup
     val end = new Label("end branchTo", g)
-    code(lbl, Fall)
+    branch(lbl, Fall)
   }
   
   def mkIf(ifBranch: CodeBuilder): CodeBuilder = {
     val g   = new LabelGroup
     val end = new Label("end if", g)
     val t   = new Label("if branch", g)
-    code(Fall, end) |+| Lbl(t) |+| ifBranch |+| Lbl(end)
+    branch(Fall, end) |+| Lbl(t) |+| ifBranch |+| Lbl(end)
   }
   
   def mkIfElse(ifBranch: CodeBuilder, elseBranch: CodeBuilder): CodeBuilder = {
@@ -48,7 +57,7 @@ sealed abstract class BoolExpr extends Expr {
     val end = new Label("end if-else", g)
     val t   = new Label("if branch", g)
     val f   = new Label("else branch", g)
-    code(t, Fall) |+| Lbl(f) |+| elseBranch |+| Goto(end) |+| Lbl(t) |+| ifBranch |+| Lbl(end)
+    branch(t, Fall) |+| Lbl(f) |+| elseBranch |+| Goto(end) |+| Lbl(t) |+| ifBranch |+| Lbl(end)
   }
   
   def mkWhile(loopBody: CodeBuilder): CodeBuilder = {
@@ -58,33 +67,33 @@ sealed abstract class BoolExpr extends Expr {
     val cond = new Label("cond of loop", g)
     Goto(cond) |+|
     Lbl(top)   |+| loopBody |+|
-    Lbl(cond)  |+| code(top, Fall) |+|
+    Lbl(cond)  |+| branch(top, Fall) |+|
     Lbl(end)
   }
 }
 
 private case class Not(b: BoolExpr) extends BoolExpr {
-  def code(trueBr: Target, falseBr: Target): CodeBuilder =
-    b.code(falseBr, trueBr)
+  def branch(trueBr: Target, falseBr: Target): CodeBuilder =
+    b.branch(falseBr, trueBr)
 }
 
 private case class And(b1: BoolExpr, b2: BoolExpr) extends BoolExpr {
-  def code(trueBr: Target, falseBr: Target): CodeBuilder = {
+  def branch(trueBr: Target, falseBr: Target): CodeBuilder = {
     val g    = new LabelGroup
     val btwn = new Label("between and", g)
     val end  = new Label("end and", g)
     
-    b1.code(Fall, falseBr.replaceFall(end)) |+| Lbl(btwn) |+| b2.code(trueBr, falseBr)
+    b1.branch(Fall, falseBr.replaceFall(end)) |+| Lbl(btwn) |+| b2.branch(trueBr, falseBr)
   }
 }
 
 private case class Or(b1: BoolExpr, b2: BoolExpr) extends BoolExpr {
-  def code(trueBr: Target, falseBr: Target): CodeBuilder = {
+  def branch(trueBr: Target, falseBr: Target): CodeBuilder = {
     val g    = new LabelGroup
     val btwn = new Label("between or", g)
     val end  = new Label("end or", g)
     
-    b1.code(trueBr.replaceFall(end), Fall) |+| Lbl(btwn) |+| b2.code(trueBr, falseBr)
+    b1.branch(trueBr.replaceFall(end), Fall) |+| Lbl(btwn) |+| b2.branch(trueBr, falseBr)
   }
 }
 
@@ -93,7 +102,7 @@ private sealed abstract class CompExpr(comp: Comparison) extends BoolExpr {
   
   private val stackingCode = e1.eval |+| e2.eval
   
-  private[expr] def code(trueBr: Target, falseBr: Target): CodeBuilder = (trueBr, falseBr) match {
+  private[expr] def branch(trueBr: Target, falseBr: Target): CodeBuilder = (trueBr, falseBr) match {
     case (Jump(tLbl), Jump(fLbl)) => e1.eval |+| e2.eval |+| Branch(comp, tLbl) |+| Goto(fLbl)
     case (Jump(tLbl), Fall)       => e1.eval |+| e2.eval |+| Branch(comp, tLbl)
     case (Fall,       Jump(fLbl)) => e1.eval |+| e2.eval |+| Branch(IfNot(comp), fLbl)
