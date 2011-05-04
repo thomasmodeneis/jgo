@@ -7,20 +7,13 @@ package types
  * A marker trait that indicates that this type can be the type
  * of a compile-time constant.
  */
-trait Constable extends Type
+trait ConstableType extends Type
 
 /**
- * A marker trait that signifies that the value in question is
- * a compile-time constant.
+ * A "type" for items (int literals, for example) whose effective
+ * type is dependent on their value.
  */
-trait ConstType extends Type {
-  self: Constable =>
-}
-
-/**
- * 
- */
-trait UntypedConst extends Constable with ConstType { //how oxymoronic!
+trait UntypedConstType extends Constable { //how oxymoronic!
   /**
    * Indicates whether this particular constant value
    * can fit in the specified type.

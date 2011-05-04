@@ -2,7 +2,7 @@ package jgo.compiler
 package interm
 package types
 
-sealed trait BuiltinType extends Type with Constable
+sealed trait BuiltinType extends Type with ConstableType
 
 case object IntType  extends TypeName("int",  Int32)  with BuiltinType
 case object UintType extends TypeName("uint", Uint32) with BuiltinType
