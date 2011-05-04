@@ -35,13 +35,13 @@ case object Float64 extends NumericType { val name = "float64" }
 case object Complex64  extends NumericType { val name = "complex64" } //or BuiltinType?
 case object Complex128 extends NumericType { val name = "complex128" }
 
-sealed trait BuiltinRefType extends Type with Constable {
+sealed trait BuiltinRefType extends Type with ConstableType {
   val semantics = Reference
 }
 
 case object StringType extends BuiltinRefType //or Primitive...?
                           with AddableType
-                          with Nilable
+                          with NilableType
                           with Named {
   val name = "string"
   override def toString = "string"

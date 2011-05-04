@@ -2,7 +2,7 @@ package jgo.compiler
 package interm
 package types
 
-case class FuncType(params: List[Type], results: List[Type], isVariadic: Boolean) extends Type with Nilable {
+case class FuncType(params: List[Type], results: List[Type], isVariadic: Boolean) extends Type with NilableType {
   /**
    * not sure what is existentially appropriate here,
    * but this has the correct codegen implications because

@@ -17,7 +17,7 @@ object SendChanType {
 }
 
 case class ChanType(elemType: Type, canRecv: Boolean = true, canSend: Boolean = true)
-extends Type with Nilable {
+extends Type with NilableType {
   require(canRecv || canSend, "implementation error: ChanType that can neither send nor receive created")
   
   val semantics = Reference

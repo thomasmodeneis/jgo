@@ -19,11 +19,6 @@ trait Type extends Membered {
   val members: Map[String, Member] = Map()
   
   /**
-   * States whether this type is identical to the given type.
-   */
-  final def === (other: Type): Boolean = Type.identical(this, other)
-  
-  /**
    * States whether values of this type and values of the specified type are
    * comparable. Two types are said to have comparable values (colloquially,
    * two types are said to be comparable) if values of either type are
@@ -47,14 +42,11 @@ trait Type extends Membered {
 }
 
 object Type {
-  def identical(t1: Type, t2: Type): Boolean = (t1, t2) match {
-    case (TypeError, _) => true
-    case (_, TypeError) => true
-    case (a, b) => a == b
-  }
+  def identical(t1: Type, t2: Type): Boolean =
+    t1 == t2
   
   def canHold(t1: Type, t2: Type): Boolean =
-    identical(t1, t2) || //a TypeError is identical to any type, so...
+    identical(t1, t2) ||
     (
       !t1.isInstanceOf[TypeName] &&
       !t2.isInstanceOf[TypeName] && {
@@ -93,6 +85,6 @@ sealed abstract class Semantics
   case object Reference extends Semantics
   case object Primitive extends Semantics
 
-trait Nilable extends Type {
+trait NilableType extends Type {
   override val nilable: Boolean = true
 }

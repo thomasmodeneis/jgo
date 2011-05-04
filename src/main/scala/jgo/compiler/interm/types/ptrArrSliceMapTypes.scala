@@ -2,7 +2,7 @@ package jgo.compiler
 package interm
 package types
 
-case class PointerType(elemType: Type) extends Type with Nilable {
+case class PointerType(elemType: Type) extends Type with NilableType {
   override val isInterface = elemType.isInterface
   val          semantics   = Reference
   
@@ -15,13 +15,13 @@ case class ArrayType(length: Int, elemType: Type) extends Type {
   override def toString = "[" + length + "]" + elemType
 }
 
-case class SliceType(elemType: Type) extends Type with Nilable {
+case class SliceType(elemType: Type) extends Type with NilableType {
   val semantics = Reference
   
   override def toString = "[]" + elemType
 }
 
-case class MapType(keyType: Type, valueType: Type) extends Type with Nilable {
+case class MapType(keyType: Type, valueType: Type) extends Type with NilableType {
   val semantics = Reference
   
   override def toString = "map[" + keyType + "]" + valueType
