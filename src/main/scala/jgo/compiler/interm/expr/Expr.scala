@@ -27,7 +27,3 @@ trait Expr extends Typed {
   private[expr] def mkCall(args: List[Expr], resultT: Type): Expr =
     BasicExpr((args foldLeft eval) { _ |+| _.eval } |+| InvokeLambda(funcType.get), resultT)
 }
-
-object Expr {
-  def apply(eval: => CodeBuilder, t: Type): Expr = new BasicExpr(eval, t)
-}

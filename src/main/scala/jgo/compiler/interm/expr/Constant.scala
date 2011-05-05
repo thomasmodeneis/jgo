@@ -9,19 +9,19 @@ import codeseq._
 
 import PartialFunction._
 
-private sealed abstract class ConstExpr extends Expr {
+sealed abstract class Constant extends Expr {
+  
 }
 
-private sealed abstract class UntypedConst extends ConstExpr {
-  val typeOf: UntypedConstType
+private case class UntypedNumericConst(value: BigDecimal) extends Constant {
   def eval =
     throw new UnsupportedOperationException("Impl error: attempting to call eval on an UntypedConst")
-}
-
-private case class UntypedIntConst(value: BigInt) extends UntypedConst {
+  
   val typeOf = new UntypedConstType {
-    private def bounded(low: BigInt, high: BigInt) =
+    private def bounded(low: BigDecimal, high: BigDecimal) =
       (low <= value) && (value <= high)
+    
+    private def 
     
     def canFitIn(t: BuiltinType) = cond(t) {
       case Int8  => value.isValidByte
@@ -35,13 +35,30 @@ private case class UntypedIntConst(value: BigInt) extends UntypedConst {
       case Uint64 => bounded(0, (1 << 64) - 1)
       
       case Float32 => value.floatValue.isInfinite //Float.MinValue <= value && value <=  Float.MaxValue
-      case Float64 => value.floatValue.isInfinite //Double.MinValue <= value && value <= Double.MaxValue
+      case Float64 => value.doubleValue.isInfinite //Double.MinValue <= value && value <= Double.MaxValue
+      
+      case Complex64  => value.floatValue.isInfinite
+      case Complex128 => value.doubleValue.isInfinite
+      
     }
+    
+    /*
+    def withType(newType: NumericType): M[Constant] = newType match {
+      
+    }
+    */
     
     val semantics = Primitive
   }
 }
 
-private case class IntConstExpr(value: BigInt, typeOf: IntegralType) extends ConstExpr {
-  def eval = IntConst(value.toLong, typeOf)
+private sealed abstract class TypedConst {
+  val typeOf: ConstableType
 }
+
+private case class IntegralConst(value: Long, typeOf: IntegralType) extends Constant {
+  def eval = IntConst(value, typeOf)
+  val semantics  = Primitive
+}
+
+private case class FloatingPtConst(value: Double
