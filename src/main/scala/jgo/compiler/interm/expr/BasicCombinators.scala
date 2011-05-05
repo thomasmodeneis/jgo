@@ -99,7 +99,7 @@ private trait BasicCombinators extends Combinators with TypeChecks {
     t <- sendChanT(chan)
     e <- eM
     _ <- if (t <<= e.t) Result(())
-         else Problem("type %s of right operand of channel send not assignable to element type of left operand",
+         else Problem("type %s of right operand of channel send not assignable to element type %s of left operand",
                       e.t, t)
   } yield chan.eval |+| e.eval |+| ChanSend
   
