@@ -27,7 +27,7 @@ private case class UntypedIntConst(value: BigInt) extends UntypedConst {
       case Int8  => value.isValidByte
       case Int16 => value.isValidShort
       case Int32 => value.isValidInt
-      case Int64 => (BigInt.MinLong <= value && value <= BigInt.MaxLong)
+      case Int64 => bounded(Long.MinValue, Long.MaxValue)
       
       case Uint8  => bounded(0, 255)
       case Uint16 => bounded(0, (1 << 16) - 1)
