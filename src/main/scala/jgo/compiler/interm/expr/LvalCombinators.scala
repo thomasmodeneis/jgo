@@ -22,13 +22,11 @@ private trait LvalCombinators extends Combinators with TypeChecks {
     else Problem("addressable expression expected for %s", desc)
   
   
-  def addrOf(eM: M[Expr]) (implicit pos: Pos): M[Expr] = for {
-    e <- eM
+  def addrOf(e: Expr) (implicit pos: Pos): M[Expr] = for {
     p <- mkPtr(e, "operand")
   } yield p
   
-  def deref(eM: M[Expr]) (implicit pos: Pos): M[PtrDerefLval] = for {
-    e   <- eM
+  def deref(e: Expr) (implicit pos: Pos): M[PtrDerefLval] = for {
     res <- e match {
       case HasType(PointerType(elemT)) => Result(PtrDerefLval(e, elemT))
       case _ =>
@@ -36,7 +34,7 @@ private trait LvalCombinators extends Combinators with TypeChecks {
     }
   } yield res
   
-  def select(objM: M[Expr], selector: String) (implicit pos: Pos): M[Expr]
+  //def select(obj: Expr, selector: String) (implicit pos: Pos): M[Expr]
   
   
   private def mkIndex(arr: Expr, indx: Expr) (implicit pos: Pos) = {
@@ -60,14 +58,12 @@ private trait LvalCombinators extends Combinators with TypeChecks {
         )
     }
   }
-  def index(arrM: M[Expr], indxM: M[Expr]) (implicit pos: Pos): M[Expr] = for {
-    (arr, indx) <- together(arrM, indxM)
+  def index(arr: Expr, indx: Expr) (implicit pos: Pos): M[Expr] = for {
     result <- mkIndex(arr, indx)
   } yield result
   
-  def slice(arrM: M[Expr], lowM: M[Option[Expr]], highM: M[Option[Expr]]) (implicit pos: Pos): M[Expr] =
+  def slice(arr: Expr, low: Option[Expr], high: Option[Expr]) (implicit pos: Pos): M[Expr] =
     for {
-      (arr, low, high) <- together(arrM, lowM, highM)
       _ <- together(
         for (l <- low)  yield integral(l, "lower bound of slice"), //these Option[M[Expr]]'s are implicitly
         for (h <- high) yield integral(h, "upper bound of slice")  //converted to M[Option[Expr]]'s
@@ -86,8 +82,7 @@ private trait LvalCombinators extends Combinators with TypeChecks {
       }
     } yield result
   
-  def incr(eM: M[Expr]) (implicit pos: Pos): M[CodeBuilder] = for {
-    e <- eM
+  def incr(e: Expr) (implicit pos: Pos): M[CodeBuilder] = for {
     l <- lval(e, "operand of ++")
     intT <- integral(l, "operand of ++")
   } yield l match {
@@ -95,8 +90,7 @@ private trait LvalCombinators extends Combinators with TypeChecks {
     case _ => l.store(l.load |+| IntConst(1, intT) |+| Add(intT))
   }
   
-  def decr(eM: M[Expr]) (implicit pos: Pos): M[CodeBuilder] = for {
-    e <- eM
+  def decr(e: Expr) (implicit pos: Pos): M[CodeBuilder] = for {
     l <- lval(e, "operand of --")
     intT <- integral(l, "operand of --")
   } yield l match {
@@ -144,8 +138,7 @@ private trait LvalCombinators extends Combinators with TypeChecks {
         )
     Result(())
   }
-  def assign(leftM: M[List[Expr]], rightM: M[List[Expr]]) (implicit pos: Pos): M[CodeBuilder] = for {
-    (left0, right) <- together(leftM, rightM)
+  def assign(left0: List[Expr], right: List[Expr]) (implicit pos: Pos): M[CodeBuilder] = for {
     left <- lvalues(left0, "left side of assignment")
     pairs <- zipAndCheckArity(left, right)
     _ <- checkAssignability(pairs)
