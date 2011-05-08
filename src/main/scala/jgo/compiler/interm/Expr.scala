@@ -46,6 +46,7 @@ object Expr {
   }
 }
 
+@deprecated("Use interm.expr.Expr instead")
 sealed abstract class Expr extends Typed {
   /**
    * Provides the code necessary for computing the value
