@@ -2,6 +2,9 @@ package jgo.compiler
 package interm
 package expr
 
+import message._
+import message.Messaged._
+
 import types._
 import instr._
 import instr.TypeConversions._
@@ -176,7 +179,7 @@ private trait ConstCombinators extends Combinators with ConstTypeCheckOverrides 
   }
   //def shiftL(e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr]
   //def shiftR(e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr]
-  def bitCompl(e: Expr) (implicit pos: Pos) = e match {
+  abstract override def bitCompl(e: Expr) (implicit pos: Pos) = e match {
     case IntConst(i) => IntConst(~i)
     case _ => super.bitCompl(e)
   }

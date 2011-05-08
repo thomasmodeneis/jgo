@@ -14,11 +14,11 @@ import Utils._
 
 private trait BoolCombinators extends Combinators with TypeChecks {
   def and(e1: Expr, e2: Expr) (implicit pos: Pos) = for {
-    (b1, b2) <- sameBoolExpr(e1, e2, "left operand", "right operand")
+    (b1, b2) <- sameBoolExpr(e1, e2)
   } yield new And(b1, b2)
   
   def or(e1: Expr, e2: Expr) (implicit pos: Pos) = for {
-    (b1, b2) <- sameBoolExpr(e1, e2, "left operand", "right operand")
+    (b1, b2) <- sameBoolExpr(e1, e2)
   } yield new Or(b1, b2)
   
   def not(e: Expr) (implicit pos: Pos) = for {
@@ -27,7 +27,7 @@ private trait BoolCombinators extends Combinators with TypeChecks {
   
   
   def compEq(e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr] = for {
-    t <- sameType(e1, e2, "left operand", "right operand")
+    t <- sameType(e1, e2)
   } yield t match {
     case BoolType => BoolEquals(e1, e2)
     case nt: NumericType => NumEquals(e1, e2, nt)
@@ -35,7 +35,7 @@ private trait BoolCombinators extends Combinators with TypeChecks {
   }
   
   def compNe(e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr] = for {
-    t <- sameType(e1, e2, "left operand", "right operand")
+    t <- sameType(e1, e2)
   } yield t match {
     case BoolType => BoolNotEquals(e1, e2)
     case nt: NumericType => NumNotEquals(e1, e2, nt)
@@ -43,20 +43,19 @@ private trait BoolCombinators extends Combinators with TypeChecks {
   }
   
   
-  def compLt(e1: Expr, e2: Expr) (implicit pos: Pos) = for {
-    nt <- sameNumeric(e1, e2, "left operand", "right operand")
-  } yield LessThan(e1, e2, nt)
+  def compLt(e1: Expr, e2: Expr) (implicit pos: Pos) =
+    for ((e1n, e2n, nt) <- sameNumeric(e1, e2))
+    yield LessThan(e1n, e2n, nt)
   
-  def compLeq(e1: Expr, e2: Expr) (implicit pos: Pos) = for {
-    nt <- sameNumeric(e1, e2, "left operand", "right operand")
-  } yield LessEquals(e1, e2, nt)
+  def compLeq(e1: Expr, e2: Expr) (implicit pos: Pos) =
+    for ((e1n, e2n, nt) <- sameNumeric(e1, e2))
+    yield LessEquals(e1n, e2n, nt)
   
-  def compGt(e1: Expr, e2: Expr) (implicit pos: Pos) = for {
-    nt <- sameNumeric(e1, e2, "left operand", "right operand")
-  } yield GreaterThan(e1, e2, nt)
+  def compGt(e1: Expr, e2: Expr) (implicit pos: Pos) =
+    for ((e1n, e2n, nt) <- sameNumeric(e1, e2))
+    yield GreaterThan(e1n, e2n, nt)
   
-  def compGeq(e1: Expr, e2: Expr) (implicit pos: Pos) = for {
-    nt <- sameNumeric(e1, e2, "left operand", "right operand")
-  } yield GreaterEquals(e1, e2, nt)
-  
+  def compGeq(e1: Expr, e2: Expr) (implicit pos: Pos) =
+    for ((e1n, e2n, nt) <- sameNumeric(e1, e2))
+    yield GreaterEquals(e1n, e2n, nt)
 }

@@ -70,6 +70,18 @@ sealed abstract class BoolExpr extends Expr {
   }
 }
 
+private class BoolValueExpr(evalCode: => CodeBuilder) extends BoolExpr {
+  override def eval = evalCode
+  
+  def branch(t: Target, f: Target) = (t, f) match {
+    case (Jump(tLbl), Jump(fLbl)) => evalCode |+| Branch(IsTrue, tLbl) |+| Goto(fLbl)
+    case (Jump(tLbl), Fall)       => evalCode |+| Branch(IsTrue, tLbl)
+    case (Fall,       Jump(fLbl)) => evalCode |+| Branch(IfNot(IsTrue), fLbl)
+    
+    case (Fall, Fall) => throw new AssertionError("impl error: no reason why both branches should be Fall")
+  }
+}
+
 private class Not(b: BoolExpr) extends BoolExpr {
   def branch(trueBr: Target, falseBr: Target): CodeBuilder =
     b.branch(falseBr, trueBr)
@@ -85,7 +97,7 @@ private class And(b1: BoolExpr, b2: BoolExpr) extends BoolExpr {
   }
 }
 
-private case class Or(b1: BoolExpr, b2: BoolExpr) extends BoolExpr {
+private class Or(b1: BoolExpr, b2: BoolExpr) extends BoolExpr {
   def branch(trueBr: Target, falseBr: Target): CodeBuilder = {
     val g    = new LabelGroup
     val btwn = new Label("between or", g)

@@ -41,7 +41,7 @@ sealed abstract class Check      extends SimpleTest(1)
 
 
 case object IsTrue  extends Check { val t = Bool; def name = "is true"  }
-case object IsFalse extends Check { val t = Bool; def name = "is false" }
+//case object IsFalse extends Check { val t = Bool; def name = "is false" }
 
 case object BoolEq extends Comparison { val t = Bool; def name = "==" }
 case object BoolNe extends Comparison { val t = Bool; def name = "!=" }

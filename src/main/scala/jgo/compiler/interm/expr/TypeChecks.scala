@@ -45,7 +45,7 @@ private trait TypeChecks {
   }
   
   
-  protected def sameType(e1: Expr, e2: Expr, d1: String, d2: String) (implicit pos: Pos): M[Type] =
+  protected def sameType(e1: Expr, e2: Expr) (implicit pos: Pos): M[Type] =
     if (e1.t == e2.t)
       Result(e1.t)
     else
@@ -85,10 +85,10 @@ private trait TypeChecks {
   
   protected def recvChanT(e: Expr, desc: String) (implicit pos: Pos): M[(Expr, Type)] = e match {
     case HasType(RecvChanType(t)) => Result(e, t)
-    case _ => Problem("%s has type %s; receiving chan type required", e.t)
+    case _ => Problem("%s has type %s; receiving chan type required", desc, e.t)
   }
-  protected def sendChanT(e: Expr) (implicit pos: Pos): M[(Expr, Type)] = e match {
+  protected def sendChanT(e: Expr, desc: String) (implicit pos: Pos): M[(Expr, Type)] = e match {
     case HasType(SendChanType(t)) => Result(e, t)
-    case _ => Problem("%s has type %s; sending chan type required", e.t)
+    case _ => Problem("%s has type %s; sending chan type required", desc, e.t)
   }
 }

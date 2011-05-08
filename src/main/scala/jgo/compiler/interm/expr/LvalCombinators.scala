@@ -84,7 +84,7 @@ private trait LvalCombinators extends Combinators with TypeChecks {
   
   def incr(e: Expr) (implicit pos: Pos): M[CodeBuilder] = for {
     l <- lval(e, "operand of ++")
-    intT <- integral(l, "operand of ++")
+    (_, intT) <- integral(l, "operand of ++") //NOTE:  Need to fix this; an "intLval" check needed
   } yield l match {
     case VarLval(vr) => Incr(vr, 1, intT)
     case _ => l.store(l.load |+| PushInt(1, intT) |+| Add(intT))
@@ -92,7 +92,7 @@ private trait LvalCombinators extends Combinators with TypeChecks {
   
   def decr(e: Expr) (implicit pos: Pos): M[CodeBuilder] = for {
     l <- lval(e, "operand of --")
-    intT <- integral(l, "operand of --")
+    (_, intT) <- integral(l, "operand of --")
   } yield l match {
     case VarLval(vr) => Decr(vr, 1, intT)
     case _ => l.store(l.load |+| PushInt(1, intT) |+| Sub(intT))

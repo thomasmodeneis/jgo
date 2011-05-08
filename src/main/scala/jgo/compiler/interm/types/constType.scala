@@ -26,6 +26,8 @@ trait UntypedConstType extends ConstableType { //how oxymoronic!
    * type if ''T'' itself is any untyped-constant-type.
    */
   override def equals(other: Any) = other.isInstanceOf[UntypedConstType]
+  
+  val semantics = Primitive //I should probably remove this field...
 }
 
 /**
