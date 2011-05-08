@@ -20,21 +20,21 @@ private trait BasicCombinators extends Combinators with TypeChecks {
     case t: NumericType => BasicExpr(e1.eval |+| e2.eval |+| Add(t), e1.t)
   }
     
-  def minus(e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr] = for {
-    ut <- sameNumeric(e1, e2, "left operand", "right operand")
-  } yield BasicExpr(e1.eval |+| e2.eval |+| Sub(ut), e1.t)
+  def minus(e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr] =
+    for { (e1n, e2n, nt) <- sameNumeric(e1, e2, "left operand", "right operand") }
+    yield BasicExpr(e1n.eval |+| e2n.eval |+| Sub(nt), e1n.t)
   
-  def times(e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr] = for {
-    ut <- sameNumeric(e1, e2, "left operand", "right operand")
-  } yield BasicExpr(e1.eval |+| e2.eval |+| Mul(ut), e1.t)
+  def times(e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr] = 
+    for { (e1n, e2n, nt) <- sameNumeric(e1, e2, "left operand", "right operand") }
+    yield BasicExpr(e1n.eval |+| e2n.eval |+| Mul(nt), e1.t)
   
-  def div(e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr] = for {
-    ut <- sameNumeric(e1, e2, "left operand", "right operand")
-  } yield BasicExpr(e1.eval |+| e2.eval |+| Div(ut), e1.t)
+  def div(e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr] = 
+    for { (e1n, e2n, nt) <- sameNumeric(e1, e2, "left operand", "right operand") }
+    yield BasicExpr(e1n.eval |+| e2n.eval |+| Div(nt), e1.t)
   
-  def mod(e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr] = for {
-    ut <- sameIntegral(e1, e2, "left operand", "right operand")
-  } yield BasicExpr(e1.eval |+| e2.eval |+| Mod(ut), e1.t)
+  def mod(e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr] = 
+    for { (e1i, e2i, it) <- sameIntegral(e1, e2, "left operand", "right operand") }
+    yield BasicExpr(e1i.eval |+| e2i.eval |+| Mod(it), e1.t)
   
   def pos(e: Expr) (implicit pos: Pos): M[Expr] = for {
     _ <- numeric(e, "operand of unary +")
