@@ -12,7 +12,7 @@ import codeseq._
 
 import Utils._
 
-private trait BasicCombinators extends Combinators with TypeChecks {
+trait BasicCombinators extends Combinators with TypeChecks {
   def plus(e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr] =
     for ((e1a, e2a, at) <- sameAddable(e1, e2))
     yield at match {

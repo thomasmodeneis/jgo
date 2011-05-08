@@ -2,7 +2,10 @@ package jgo.compiler
 package parser.exprs
 
 import parser.types._
-import interm._
+import message.Messaged._
+//import interm._
+import interm.expr._
+import interm.expr.Expr
 import interm.types._
 import codeseq._
 import instr._
@@ -10,60 +13,72 @@ import instr.TypeConversions._
 import bool._
 
 trait Expressions extends PrimaryExprs with ExprUtils {
-  lazy val expression: PP[Expr] =                       "expression" $
+  private implicit def convBinary(f: (Expr, Expr) => Pos => M[Expr]): (M[Expr], Pos, M[Expr]) => M[Expr] =
+    (e1M, p, e2M) => for {
+      (e1, e2) <- together(e1M, e2M)
+      res <- f(e1, e2)(p)
+    } yield res
+  
+  private implicit def convUnary(f: Expr => Pos => M[Expr]): (Pos, M[Expr]) => M[Expr] =
+    (p, eM) => for {
+      e <- eM
+      res <- f(e)(p)
+    } yield res
+  
+  lazy val expression: PPM[Expr] =                       "expression" $
     orExpr
   
-  lazy val orExpr: PP[Expr] =                //"or-expression: prec 1" $
-    ( orExpr ~ ("||" ~> andExpr)   ^^ or
+  lazy val orExpr: PPM[Expr] =                "or-expression: prec 1" $
+    ( orExpr ~ pos("||") ~ andExpr   ^^ or
     | andExpr
     )
   
-  lazy val andExpr: PP[Expr] =              "and-expression: prec 2" $
-    ( andExpr ~ ("&&" ~> relExpr)  ^^ and
+  lazy val andExpr: PPM[Expr] =              "and-expression: prec 2" $
+    ( andExpr ~ pos("&&") ~ relExpr  ^^ and
     | relExpr
     )
   
-  lazy val relExpr: PP[Expr] =       "relational expression: prec 3" $
-    ( relExpr ~ ("==" ~> addExpr)  ^^ compEq
-    | relExpr ~ ("!=" ~> addExpr)  ^^ compNe
-    | relExpr ~ ("<"  ~> addExpr)  ^^ lt
-    | relExpr ~ ("<=" ~> addExpr)  ^^ le
-    | relExpr ~ (">"  ~> addExpr)  ^^ gt
-    | relExpr ~ (">=" ~> addExpr)  ^^ ge
+  lazy val relExpr: PPM[Expr] =       "relational expression: prec 3" $
+    ( relExpr ~ pos("==") ~ addExpr  ^^ compEq
+    | relExpr ~ pos("!=") ~ addExpr  ^^ compNe
+    | relExpr ~ pos("<")  ~ addExpr  ^^ lt
+    | relExpr ~ pos("<=") ~ addExpr  ^^ le
+    | relExpr ~ pos(">")  ~ addExpr  ^^ gt
+    | relExpr ~ pos(">=") ~ addExpr  ^^ ge
     | addExpr
     )
   
-  lazy val addExpr: PP[Expr] =         "additive expression: prec 4" $
-    ( addExpr ~ ("+" ~> multExpr)  ^^ plus
-    | addExpr ~ ("-" ~> multExpr)  ^^ minus
-    | addExpr ~ ("|" ~> multExpr)  ^^ bitOr
-    | addExpr ~ ("^" ~> multExpr)  ^^ bitXor
+  lazy val addExpr: PPM[Expr] =         "additive expression: prec 4" $
+    ( addExpr ~ pos("+") ~ multExpr  ^^ plus
+    | addExpr ~ pos("-") ~ multExpr  ^^ minus
+    | addExpr ~ pos("|") ~ multExpr  ^^ bitOr
+    | addExpr ~ pos("^") ~ multExpr  ^^ bitXor
     | multExpr
     )
   
-  lazy val multExpr: PP[Expr] =  "multiplicative expression: prec 5" $
-    ( multExpr ~ ("*"  ~> unaryExpr)  ^^ times
-    | multExpr ~ ("/"  ~> unaryExpr)  ^^ div
-    | multExpr ~ ("%"  ~> unaryExpr)  ^^ mod
-    | multExpr ~ ("<<" ~> unaryExpr)  ^^ shiftl
-    | multExpr ~ (">>" ~> unaryExpr)  ^^ shiftr
-    | multExpr ~ ("&"  ~> unaryExpr)  ^^ bitAnd
-    | multExpr ~ ("&^" ~> unaryExpr)  ^^ bitAndNot
+  lazy val multExpr: PPM[Expr] =  "multiplicative expression: prec 5" $
+    ( multExpr ~ pos("*")  ~ unaryExpr  ^^ times
+    | multExpr ~ pos("/")  ~ unaryExpr  ^^ div
+    | multExpr ~ pos("%")  ~ unaryExpr  ^^ mod
+    | multExpr ~ pos("<<") ~ unaryExpr  ^^ shiftl
+    | multExpr ~ pos(">>") ~ unaryExpr  ^^ shiftr
+    | multExpr ~ pos("&")  ~ unaryExpr  ^^ bitAnd
+    | multExpr ~ pos("&^") ~ unaryExpr  ^^ bitAndNot
     | unaryExpr
     )
   
-  lazy val unaryExpr: PP[Expr] =          "unary expression: prec 6" $
-    (("+"  ~> unaryExpr) ^^ pos
-    | "-"  ~> unaryExpr  ^^ neg
-    | "^"  ~> unaryExpr  ^^ compl
-    | "!"  ~> unaryExpr  ^^ not
-    | "<-" ~> unaryExpr  ^^ chanRecv
-    | "&"  ~> unaryExpr  //^^# (AddrOf(_))
-    | "*"  ~> unaryExpr  //^^ deref
+  lazy val unaryExpr: PPM[Expr] =          "unary expression: prec 6" $
+    ( pos("+")  ~ unaryExpr  ^^ pos
+    | pos("-")  ~ unaryExpr  ^^ neg
+    | pos("^")  ~ unaryExpr  ^^ compl
+    | pos("!")  ~ unaryExpr  ^^ not
+    | pos("<-") ~ unaryExpr  ^^ chanRecv
+    | pos("&")  ~ unaryExpr  //^^# (AddrOf(_))
+    | pos("*")  ~ unaryExpr  //^^ deref
     | primaryExpr
     )
     
-  lazy val exprList: P[List[Expr]] =               "expression list" $
+  lazy val exprList: PM[List[Expr]] =               "expression list" $
     rep1sep(expression, ",")
   
   

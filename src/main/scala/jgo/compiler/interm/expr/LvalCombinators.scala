@@ -12,7 +12,7 @@ import codeseq._
 
 import Utils._
 
-private trait LvalCombinators extends Combinators with TypeChecks {
+trait LvalCombinators extends Combinators with TypeChecks {
   private def lval(e: Expr, desc: String) (implicit pos: Pos): M[LvalExpr] = e match {
     case l: LvalExpr => Result(l)
     case _ => Problem("lvalue expected for %s", desc)
@@ -26,7 +26,7 @@ private trait LvalCombinators extends Combinators with TypeChecks {
     p <- mkPtr(e, "operand")
   } yield p
   
-  def deref(e: Expr) (implicit pos: Pos): M[PtrDerefLval] = for {
+  def deref(e: Expr) (implicit pos: Pos): M[Expr] = for {
     res <- e match {
       case HasType(PointerType(elemT)) => Result(PtrDerefLval(e, elemT))
       case _ =>

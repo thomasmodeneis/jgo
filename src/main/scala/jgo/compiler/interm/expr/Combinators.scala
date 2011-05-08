@@ -61,4 +61,4 @@ trait Combinators {
     e.eval
 }
 
-object Combinators //extends Combinators
+object Combinators extends Combinators with BasicCombinators with BoolCombinators with LvalCombinators with ConstCombinators

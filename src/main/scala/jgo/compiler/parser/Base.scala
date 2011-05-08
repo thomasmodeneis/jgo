@@ -1,10 +1,11 @@
 package jgo.compiler
 package parser
 
-import combinatorExten._
-import message._
 //import lexer.{Scanner, Lexical}
+import message._
 import scope._
+
+import combinatorExten._
 
 import scala.util.parsing._
 import combinator._
@@ -14,8 +15,15 @@ import input.{Position, NoPosition}
 import scala.collection.mutable.ListBuffer
 
 trait Base extends Tokens with PackratParsers with FancyParsers with MessageHandling {
+  type Pos   = Position
+  type M[+T] = message.Messaged[T]
+  
   type P[+T]   = Parser       [T]
   type PP[+T]  = PackratParser[T]
+  
+  type PM[+T]  = Parser       [M[T]]
+  type PPM[+T] = PackratParser[M[T]]
+  
   type P_      = Parser       [Any]
   type PP_     = PackratParser[Any]
   

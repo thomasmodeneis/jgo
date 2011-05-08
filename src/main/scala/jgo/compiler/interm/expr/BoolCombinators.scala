@@ -12,16 +12,16 @@ import codeseq._
 
 import Utils._
 
-private trait BoolCombinators extends Combinators with TypeChecks {
-  def and(e1: Expr, e2: Expr) (implicit pos: Pos) = for {
+trait BoolCombinators extends Combinators with TypeChecks {
+  def and(e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr] = for {
     (b1, b2) <- sameBoolExpr(e1, e2)
   } yield new And(b1, b2)
   
-  def or(e1: Expr, e2: Expr) (implicit pos: Pos) = for {
+  def or(e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr] = for {
     (b1, b2) <- sameBoolExpr(e1, e2)
   } yield new Or(b1, b2)
   
-  def not(e: Expr) (implicit pos: Pos) = for {
+  def not(e: Expr) (implicit pos: Pos): M[Expr] = for {
     b <- boolExpr(e, "operand")
   } yield new Not(b)
   
@@ -43,19 +43,19 @@ private trait BoolCombinators extends Combinators with TypeChecks {
   }
   
   
-  def compLt(e1: Expr, e2: Expr) (implicit pos: Pos) =
+  def compLt(e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr] =
     for ((e1n, e2n, nt) <- sameNumeric(e1, e2))
     yield LessThan(e1n, e2n, nt)
   
-  def compLeq(e1: Expr, e2: Expr) (implicit pos: Pos) =
+  def compLeq(e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr] =
     for ((e1n, e2n, nt) <- sameNumeric(e1, e2))
     yield LessEquals(e1n, e2n, nt)
   
-  def compGt(e1: Expr, e2: Expr) (implicit pos: Pos) =
+  def compGt(e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr] =
     for ((e1n, e2n, nt) <- sameNumeric(e1, e2))
     yield GreaterThan(e1n, e2n, nt)
   
-  def compGeq(e1: Expr, e2: Expr) (implicit pos: Pos) =
+  def compGeq(e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr] =
     for ((e1n, e2n, nt) <- sameNumeric(e1, e2))
     yield GreaterEquals(e1n, e2n, nt)
 }

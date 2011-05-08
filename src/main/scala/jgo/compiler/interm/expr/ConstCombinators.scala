@@ -10,7 +10,7 @@ import instr._
 import instr.TypeConversions._
 import codeseq._
 
-private trait ConstCombinators extends Combinators with ConstTypeCheckOverrides {
+trait ConstCombinators extends Combinators with ConstTypeCheckOverrides {
   /*
   private def untypedToTyped(c: UntypedRealConst, t: RealType) (implicit pos: Pos) =
     if (c.canFitIn(t)) Result(TypedRealConst(c.value, t))

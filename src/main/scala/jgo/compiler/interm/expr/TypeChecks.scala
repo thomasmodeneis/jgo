@@ -10,7 +10,7 @@ import instr._
 import instr.TypeConversions._
 import codeseq._
 
-private trait TypeChecks {
+trait TypeChecks {
   protected def boolExpr(e: Expr, desc: String) (implicit pos: Pos): M[BoolExpr] = e match {
     case b: BoolExpr => Result(b)
     case HasType(BoolType) => Problem("%s has type %s; boolean newtypes not yet supported", desc, e.t)
