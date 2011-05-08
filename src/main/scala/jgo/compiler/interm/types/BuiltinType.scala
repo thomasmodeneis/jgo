@@ -14,8 +14,11 @@ sealed trait PrimitiveType extends BuiltinType with Named {
 
 sealed trait AddableType  extends BuiltinType
 sealed trait NumericType  extends PrimitiveType with AddableType
-sealed trait IntegralType extends NumericType
+sealed trait ComplexType  extends NumericType
+sealed trait RealType     extends NumericType
+sealed trait IntegralType extends RealType
 sealed trait UnsignedType extends IntegralType
+sealed trait FloatingType extends RealType
 
 case object BoolType extends PrimitiveType  { val name = "bool" }
 
@@ -29,11 +32,11 @@ case object Int16 extends IntegralType { val name = "int16" }
 case object Int32 extends IntegralType { val name = "int32" }
 case object Int64 extends IntegralType { val name = "int64" }
 
-case object Float32 extends NumericType { val name = "float32" }
-case object Float64 extends NumericType { val name = "float64" }
+case object Float32 extends FloatingType { val name = "float32" }
+case object Float64 extends FloatingType { val name = "float64" }
 
-case object Complex64  extends NumericType { val name = "complex64" } //or BuiltinType?
-case object Complex128 extends NumericType { val name = "complex128" }
+case object Complex64  extends ComplexType { val name = "complex64" } //or BuiltinType?
+case object Complex128 extends ComplexType { val name = "complex128" }
 
 sealed trait BuiltinRefType extends Type with ConstableType {
   val semantics = Reference

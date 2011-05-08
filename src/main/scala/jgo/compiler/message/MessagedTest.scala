@@ -21,7 +21,7 @@ object MessagedTest {
   
   def test1: M[Expr] = {
     val e1M: M[Expr] = Problem("operands of * have differing types int and int32")
-    val e2M: M[Expr] = SimpleExpr(IntConst(2, I32), Int32)
+    val e2M: M[Expr] = SimpleExpr(PushInt(2, I32), Int32)
     
     plus(e1M, e2M)
   }

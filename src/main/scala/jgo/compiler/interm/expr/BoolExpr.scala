@@ -13,7 +13,6 @@ private object BoolExpr {
       case j: Jump => j
       case Fall    => Jump(end)
     }
-    
     def isJump = this.isInstanceOf[Jump]
   }
   
@@ -35,7 +34,7 @@ sealed abstract class BoolExpr extends Expr {
     val tr  = new Label("push true", g)
     val end = new Label("end of push bool", g)
     
-    branch(tr, Fall) |+| BoolConst(false) |+| Goto(end) |+| Lbl(tr) |+| BoolConst(true) |+| Lbl(end)
+    branch(tr, Fall) |+| PushBool(false) |+| Goto(end) |+| Lbl(tr) |+| PushBool(true) |+| Lbl(end)
   }
   
   def branchTo(lbl: Label): CodeBuilder = {

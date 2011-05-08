@@ -85,10 +85,6 @@ case class DummyLval(typeOf: Type) extends LvalExpr {
 
 case class SimpleExpr(eval: CodeBuilder, typeOf: Type) extends Expr
 
-case class IntConstExpr(value: BigInt, typeOf: IntegralType) extends Expr {
-  def eval = IntConst(value.toLong, typeOf)
-}
-
 case class FuncExpr(f: Function) extends Expr {
   val typeOf = f.typeOf
   override def callable = true

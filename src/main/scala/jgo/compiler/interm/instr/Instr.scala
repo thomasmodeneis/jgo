@@ -87,9 +87,10 @@ case class BitwiseCompl(t: Integral)    extends Instr
 case class Incr(v: Variable, n: Int, t: Integral)  extends Instr
 case class Decr(v: Variable, n: Int, t: Integral)  extends Instr
 
-case class StrConst(s: String)            extends Instr
-case class IntConst(i: Long, t: Integral) extends Instr
-case class BoolConst(b: Boolean)          extends Instr
+case class PushStr  (s: String)              extends Instr
+case class PushInt  (i: Long,   t: Integral) extends Instr
+case class PushFloat(i: Double, t: Floating) extends Instr
+case class PushBool (b: Boolean)             extends Instr
 
 case object Pop        extends Instr
 case object Dupl       extends Instr

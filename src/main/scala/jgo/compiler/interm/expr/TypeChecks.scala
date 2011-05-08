@@ -16,31 +16,31 @@ private trait TypeChecks {
     case HasType(BoolType) => Problem("%s has type %s; boolean newtypes not yet supported", desc, e.t)
     case _ => Problem("%s has type %s; boolean type required", desc, e.t)
   }
-  protected def sameBoolExpr(e1: Expr, e2: Expr, d1: String, d2: String) (implicit pos: Pos): M[(BoolExpr, BoolExpr)] = for {
-    (b1, b2) <- together(boolExpr(e1, d1), boolExpr(e2, d2))
+  protected def sameBoolExpr(e1: Expr, e2: Expr) (implicit pos: Pos): M[(BoolExpr, BoolExpr)] = for {
+    (b1, b2) <- together(boolExpr(e1, "left operand"), boolExpr(e2, "right operand"))
     result <- if (e1.t == e2.t) Result(b1, b2)
               else Problem("left and right operands have differing types %s and %s", e1.t, e2.t)
   } yield result
   
   
-  protected def addable(e: Expr, desc: String) (implicit pos: Pos): M[AddableType] = e match {
-    case HasType(ut: AddableType) => Result(ut)
+  protected def addable(e: Expr, desc: String) (implicit pos: Pos): M[(Expr, AddableType)] = e match {
+    case HasType(ut: AddableType) => Result(e, ut)
     case _ => Problem("%s has type %s; numeric or string type required", desc, e.t)
   }
-  protected def numeric(e: Expr, desc: String) (implicit pos: Pos): M[NumericType] = e match {
-    case HasType(ut: NumericType) => Result(ut)
+  protected def numeric(e: Expr, desc: String) (implicit pos: Pos): M[(Expr, NumericType)] = e match {
+    case HasType(ut: NumericType) => Result(e, ut)
     case _ => Problem("%s has type %s; numeric type required", desc, e.t)
   }
-  protected def integral(e: Expr, desc: String) (implicit pos: Pos): M[IntegralType] = e match {
-    case HasType(ut: IntegralType) => Result(ut)
+  protected def integral(e: Expr, desc: String) (implicit pos: Pos): M[(Expr, IntegralType)] = e match {
+    case HasType(ut: IntegralType) => Result(e, ut)
     case _ => Problem("%s has type %s; integral type required", desc, e.t)
   }
-  protected def unsigned(e: Expr, desc: String) (implicit pos: Pos): M[UnsignedType] = e match {
-    case HasType(ut: UnsignedType) => Result(ut)
+  protected def unsigned(e: Expr, desc: String) (implicit pos: Pos): M[(Expr, UnsignedType)] = e match {
+    case HasType(ut: UnsignedType) => Result(e, ut)
     case _ => Problem("%s has type %s; unsigned integral type required", desc, e.t)
   }
-  protected def string(e: Expr, desc: String) (implicit pos: Pos): M[Unit] = e match {
-    case HasType(StringType) => Result(())
+  protected def string(e: Expr, desc: String) (implicit pos: Pos): M[Expr] = e match {
+    case HasType(StringType) => Result(e)
     case _ => Problem("%s has type %s; string type required", desc, e.t)
   }
   
@@ -52,43 +52,43 @@ private trait TypeChecks {
       Problem("left and right operands have differing types %s and %s", e1.t, e2.t)
   
   
-  protected def sameAddable(e1: Expr, e2: Expr, d1: String, d2: String) (implicit pos: Pos): M[AddableType] = for {
-    (ut1, ut2) <- together(addable(e1, d1), addable(e2, d2))
-    result <- if (e1.t == e2.t) Result(ut1)
+  protected def sameAddable(e1: Expr, e2: Expr) (implicit pos: Pos): M[(Expr, Expr, AddableType)] = for {
+    ((e1_, ut1), (e2_, ut2)) <- together(addable(e1, "left operand"), addable(e2, "right operand"))
+    result <- if (e1_.t == e2_.t) Result(e1_, e2_, ut1)
               else Problem("left and right operands have differing types %s and %s", e1.t, e2.t)
   } yield result
   
-  protected def sameNumeric(e1: Expr, e2: Expr, d1: String, d2: String) (implicit pos: Pos): M[NumericType] = for {
-    (ut1, ut2) <- together(numeric(e1, d1), numeric(e2, d2))
-    result <- if (e1.t == e2.t) Result(ut1)
+  protected def sameNumeric(e1: Expr, e2: Expr) (implicit pos: Pos): M[(Expr, Expr, NumericType)] = for {
+    ((e1_, ut1), (e2_, ut2)) <- together(numeric(e1, "left operand"), numeric(e2, "right operand"))
+    result <- if (e1_.t == e2_.t) Result(e1_, e2_, ut1)
               else Problem("left and right operands have differing types %s and %s", e1.t, e2.t)
   } yield result
   
-  protected def sameIntegral(e1: Expr, e2: Expr, d1: String, d2: String) (implicit pos: Pos): M[IntegralType] = for {
-    (ut1, ut2) <- together(integral(e1, d1), integral(e2, d2))
-    result <- if (e1.t == e2.t) Result(ut1)
+  protected def sameIntegral(e1: Expr, e2: Expr) (implicit pos: Pos): M[(Expr, Expr, IntegralType)] = for {
+    ((e1_, ut1), (e2_, ut2)) <- together(integral(e1, "left operand"), integral(e2, "right operand"))
+    result <- if (e1_.t == e2_.t) Result(e1_, e2_, ut1)
               else Problem("left and right operands have differing types %s and %s", e1.t, e2.t)
   } yield result
   
-  protected def sameUnsigned(e1: Expr, e2: Expr, d1: String, d2: String) (implicit pos: Pos): M[UnsignedType] = for {
-    (ut1, ut2) <- together(unsigned(e1, d1), unsigned(e2, d2))
-    result <- if (e1.t == e2.t) Result(ut1)
+  protected def sameUnsigned(e1: Expr, e2: Expr) (implicit pos: Pos): M[(Expr, Expr, UnsignedType)] = for {
+    ((e1_, ut1), (e2_, ut2)) <- together(unsigned(e1, "left operand"), unsigned(e2, "right operand"))
+    result <- if (e1_.t == e2_.t) Result(e1_, e2_, ut1)
               else Problem("left and right operands have differing types %s and %s", e1.t, e2.t)
   } yield result
   
-  protected def sameString(e1: Expr, e2: Expr, d1: String, d2: String) (implicit pos: Pos): M[Unit] = for {
-    (_, _) <- together(string(e1, d1), string(e2, d2))
-    result <- if (e1.t == e2.t) Result(())
+  protected def sameString(e1: Expr, e2: Expr) (implicit pos: Pos): M[(Expr, Expr)] = for {
+    (e1_, e2_) <- together(string(e1, "left operand"), string(e2, "right operand"))
+    result <- if (e1_.t == e2_.t) Result(e1_, e2_)
               else Problem("left and right operands have differing types %s and %s", e1.t, e2.t)
   } yield result
   
   
-  protected def recvChanT(e: Expr) (implicit pos: Pos): M[Type] = e match {
-    case HasType(RecvChanType(t)) => Result(t)
-    case _ => Problem("operand of channel receive has type %s; receiving chan type required", e.t)
+  protected def recvChanT(e: Expr, desc: String) (implicit pos: Pos): M[(Expr, Type)] = e match {
+    case HasType(RecvChanType(t)) => Result(e, t)
+    case _ => Problem("%s has type %s; receiving chan type required", e.t)
   }
-  protected def sendChanT(e: Expr) (implicit pos: Pos): M[Type] = e match {
-    case HasType(SendChanType(t)) => Result(t)
-    case _ => Problem("left operand of channel send has type %s; sending chan type required", e.t)
+  protected def sendChanT(e: Expr) (implicit pos: Pos): M[(Expr, Type)] = e match {
+    case HasType(SendChanType(t)) => Result(e, t)
+    case _ => Problem("%s has type %s; sending chan type required", e.t)
   }
 }

@@ -118,7 +118,7 @@ trait SimpleStmts extends Expressions with Symbols with GrowablyScoped with Stmt
     case VarLval(vr) OfType (t: IntegralType) => //I think this is a poster case for OfType!
       Incr(vr, 1, t)
     case (l: LvalExpr) OfType (t: IntegralType) =>
-      l.store(l.load |+| IntConst(1, t) |+| Add(t))
+      l.store(l.load |+| PushInt(1, t) |+| Add(t))
     
     case (l: LvalExpr) OfType t =>
       badStmt("lvalue operand of ++ has type %s, which is not an integral type", t)
@@ -130,7 +130,7 @@ trait SimpleStmts extends Expressions with Symbols with GrowablyScoped with Stmt
     case VarLval(vr) OfType (t: IntegralType) => //I think this is a poster case for OfType!
       Decr(vr, 1, t)
     case (l: LvalExpr) OfType (t: IntegralType) =>
-      l.store(l.load |+| IntConst(1, t) |+| Sub(t))
+      l.store(l.load |+| PushInt(1, t) |+| Sub(t))
     
     case (l: LvalExpr) OfType t =>
       badStmt("lvalue operand of -- has type %s, which is not an integral type", t)

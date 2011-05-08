@@ -77,11 +77,11 @@ private trait BasicCombinators extends Combinators with TypeChecks {
   
   
   def chanRecv(chan: Expr) (implicit pos: Pos): M[Expr] =
-    for (t <- recvChanT(chan))
+    for (t <- recvChanT(chan, "operand of channel receive"))
     yield BasicExpr(chan.eval |+| ChanRecv, t)
   
   def chanSend(chan: Expr, e: Expr) (implicit pos: Pos): M[CodeBuilder] = for {
-    t <- sendChanT(chan)
+    t <- sendChanT(chan, "left operand of channel send")
     _ <- if (t <<= e.t) Result(())
          else Problem("type %s of right operand of channel send not assignable to element type %s of left operand",
                       e.t, t)
