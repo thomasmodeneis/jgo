@@ -4,7 +4,6 @@
 import jgo.compiler._
 
 import message._
-import message.Messaged._
 import interm._
 
 import codeseq._
@@ -27,7 +26,7 @@ object MessagedTest {
   }
   
   def plus(e1M: M[Expr], e2M: M[Expr]): M[Expr] = for {
-    (e1, e2) <- together(e1M, e2M)
+    (e1, e2) <- together2(e1M, e2M)
     res <-
       if (e1.t != e2.t)
         Problem("operands of + have differing types %s and %s", e1.t, e2.t)

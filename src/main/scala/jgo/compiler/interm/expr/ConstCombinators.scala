@@ -148,16 +148,16 @@ trait ConstCombinators extends Combinators with ConstTypeCheckOverrides {
   }
     //sameIntegralConst(e1, e2) { _ % _ } getOrElse super.mod(e1, e2)
   
-  abstract override def pos(e: Expr) (implicit pos: Pos) = e match {
+  abstract override def positive(e: Expr) (implicit pos: Pos) = e match {
     case i: IntConst   => i
     case f: FloatConst => f
-    case _ => super.pos(e)
+    case _ => super.positive(e)
   }
   
-  abstract override def neg(e: Expr) (implicit pos: Pos) = e match {
+  abstract override def negative(e: Expr) (implicit pos: Pos) = e match {
     case IntConst(i)   => IntConst(-i)
     case FloatConst(f) => FloatConst(-f)
-    case _ => super.neg(e)
+    case _ => super.negative(e)
   }
   
   

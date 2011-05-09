@@ -4,12 +4,11 @@ package types
 
 sealed trait BuiltinType extends Type with ConstableType
 
-case object IntType  extends TypeName("int",  Int32)  with BuiltinType
-case object UintType extends TypeName("uint", Uint32) with BuiltinType
+//case object IntType  extends TypeName("int",  Int32)  with BuiltinType
+//case object UintType extends TypeName("uint", Uint32) with BuiltinType
 
-sealed trait PrimitiveType extends BuiltinType with Named {
+sealed trait PrimitiveType extends BuiltinType {
   val semantics = Primitive
-  override def toString = name
 }
 
 sealed trait AddableType  extends BuiltinType
@@ -44,8 +43,7 @@ sealed trait BuiltinRefType extends Type with ConstableType {
 
 case object StringType extends BuiltinRefType //or Primitive...?
                           with AddableType
-                          with NilableType
-                          with Named {
+                          with NilableType {
   val name = "string"
   override def toString = "string"
 }
@@ -55,7 +53,7 @@ case object NilType     extends BuiltinRefType
 case object BottomType  extends BuiltinRefType
 case object UnitType    extends BuiltinRefType
 
-case object TypeError extends BuiltinRefType with Named {
+case object TypeError extends BuiltinRefType {
   //I don't know of any way of overriding hashCode
   //to be consistent with this, so I don't try.
   //Also, this totally breaks the transitivity of ==.

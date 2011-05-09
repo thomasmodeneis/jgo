@@ -2,29 +2,13 @@ package jgo.compiler
 package parser.exprs
 
 import parser.types._
-import message.Messaged._
 //import interm._
 import interm.expr._
 import interm.expr.Expr
+import interm.expr.Combinators._
 import interm.types._
-import codeseq._
-import instr._
-import instr.TypeConversions._
-import bool._
 
 trait Expressions extends PrimaryExprs with ExprUtils {
-  private implicit def convBinary(f: (Expr, Expr) => Pos => M[Expr]): (M[Expr], Pos, M[Expr]) => M[Expr] =
-    (e1M, p, e2M) => for {
-      (e1, e2) <- together(e1M, e2M)
-      res <- f(e1, e2)(p)
-    } yield res
-  
-  private implicit def convUnary(f: Expr => Pos => M[Expr]): (Pos, M[Expr]) => M[Expr] =
-    (p, eM) => for {
-      e <- eM
-      res <- f(e)(p)
-    } yield res
-  
   lazy val expression: PPM[Expr] =                       "expression" $
     orExpr
   
@@ -41,10 +25,10 @@ trait Expressions extends PrimaryExprs with ExprUtils {
   lazy val relExpr: PPM[Expr] =       "relational expression: prec 3" $
     ( relExpr ~ pos("==") ~ addExpr  ^^ compEq
     | relExpr ~ pos("!=") ~ addExpr  ^^ compNe
-    | relExpr ~ pos("<")  ~ addExpr  ^^ lt
-    | relExpr ~ pos("<=") ~ addExpr  ^^ le
-    | relExpr ~ pos(">")  ~ addExpr  ^^ gt
-    | relExpr ~ pos(">=") ~ addExpr  ^^ ge
+    | relExpr ~ pos("<")  ~ addExpr  ^^ compLt
+    | relExpr ~ pos("<=") ~ addExpr  ^^ compLeq
+    | relExpr ~ pos(">")  ~ addExpr  ^^ compGt
+    | relExpr ~ pos(">=") ~ addExpr  ^^ compGeq
     | addExpr
     )
   
@@ -60,21 +44,21 @@ trait Expressions extends PrimaryExprs with ExprUtils {
     ( multExpr ~ pos("*")  ~ unaryExpr  ^^ times
     | multExpr ~ pos("/")  ~ unaryExpr  ^^ div
     | multExpr ~ pos("%")  ~ unaryExpr  ^^ mod
-    | multExpr ~ pos("<<") ~ unaryExpr  ^^ shiftl
-    | multExpr ~ pos(">>") ~ unaryExpr  ^^ shiftr
+    | multExpr ~ pos("<<") ~ unaryExpr  ^^ shiftL
+    | multExpr ~ pos(">>") ~ unaryExpr  ^^ shiftR
     | multExpr ~ pos("&")  ~ unaryExpr  ^^ bitAnd
     | multExpr ~ pos("&^") ~ unaryExpr  ^^ bitAndNot
     | unaryExpr
     )
   
   lazy val unaryExpr: PPM[Expr] =          "unary expression: prec 6" $
-    ( pos("+")  ~ unaryExpr  ^^ pos
-    | pos("-")  ~ unaryExpr  ^^ neg
-    | pos("^")  ~ unaryExpr  ^^ compl
-    | pos("!")  ~ unaryExpr  ^^ not
+    ( pos("+")  ~ unaryExpr  ^^ positive
+    | pos("-")  ~ unaryExpr  ^^ negative
+    | pos("^")  ~ unaryExpr  ^^ bitCompl
+    | pos("!")  ~ unaryExpr  ^^ Combinators.not //find out which "not" the compiler was confused with.
     | pos("<-") ~ unaryExpr  ^^ chanRecv
-    | pos("&")  ~ unaryExpr  //^^# (AddrOf(_))
-    | pos("*")  ~ unaryExpr  //^^ deref
+    | pos("&")  ~ unaryExpr  ^^ addrOf
+    | pos("*")  ~ unaryExpr  ^^ deref
     | primaryExpr
     )
     
@@ -82,6 +66,7 @@ trait Expressions extends PrimaryExprs with ExprUtils {
     rep1sep(expression, ",")
   
   
+  /*
   private def and(e1: Expr, e2: Expr): Expr = (e1, e2) match {
     case (b1: BoolExpr, b2: BoolExpr) => And(b1, b2)
     case _ => badExpr("operand(s) of && not of boolean type")
@@ -154,4 +139,5 @@ trait Expressions extends PrimaryExprs with ExprUtils {
     case b: BoolExpr => Not(b)
     case _ => badExpr("operand of ! has type %s; must be of boolean type", expr.t)
   }
+  */
 }

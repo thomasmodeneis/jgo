@@ -4,11 +4,4 @@ package symbol
 
 import types._
 
-case class TypeSymbol(theType: Type with Named) extends Symbol
-
-/*
-object TypeSymbol {
-  implicit def name2symbol(tn: TypeName): TypeSymbol = TypeSymbol(tn)
-  implicit def symbol2name(ts: TypeSymbol): TypeName = ts.typeName
-}
-*/
+case class TypeSymbol(theType: NamedType) extends Symbol

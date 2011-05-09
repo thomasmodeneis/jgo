@@ -36,11 +36,11 @@ trait BasicCombinators extends Combinators with TypeChecks {
     for ((e1i, e2i, it) <- sameIntegral(e1, e2))
     yield BasicExpr(e1i.eval |+| e2i.eval |+| Mod(it), e1.t)
   
-  def pos(e: Expr) (implicit pos: Pos): M[Expr] =
+  def positive(e: Expr) (implicit pos: Pos): M[Expr] =
     for ((en, _) <- numeric(e, "operand of unary +"))
     yield en
   
-  def neg(e: Expr) (implicit pos: Pos): M[Expr] =
+  def negative(e: Expr) (implicit pos: Pos): M[Expr] =
     for ((en, nt) <- numeric(e, "operand of unary -"))
     yield BasicExpr(en.eval |+| Neg(nt), e.t)
   

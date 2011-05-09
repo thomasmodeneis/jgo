@@ -1,15 +1,16 @@
 package jgo.compiler
 package parser.types
 
+import message._
+
 import parser.scoped._
 
-import interm._
-import types._
-import symbol._
+import interm.types._
+import interm.symbol._
 
 trait TypeSyntax extends Symbols with TypeUtils {
-  lazy val goType: P[Type] =                                                                "type" $
-    ( typeSymbol
+  lazy val goType: PM[Type] =                                                                "type" $
+    ( typeSymbol ^^ { _ map { symb => symb.theType } }
     | "(" ~> goType <~ ")"   &@ "parenthesized type"
     | arrayType
     | structType
@@ -22,22 +23,16 @@ trait TypeSyntax extends Symbols with TypeUtils {
     )
   
   
-  lazy val typeSymbol: P[Type with Named] =                                            "type-name" $
-    ident ^^ typeSymb
-    //qualifiedIdent
-    //typeSymbol  ^^ { _.typeName }
-  
-  
-  lazy val arrayType: P[ArrayType] =                                                  "array type" $
+  lazy val arrayType: PM[ArrayType] =                                                  "array type" $
     //("[" ~> expression <~ "]") ~ goType //compile-time constants not yet fully supported
-    ("[" ~> intLit <~ "]") ~ goType  ^^ array
+    "[" ~> intLit ~ pos("]") ~ goType  ^^ array
   
   
-  lazy val sliceType: P[SliceType] =                                                  "slice type" $
-    "[" ~ "]" ~> goType  ^^ SliceType
+  lazy val sliceType: PM[SliceType] =                                                  "slice type" $
+    "[" ~ "]" ~> goType  ^^ { _ map SliceType.apply }
   
   
-  lazy val structType: P[StructType] =                                               "struct type" $
+  lazy val structType: PM[StructType] =                                               "struct type" $
     "struct" ~>! "{" ~> repWithSemi(structFieldDecl) <~ "}"  ^^ struct
   
   private lazy val structFieldDecl: P[List[FieldDesc]] =                       "struct field decl" $
@@ -47,11 +42,11 @@ trait TypeSyntax extends Symbols with TypeUtils {
     )
   
   
-  lazy val pointerType: P[PointerType] =                                            "pointer type" $
-    "*" ~> goType  ^^ PointerType
+  lazy val pointerType: PM[PointerType] =                                            "pointer type" $
+    "*" ~> goType  ^^ { _ map PointerType.apply }
   
   
-  lazy val functionType: P[FuncType] =                                             "function type" $
+  lazy val functionType: PM[FuncType] =                                             "function type" $
     "func" ~>! funcTypeParams ~ funcTypeResult.?  ^^ func
   
   private lazy val funcTypeParams: P[(List[Type], Boolean)] =           "function-type parameters" $
@@ -86,16 +81,16 @@ trait TypeSyntax extends Symbols with TypeUtils {
     )
   */
   
-  lazy val mapType: P[MapType] =                                                        "map type" $
+  lazy val mapType: PM[MapType] =                                                        "map type" $
     "map" ~>! ("[" ~> goType <~ "]") ~ goType  ^^ MapType
   
-  lazy val channelType: P[ChanType] =                                               "channel type" $
+  lazy val channelType: PM[ChanType] =                                               "channel type" $
     ( "chan" ~> "<-" ~> goType  ^^ chan(recv = false, send = true)
     | "<-" ~> "chan" ~> goType  ^^ chan(recv = true,  send = false)
     | "chan" ~> goType          ^^ chan(recv = true,  send = true)
     )
   
-  lazy val typeList: P[List[Type]] =                                                   "type list" $
+  lazy val typeList: PM[List[Type]] =                                                   "type list" $
     rep1sep(goType, ",")
   
   
@@ -105,25 +100,20 @@ trait TypeSyntax extends Symbols with TypeUtils {
   private def countAndFill(is: List[String], t: Type):  List[Type] =
     for (i <- is) yield t
   
-  private val typeSymb: String => Type with Named = getTypeSymbol(_) match {
-    case Some(t: TypeSymbol) => t.theType
-    case _                   => TypeError
-  }
   
-  private def array(i: lexer.IntLit, t: Type) = {
+  private def array(i: lexer.IntLit, pos: Pos, tM: M[Type]) = tM flatMap { t =>
     val len = i.value.toInt
-    if(len < 0)
-      recordErr("cannot have negative array length")
-    ArrayType(len, t)
+    if (len < 0) Problem("cannot have negative array length")(pos)
+    else Result(ArrayType(len, t))
   }
   
-  private def chan(recv: Boolean, send: Boolean)(elemT: Type) =
+  private def chan(recv: Boolean, send: Boolean)(elemTM: M[Type]) = elemTM map { elemT =>
     ChanType(elemT, canRecv = recv, canSend = send)
-  
+  }
   
   private def struct(decls: List[List[FieldDesc]]) = {
     val fields = decls.flatten
-    StructType(fields)
+    Result(StructType(fields))
     //add logic for duplicate field names, etc
   }
   

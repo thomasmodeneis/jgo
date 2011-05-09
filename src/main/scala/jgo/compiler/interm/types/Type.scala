@@ -48,8 +48,8 @@ object Type {
   def canHold(t1: Type, t2: Type): Boolean =
     identical(t1, t2) ||
     (
-      !t1.isInstanceOf[TypeName] &&
-      !t2.isInstanceOf[TypeName] && {
+      !t1.isInstanceOf[NamedType] &&
+      !t2.isInstanceOf[NamedType] && {
       (t1, t2) match {
         case (TopType, _)              => true
         case (n, NilType) if n.nilable => true
@@ -75,8 +75,8 @@ object Type {
       } }
     ) ||
     canHold(t1.underlying, t2.underlying) && !(
-      t1.isInstanceOf[TypeName] &&
-      t2.isInstanceOf[TypeName]
+      t1.isInstanceOf[NamedType] &&
+      t2.isInstanceOf[NamedType]
     )
 }
 

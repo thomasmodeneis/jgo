@@ -28,8 +28,8 @@ trait Combinators {
   def times(e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr]
   def div  (e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr]
   def mod  (e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr]
-  def pos(e: Expr) (implicit pos: Pos): M[Expr]
-  def neg(e: Expr) (implicit pos: Pos): M[Expr]
+  def positive(e: Expr) (implicit pos: Pos): M[Expr]
+  def negative(e: Expr) (implicit pos: Pos): M[Expr]
   
   def bitAnd   (e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr]
   def bitAndNot(e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr]
@@ -57,8 +57,57 @@ trait Combinators {
   
   def assign(left: List[Expr], right: List[Expr]) (implicit pos: Pos): M[CodeBuilder]
   
-  def eval(e: Expr): M[CodeBuilder] =
+  def eval(e: Expr) (implicit pos: Pos): M[CodeBuilder] =
     e.eval
 }
 
-object Combinators extends Combinators with BasicCombinators with BoolCombinators with LvalCombinators with ConstCombinators
+object Combinators {
+  private val c = new BasicCombinators with BoolCombinators with LvalCombinators with ConstCombinators
+  
+  def and(e1: Expr, e2: Expr) (pos: Pos): M[Expr] = c.and(e1, e2)(pos)
+  def or (e1: Expr, e2: Expr) (pos: Pos): M[Expr] = c.or(e1, e2)(pos)
+  def not(e: Expr) (pos: Pos): M[Expr] = c.not(e)(pos)
+  
+  def compEq (e1: Expr, e2: Expr) (pos: Pos): M[Expr] = c.compEq(e1, e2)(pos)
+  def compNe (e1: Expr, e2: Expr) (pos: Pos): M[Expr] = c.compNe(e1, e2)(pos)
+  def compLt (e1: Expr, e2: Expr) (pos: Pos): M[Expr] = c.compLt(e1, e2)(pos)
+  def compLeq(e1: Expr, e2: Expr) (pos: Pos): M[Expr] = c.compLeq(e1, e2)(pos)
+  def compGt (e1: Expr, e2: Expr) (pos: Pos): M[Expr] = c.compGt(e1, e2)(pos)
+  def compGeq(e1: Expr, e2: Expr) (pos: Pos): M[Expr] = c.compGeq(e1, e2)(pos)
+  
+  def plus (e1: Expr, e2: Expr) (pos: Pos): M[Expr] = c.plus(e1, e2)(pos)
+  def minus(e1: Expr, e2: Expr) (pos: Pos): M[Expr] = c.minus(e1, e2)(pos)
+  def times(e1: Expr, e2: Expr) (pos: Pos): M[Expr] = c.times(e1, e2)(pos)
+  def div  (e1: Expr, e2: Expr) (pos: Pos): M[Expr] = c.div(e1, e2)(pos)
+  def mod  (e1: Expr, e2: Expr) (pos: Pos): M[Expr] = c.mod(e1, e2)(pos)
+  def positive(e: Expr) (pos: Pos): M[Expr] = c.positive(e)(pos)
+  def negative(e: Expr) (pos: Pos): M[Expr] = c.negative(e)(pos)
+  
+  def bitAnd   (e1: Expr, e2: Expr) (pos: Pos): M[Expr] = c.bitAnd(e1, e2)(pos)
+  def bitAndNot(e1: Expr, e2: Expr) (pos: Pos): M[Expr] = c.bitAndNot(e1, e2)(pos)
+  def bitOr    (e1: Expr, e2: Expr) (pos: Pos): M[Expr] = c.bitOr(e1, e2)(pos)
+  def bitXor   (e1: Expr, e2: Expr) (pos: Pos): M[Expr] = c.bitXor(e1, e2)(pos)
+  def shiftL   (e1: Expr, e2: Expr) (pos: Pos): M[Expr] = c.shiftL(e1, e2)(pos)
+  def shiftR   (e1: Expr, e2: Expr) (pos: Pos): M[Expr] = c.shiftR(e1, e2)(pos)
+  def bitCompl(e: Expr) (pos: Pos): M[Expr] = c.bitCompl(e)(pos)
+  
+  def addrOf(e: Expr) (pos: Pos): M[Expr] = c.addrOf(e)(pos)
+  def deref (e: Expr) (pos: Pos): M[Expr] = c.deref(e)(pos)
+  
+  def chanRecv(chan: Expr) (pos: Pos): M[Expr] = c.chanRecv(chan)(pos)
+  def chanSend(chan: Expr, e: Expr) (pos: Pos): M[CodeBuilder] = c.chanSend(chan, e)(pos)
+  
+  //def select(obj:  Expr, selector: String) (pos: Pos): M[Expr] = c.select(obj, selector)(pos)
+  def invoke(callee: Expr, args: List[Expr]) (pos: Pos): M[Expr] = c.invoke(callee, args)(pos)
+  def typeAssert(e: Expr, t: Type) (pos: Pos): M[Expr] = c.typeAssert(e, t)(pos)
+  
+  def index(arr: Expr, indx: Expr) (pos: Pos): M[Expr] = c.index(arr, indx)(pos)
+  def slice(arr: Expr, low: Option[Expr], high: Option[Expr]) (pos: Pos): M[Expr] = c.slice(arr, low, high)(pos)
+  
+  def incr(e: Expr) (pos: Pos): M[CodeBuilder] = c.incr(e)(pos)
+  def decr(e: Expr) (pos: Pos): M[CodeBuilder] = c.decr(e)(pos)
+  
+  def assign(left: List[Expr], right: List[Expr]) (pos: Pos): M[CodeBuilder] = c.assign(left, right)(pos)
+  
+  def eval(e: Expr) (pos: Pos): M[CodeBuilder] = c.eval(e)(pos)
+}

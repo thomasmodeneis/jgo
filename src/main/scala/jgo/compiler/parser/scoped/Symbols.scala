@@ -2,6 +2,7 @@ package jgo.compiler
 package parser
 package scoped
 
+import message._
 import scope._
 import interm.symbol._
 import interm.types._
@@ -17,8 +18,8 @@ trait Symbols extends Base with Scoped {
   lazy val onlyFuncSymbol:  P[Function] =             "var symbol" $
     ident ^? scope ^? { case v: Function => v }
   
-  /*lazy val constSymbol: P[ConstSymbol] =          "const symbol" $
-    ident ^? symbols.constProj*/
+  /*lazy val onlyConstSymbol: P[ConstSymbol] =      "const symbol" $
+    ident ^? scope ^? { case c: ConstSymbol =? c } */
   
   lazy val onlyPkgSymbol:   P[Package] =          "package symbol" $
     ident ^? scope ^? { case p: Package => p }
@@ -27,33 +28,66 @@ trait Symbols extends Base with Scoped {
     ident ^? scope ^? { case t: TypeSymbol => t }
   
   
-  lazy val symbol: P[Option[Symbol]] =                    "symbol" $
-    ident ^^ getSymbol
+  lazy val symbol: PM[Symbol] =                           "symbol" $
+    withPos(ident) ^^ (getSymbol _).tupled //Really, compiler?  Really?
+  
+  lazy val valueSymbol: PM[ValueSymbol] =
+     withPos(symbol) ^^ { case (p, sM) =>
+      sM flatMap {
+        case v: ValueSymbol => Result(v)
+        case s              => Problem("not a value: %s", s)(p)
+      }
+    }
+  
+  lazy val varSymbol: PM[Variable] =
+    withPos(symbol) ^^ { case (p, sM) =>
+      sM flatMap {
+        case v: Variable => Result(v)
+        case s           => Problem("not a variable: %s", s)(p)
+      }
+    }
+  
+  lazy val funcSymbol: PM[Function] =
+    withPos(symbol) ^^ { case (p, sM) =>
+      sM flatMap {
+        case f: Function => Result(f)
+        case s           => Problem("not a global function: %s", s)(p)
+      }
+    }
+  
+  lazy val pkgSymbol: PM[Package] =
+    withPos(symbol) ^^ { case (p, sM) =>
+      sM flatMap {
+        case pkg: Package => Result(pkg)
+        case s            => Problem("not a package: %s", s)(p)
+      }
+    }
+  
+  lazy val typeSymbol: PM[TypeSymbol] =
+    withPos(symbol) ^^ { case (p, sM) =>
+      sM flatMap {
+        case t: TypeSymbol => Result(t)
+        case s             => Problem("not a type: %s", s)(p)
+      }
+    }
   
   //not fully supported.
   lazy val qualifiedIdent: P_ =         "possibly qualified ident" $
     opt(ident <~ ".") ~ ident
   
   
-  def getSymbol(name: String): Option[Symbol] = scope.get(name) match {
-    case Some(s) => Some(s)
-    case None    => badSymbol("symbol not found: %s", name)
+  def getSymbol(p: Pos, name: String): M[Symbol] = scope.get(name) match {
+    case Some(s) => Result(s)
+    case None    => Problem("symbol not found: %s", name)(p)
   }
   
-  def getVariable(name: String): Option[Variable] = getSymbol(name) match {
-    case Some(v: Variable) => Some(v)
-    case Some(_)           => badSymbol("not a variable symbol: %s", name)
-    case None              => None
+  def getVariable(p: Pos, name: String): M[Variable] = getSymbol(p, name) flatMap {
+    case v: Variable => Result(v)
+    case _           => Problem("not a variable: %s", name)(p)
   }
   
-  def getTypeSymbol(name: String): Option[TypeSymbol] = getSymbol(name) match {
-    case Some(t: TypeSymbol) => Some(t)
-    case Some(_)             => badSymbol("not a type symbol: %s", name)
-    case None                => None
-  }
-  
-  def badSymbol(msg: String, args: AnyRef*): None.type = {
-    recordErr(msg, args: _*)
-    None
+  def getTypeSymbol(p: Pos, name: String): M[TypeSymbol] = getSymbol(p, name) flatMap {
+    case t: TypeSymbol => Result(t)
+    case _             => Problem("not a type: %s", name)(p)
   }
 }

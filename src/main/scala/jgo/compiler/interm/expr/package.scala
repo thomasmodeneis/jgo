@@ -12,9 +12,6 @@ import codeseq._
 import scala.util.parsing.input.Position
 
 package object expr {
-  private[expr] type M[+T] = Messaged[T]
-  private[expr] type Pos   = Position
-  
   def StringConstant(value: String)  (implicit pos: Pos): M[Constant] = new StringConst(value)
   def BoolConstant  (value: Boolean) (implicit pos: Pos): M[Constant] = new BoolConst(value)
   
