@@ -34,7 +34,7 @@ extends FieldDesc
 
 case class EmbeddedFieldDesc(
   name:   String,
-  typeOf: Type with Named,
+  typeOf: NamedType,
   isPtr:  Boolean,
   tag:    Option[String] = None)
 extends FieldDesc
