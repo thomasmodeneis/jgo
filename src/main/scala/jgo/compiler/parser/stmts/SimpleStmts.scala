@@ -5,6 +5,7 @@ import parser.exprs._
 import parser.scoped._
 
 import interm._
+import expr._
 import codeseq._
 import instr._
 import instr.TypeConversions._

@@ -73,7 +73,8 @@ extends Messaged[T] {
   def map    [T2](f: T => T2)           = new Result(f(result), w, n)
   def flatMap[T2](f: T => Messaged[T2]) = f(result).wnAppendedTo(w, n)
   
-  def then[T2](m: Messaged[T2]) = m.wnAppendedTo(w, n)
+  def then [T2](m: Messaged[T2]) = m.wnAppendedTo(w, n)
+  def after[T2](m: Messaged[T2]) = m then this
   
   def filter(p: T => Boolean) =
     if (p(result))
@@ -118,7 +119,7 @@ extends Messaged[Nothing] {
 }
 
 object Messaged {
-  implicit def res2Msgd[T](t: T): Messaged[T] = new Result(t, Nil, Nil)
+  //implicit def res2Msgd[T](t: T): Messaged[T] = new Result(t, Nil, Nil) //superseded by implicit def jgo.compiler.M
   
   implicit def lsM2mLs[T](ms: List[Messaged[T]]): Messaged[List[T]] =
     if (ms forall { _.isDefined }) {

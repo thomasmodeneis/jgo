@@ -44,7 +44,7 @@ trait Declarations extends Expressions with GrowablyScoped with StmtUtils {
                | "(" ~> repWithSemi(typeSpec) <~ ")"  ^^ foldUnitsTogether
                )
   lazy val typeSpec: PM[Unit] =                              "type decl spec" $
-    ident ~ goType  ^^ procTypeSpec
+    InPos ~ ident ~ goType  ^^ procTypeSpec
   
   lazy val varDecl: PM[CodeBuilder] =                       "var declaration" $
     "var" ~>! ( varSpec
@@ -69,34 +69,37 @@ trait Declarations extends Expressions with GrowablyScoped with StmtUtils {
   private def noCode = Result(CodeBuilder())
   
   private def foldUnitsTogether(ls: List[M[Unit]]): M[Unit] = {
-    var res = Result(())
+    var res = M(())
     for (action <- ls)
       res = res then action  //Monadic then is awesome!!
     res
   }
   
   private def foldCodeTogether(ls: List[M[CodeBuilder]]): M[CodeBuilder] =
-    (ls foldLeft Result(CodeBuilder())) { (accM, nextM) =>
+    (ls foldLeft M(CodeBuilder.empty)) { (accM, nextM) =>
       for ((acc, next) <- together2(accM, nextM))
       yield acc |+| next
     }
   
   
-  private def procTypeSpec(name: String, targetM: M[Type]) = {
-    for (target <- targetM)
-      bind(name, TypeSymbol(new WrappedType(name, target))) //I'm pretty sure this gets eval'd "now"
-  }
+  private def procTypeSpec(pos: Pos, name: String, targetM: M[Type]) =
+    Result(()) after {
+      for (target <- targetM)
+      yield bind(name, TypeSymbol(new WrappedType(name, target)))(pos)
+    }
   
   
   private def procVarSpecNoAssign(newVars: List[(String, Pos)], typeOfM: M[Type]): M[CodeBuilder] = 
     typeOfM flatMap { typeOf =>
       var declCode = CodeBuilder()
-      for ((name, pos) <- newVars)
-      yield {
-        val (v, declC) = mkVariable(name, typeOf)
-        declCode = declCode |+| declC
-        bind(name, v)(pos)
-      } then declCode //implicitly convert List[M[Variable]] -> M[List[Variable]]
+      val decled =
+        for ((name, pos) <- newVars)
+        yield {
+          val (v, declC) = mkVariable(name, typeOf)
+          declCode = declCode |+| declC
+          bind(name, v)(pos)
+        }
+      decled then declCode //implicitly convert List[M[Variable]] -> M[List[Variable]]
     }
   
   private def procVarSpecInfer(left: List[(String, Pos)], eqPos: Pos, rightM: M[List[Expr]]): M[CodeBuilder] =
@@ -112,27 +115,25 @@ trait Declarations extends Expressions with GrowablyScoped with StmtUtils {
           } //implicit conv
         for {
           leftVars <- leftVarsM
-          assignCode <- C.assign(leftVars, right)
+          assignCode <- C.assign(leftVars, right)(eqPos)
         } yield declCode |+| assignCode
       }
     }
   
   //Fix this function next.
-  private def procVarSpecTypeAndAssign(left: List[String], typeOfM: M[Type], rightM: M[List[Expr]]): M[CodeBuilder] = 
-    for ((typeOf, right) <- together2(typeOfM, rightM))
-    yield {
+  private def procVarSpecTypeAndAssign(left: List[(String, Pos)], typeOfM: M[Type], eqPos: Pos, rightM: M[List[Expr]]): M[CodeBuilder] = 
+    together2(typeOfM, rightM) flatMap { case (typeOf, right) =>
       var declCode = CodeBuilder()
-      checkArity(left, right)
-      for ((l, r) <- left zip right) {
-        if (!(typeOf <<= r.t))
-          recordErr("right operand not assignable to specified type %s", typeOf)
-        val (v, declC) = mkVariable(l, typeOf)
-        bind(l, v)
-        declCode = declCode |+| declC
-      }
-      declCode 
+      val newVarsM: M[List[Variable]] = //implicit conv
+        for ((name, pos) <- left)
+        yield {
+          val (v, declC) = mkVariable(name, typeOf)
+          declCode = declCode |+| declC
+          bind(name, v)(pos)
+        }
+      for {
+        newVars <- newVarsM
+        assignCode <- C.assign(newVars, right)(eqPos)
+      } yield declCode |+| assignCode
     }
-  
-  
-  private implicit def lsUnitP2unitP(p: Parser[List[Unit]]): Parser[Unit] = p ^^^ ()
 }

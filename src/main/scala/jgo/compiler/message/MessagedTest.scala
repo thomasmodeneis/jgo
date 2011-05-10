@@ -1,11 +1,13 @@
 //package jgo.compiler
 //package message
 
+/*
 import jgo.compiler._
 
 import message._
 import interm._
 
+import expr._
 import codeseq._
 import instr._
 import instr.TypeConversions._
@@ -41,3 +43,4 @@ object MessagedTest {
   }
   yield res
 }
+*/

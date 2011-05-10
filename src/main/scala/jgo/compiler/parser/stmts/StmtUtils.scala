@@ -3,6 +3,7 @@ package parser
 package stmts
 
 import interm._
+import expr._
 import codeseq._
 import instr._
 import types._

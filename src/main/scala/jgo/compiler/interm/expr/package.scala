@@ -22,4 +22,11 @@ package object expr {
   def FloatConstant(value: BigDecimal) (implicit pos: Pos): M[Constant] =
     if (!value.doubleValue.isInfinite) new FloatConst(value.doubleValue)
     else Problem("%s is out of range", value)
+  
+  
+  implicit def varLval(v: Variable): Expr = VarLval(v)
+  
+  
+  implicit def mappedToExpr[A](ls: List[A])(implicit ev: A => Expr): List[Expr] =
+    ls map ev
 }

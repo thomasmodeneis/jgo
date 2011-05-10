@@ -9,6 +9,7 @@ import codeseq._
 import member._
 import bool._
 
+/*
 object Expr {
   private def ordinal(n: Int): String = {
     require(n >= 0)
@@ -185,3 +186,4 @@ case class MapIndexLval(map: Expr, index: Expr, typeOf: Type) extends LvalExpr {
   def storePrefix(v: CodeBuilder) = map.eval |+| index.eval |+| v
   def storeSuffix                 =                                   MapPut
 }
+*/

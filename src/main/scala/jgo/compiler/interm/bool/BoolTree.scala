@@ -8,6 +8,7 @@ import codeseq._
 
 import TypeConversions._
 
+/*
 private sealed abstract class CodeParam
 private sealed abstract class ProperParam { def code: CodeBuilder }
 private case class  Push(b: Boolean, end: Label) extends CodeParam
@@ -129,4 +130,4 @@ case class LessThan(e1: Expr, e2: Expr)      extends ArithCompTree(NumLt)
 case class GreaterThan(e1: Expr, e2: Expr)   extends ArithCompTree(NumGt)
 case class LessEquals(e1: Expr, e2: Expr)    extends ArithCompTree(NumLeq)
 case class GreaterEquals(e1: Expr, e2: Expr) extends ArithCompTree(NumGeq)
-
+*/
