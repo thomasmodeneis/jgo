@@ -8,6 +8,7 @@ import parser.scoped._
 
 //import interm._
 import interm.expr._
+import interm.expr.{Combinators => C}
 import interm.types._
 import interm.symbol._
 import interm.codeseq._
@@ -21,6 +22,7 @@ trait Declarations extends Expressions with GrowablyScoped with StmtUtils {
     (res, Decl(res))
   }
   
+  
   lazy val declaration: PM[CodeBuilder] =                       "declaration" $
     ( varDecl
     | typeDecl  ^^^ noCode
@@ -32,9 +34,9 @@ trait Declarations extends Expressions with GrowablyScoped with StmtUtils {
                 | "(" ~> repWithSemi(constSpec) <~ ")"
                 )
   lazy val constSpec: P_ =                                  "const decl spec" $
-    ( identList ~ "=" ~ exprList               //note the first spec in a constDecl may not have form `idList'
-    | identList ~ goType ~ "=" ~ exprList      //the number of idents must = the number of exprs
-    | identList                                //don't forget about iota
+    ( identPosList ~ "=" ~ exprList               //note the first spec in a constDecl may not have form `idList'
+    | identPosList ~ goType ~ "=" ~ exprList      //the number of idents must = the number of exprs
+    | identPosList                                //don't forget about iota
     )
   
   lazy val typeDecl: PM[Unit] =                            "type declaration" $
@@ -49,9 +51,9 @@ trait Declarations extends Expressions with GrowablyScoped with StmtUtils {
               | "(" ~> repWithSemi(varSpec) <~ ")"  ^^ foldCodeTogether
               )
   lazy val varSpec: PM[CodeBuilder] =                         "var decl spec" $
-    ( identList          ~ ("=" ~> exprList)  ^^ procVarSpecInfer
-    | identList ~ goType ~ ("=" ~> exprList)  ^^ procVarSpecTypeAndAssign
-    | identList ~ goType                      ^^ procVarSpecNoAssign
+    ( identPosList          ~ pos("=") ~ exprList  ^^ procVarSpecInfer
+    | identPosList ~ goType ~ pos("=") ~ exprList  ^^ procVarSpecTypeAndAssign
+    | identPosList ~ goType                        ^^ procVarSpecNoAssign
     )
   
   private def iota(): Int = {
@@ -79,44 +81,58 @@ trait Declarations extends Expressions with GrowablyScoped with StmtUtils {
       yield acc |+| next
     }
   
+  
   private def procTypeSpec(name: String, targetM: M[Type]) = {
     for (target <- targetM)
       bind(name, TypeSymbol(new WrappedType(name, target))) //I'm pretty sure this gets eval'd "now"
   }
   
-  private def procVarSpecInfer(left: List[String], rightM: M[List[Expr]]) =
-    for (right <- rightM)
-    yield for ((l, r) <- left zip right) {
-      val (v, dc) = mkVariable(l, r.t)
-      bind(l, v)
+  
+  private def procVarSpecNoAssign(newVars: List[(String, Pos)], typeOfM: M[Type]): M[CodeBuilder] = 
+    typeOfM flatMap { typeOf =>
+      var declCode = CodeBuilder()
+      for ((name, pos) <- newVars)
+      yield {
+        val (v, declC) = mkVariable(name, typeOf)
+        declCode = declCode |+| declC
+        bind(name, v)(pos)
+      } then declCode //implicitly convert List[M[Variable]] -> M[List[Variable]]
     }
   
-  private def procVarSpecTypeAndAssign(left: List[String], typeOfM: M[Type], rightM: M[List[Expr]]) = 
+  private def procVarSpecInfer(left: List[(String, Pos)], eqPos: Pos, rightM: M[List[Expr]]): M[CodeBuilder] =
+    rightM flatMap { right =>
+      checkArity(left, right) then {
+        var declCode = CodeBuilder()
+        val leftVarsM: M[List[Variable]] =
+          for (((l, pos), r) <- left zip right)
+          yield {
+            val (v, declC) = mkVariable(l, r.t)
+            declCode = declCode |+| declC
+            bind(l, v)(pos)
+          } //implicit conv
+        for {
+          leftVars <- leftVarsM
+          assignCode <- C.assign(leftVars, right)
+        } yield declCode |+| assignCode
+      }
+    }
+  
+  //Fix this function next.
+  private def procVarSpecTypeAndAssign(left: List[String], typeOfM: M[Type], rightM: M[List[Expr]]): M[CodeBuilder] = 
     for ((typeOf, right) <- together2(typeOfM, rightM))
     yield {
-      var declCode, leftCode, rightCode = CodeBuilder()
+      var declCode = CodeBuilder()
       checkArity(left, right)
       for ((l, r) <- left zip right) {
         if (!(typeOf <<= r.t))
           recordErr("right operand not assignable to specified type %s", typeOf)
-        val (v, dc) = mkVariable(l, typeOf)
+        val (v, declC) = mkVariable(l, typeOf)
         bind(l, v)
-        declCode  = declCode    |+| dc
-        leftCode  = leftCode    |+| r.eval
-        rightCode = StoreVar(v) |+| rightCode
+        declCode = declCode |+| declC
       }
-      declCode |+| leftCode |+| rightCode
+      declCode 
     }
   
-  private def procVarSpecNoAssign(newVars: List[String], typeOf: Type): CodeBuilder = {
-    var declCode = CodeBuilder()
-    for (name <- newVars) {
-      val (v, dc) = mkVariable(name, typeOf)
-      bind(name, v)
-      declCode = declCode |+| dc
-    }
-    declCode
-  }
   
   private implicit def lsUnitP2unitP(p: Parser[List[Unit]]): Parser[Unit] = p ^^^ ()
 }

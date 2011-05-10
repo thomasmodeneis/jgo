@@ -47,8 +47,11 @@ trait Base extends Tokens with PackratParsers with FancyParsers with MessageHand
     p ^^ Messaged.optM2mOpt
   
   
-  lazy val identList: P[List[String]] =  "identifier list" $
+  lazy val identList: P[List[String]] =                    "identifier list" $
     rep1sep(ident, ",")
+  
+  lazy val identPosList: P[List[(String, Pos)]] =      "ident-with-pos list" $
+    rep1sep(withPos(ident), ",")
   
   def repWithSemi[T](p: Parser[T]): Parser[List[T]] =
     ("repetition of "

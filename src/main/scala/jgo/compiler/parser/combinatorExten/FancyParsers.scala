@@ -13,7 +13,7 @@ trait FancyParsers extends Parsers with ImplicitConversions {
   */
   
   object InPos extends Parser[Pos] {
-    def apply(in: Input): ParseResult = Success(in.pos, in)
+    def apply(in: Input): ParseResult[Pos] = Success(in.pos, in)
   }
   
   class FancyParserOps[+T](p: Parser[T]) {
@@ -36,8 +36,8 @@ trait FancyParsers extends Parsers with ImplicitConversions {
     p(in) map { _ => in.pos }
   }
   
-  def withPos[T](p: Parser[T]): Parser[(Pos, T)] = Parser { in =>
-    p(in) map { res => (in.pos, res) }
+  def withPos[T](p: Parser[T]): Parser[(T, Pos)] = Parser { in =>
+    p(in) map { res => (res, in.pos) }
   }
   
   //We override nameize in TracePrintingParsers.

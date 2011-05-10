@@ -32,7 +32,7 @@ trait Symbols extends Base with Scoped {
     withPos(ident) ^^ (getSymbol _).tupled //Really, compiler?  Really?
   
   lazy val valueSymbol: PM[ValueSymbol] =
-     withPos(symbol) ^^ { case (p, sM) =>
+     withPos(symbol) ^^ { case (sM, p) =>
       sM flatMap {
         case v: ValueSymbol => Result(v)
         case s              => Problem("not a value: %s", s)(p)
@@ -40,7 +40,7 @@ trait Symbols extends Base with Scoped {
     }
   
   lazy val varSymbol: PM[Variable] =
-    withPos(symbol) ^^ { case (p, sM) =>
+    withPos(symbol) ^^ { case (sM, p) =>
       sM flatMap {
         case v: Variable => Result(v)
         case s           => Problem("not a variable: %s", s)(p)
@@ -48,7 +48,7 @@ trait Symbols extends Base with Scoped {
     }
   
   lazy val funcSymbol: PM[Function] =
-    withPos(symbol) ^^ { case (p, sM) =>
+    withPos(symbol) ^^ { case (sM, p) =>
       sM flatMap {
         case f: Function => Result(f)
         case s           => Problem("not a global function: %s", s)(p)
@@ -56,7 +56,7 @@ trait Symbols extends Base with Scoped {
     }
   
   lazy val pkgSymbol: PM[Package] =
-    withPos(symbol) ^^ { case (p, sM) =>
+    withPos(symbol) ^^ { case (sM, p) =>
       sM flatMap {
         case pkg: Package => Result(pkg)
         case s            => Problem("not a package: %s", s)(p)
@@ -64,7 +64,7 @@ trait Symbols extends Base with Scoped {
     }
   
   lazy val typeSymbol: PM[TypeSymbol] =
-    withPos(symbol) ^^ { case (p, sM) =>
+    withPos(symbol) ^^ { case (sM, p) =>
       sM flatMap {
         case t: TypeSymbol => Result(t)
         case s             => Problem("not a type: %s", s)(p)
@@ -76,17 +76,17 @@ trait Symbols extends Base with Scoped {
     opt(ident <~ ".") ~ ident
   
   
-  def getSymbol(p: Pos, name: String): M[Symbol] = scope.get(name) match {
+  def getSymbol(name: String, p: Pos): M[Symbol] = scope.get(name) match {
     case Some(s) => Result(s)
     case None    => Problem("symbol not found: %s", name)(p)
   }
   
-  def getVariable(p: Pos, name: String): M[Variable] = getSymbol(p, name) flatMap {
+  def getVariable(name: String, p: Pos): M[Variable] = getSymbol(name, p) flatMap {
     case v: Variable => Result(v)
     case _           => Problem("not a variable: %s", name)(p)
   }
   
-  def getTypeSymbol(p: Pos, name: String): M[TypeSymbol] = getSymbol(p, name) flatMap {
+  def getTypeSymbol(name: String, p: Pos): M[TypeSymbol] = getSymbol(name, p) flatMap {
     case t: TypeSymbol => Result(t)
     case _             => Problem("not a type: %s", name)(p)
   }
