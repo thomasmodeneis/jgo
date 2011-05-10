@@ -9,7 +9,7 @@ import codeseq._
 import instr._
 
 trait Statements extends Expressions with SimpleStmts with Declarations with StackScoped with StmtUtils {
-  lazy val statement: P[CodeBuilder] =                            "statement" $
+  lazy val statement: PM[CodeBuilder] =                           "statement" $
     ( block
 //    | labeledStmt
     | ifStmt
@@ -26,13 +26,13 @@ trait Statements extends Expressions with SimpleStmts with Declarations with Sta
     | simpleStmt  //contains the empty statement, so must come last
     )
   
-  lazy val block: P[CodeBuilder] =                                    "block" $
+  lazy val block: PM[CodeBuilder] =                                   "block" $
     scoped("{" ~> stmtList <~ "}")  ^^ makeBlock
   
   lazy val labeledStmt: P_ =                              "labeled statement" $
     (ident <~ ":") ~ statement
   
-  lazy val ifStmt: P[CodeBuilder] =                            "if statement" $
+  lazy val ifStmt: PM[CodeBuilder] =                           "if statement" $
     "if" ~>!
       scoped((simpleStmt <~ ";").? ~ expression ~ block ~ ("else" ~>! statement).?)  ^^ makeIfStmt
   
@@ -61,7 +61,7 @@ trait Statements extends Expressions with SimpleStmts with Declarations with Sta
     | "default"          ~ (":" ~> stmtList)
     )
   
-  lazy val forStmt: P[CodeBuilder] =                          "for statement" $
+  lazy val forStmt: PM[CodeBuilder] =                         "for statement" $
     "for" ~>!
       ( (block                &@ "for with no clause: forever")            ^^ makeInfLoop
       | (expression  ~ block  &@ "for with while-esq conditional clause")  ^^ makeWhile
@@ -97,16 +97,17 @@ trait Statements extends Expressions with SimpleStmts with Declarations with Sta
   lazy val deferStmt: P_ =                                  "defer statement" $
     "defer" ~>! primaryExpr
   
-  lazy val stmtList: P[List[CodeBuilder]] =                  "statement list" $
-    repWithSemi(statement)
+  lazy val stmtList: PM[List[CodeBuilder]] =                 "statement list" $
+    repWithSemi(statement) ^^ { implicitly[List[M[CodeBuilder]] => M[List[CodeBuilder]]] }
   
   
   
 //  private implicit def ls2code(ls: List[CodeBuilder]): CodeBuilder =
 //    ls reduceLeft { _ |+| _ }
   
-  private def makeBlock(stmts: List[CodeBuilder], undeclCode: CodeBuilder): CodeBuilder =
-    (stmts foldLeft CodeBuilder())(_ |+| _) |+| undeclCode
+  private def makeBlock(stmtsM: M[List[CodeBuilder]], undeclCode: CodeBuilder): M[CodeBuilder] =
+    for (stmts <- stmtsM)
+    yield (stmts foldLeft CodeBuilder())(_ |+| _) |+| undeclCode
   
   private def makeIfStmt(
     init:       Option[CodeBuilder],
