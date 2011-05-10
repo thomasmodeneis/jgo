@@ -10,17 +10,17 @@ import interm.expr.Combinators._
 trait ExprUtils {
   self: Base =>
   
-  protected implicit def convUnary(f: Expr => Pos => M[Expr]): (Pos ~ M[Expr]) => M[Expr] = {
-    case p ~ eM => for {
-      e <- eM
-      res <- f(e)(p)
+  protected implicit def convUnary[A, R](f: A => Pos => M[R]): (Pos ~ M[A]) => M[R] = {
+    case p ~ aM => for {
+      a <- aM
+      res <- f(a)(p)
     } yield res
   }
   
-  protected implicit def convBinary(f: (Expr, Expr) => Pos => M[Expr]): (M[Expr] ~ Pos ~ M[Expr]) => M[Expr] = {
-    case e1M ~ p ~ e2M => for {
-      (e1, e2) <- together2(e1M, e2M)
-      res <- f(e1, e2)(p)
+  protected implicit def convBinary[A, B, R](f: (A, B) => Pos => M[R]): (M[A] ~ Pos ~ M[B]) => M[R] = {
+    case aM ~ p ~ bM => for {
+      (a, b) <- together2(aM, bM)
+      res <- f(a, b)(p)
     } yield res
   }
   

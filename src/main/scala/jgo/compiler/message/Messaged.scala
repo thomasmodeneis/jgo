@@ -22,6 +22,8 @@ sealed abstract class Messaged[+T] {
   def map     [T2] (f: T => T2):           Messaged[T2]
   def flatMap [T2] (f: T => Messaged[T2]): Messaged[T2]
   
+  def then[T2](m: Messaged[T2]): Messaged[T2]
+  
   def filter(p: T => Boolean): Messaged[T]
   
   /**
@@ -71,6 +73,8 @@ extends Messaged[T] {
   def map    [T2](f: T => T2)           = new Result(f(result), w, n)
   def flatMap[T2](f: T => Messaged[T2]) = f(result).wnAppendedTo(w, n)
   
+  def then[T2](m: Messaged[T2]) = m.wnAppendedTo(w, n)
+  
   def filter(p: T => Boolean) =
     if (p(result))
       this
@@ -104,6 +108,8 @@ extends Messaged[Nothing] {
   
   def map    [T2](f: Nothing => T2)           = this
   def flatMap[T2](f: Nothing => Messaged[T2]) = this
+  
+  def then[T2](m: Messaged[T2]) = new Problem(m.e ::: e, m.w ::: w, m.n ::: n)
   
   def filter(p: Nothing => Boolean) = this
   

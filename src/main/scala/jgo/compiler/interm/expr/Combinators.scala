@@ -57,6 +57,10 @@ trait Combinators {
   
   def assign(left: List[Expr], right: List[Expr]) (implicit pos: Pos): M[CodeBuilder]
   
+  def assignableTo(e: Expr, targetType: Type) (implicit pos: Pos): M[Expr] =
+    if (targetType <<= e.t) Result(e)
+    else Problem("expression not assignable to target type %s", targetType)
+  
   def eval(e: Expr) (implicit pos: Pos): M[CodeBuilder] =
     e.eval
 }

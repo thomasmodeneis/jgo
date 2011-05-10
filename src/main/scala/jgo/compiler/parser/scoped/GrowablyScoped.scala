@@ -2,6 +2,7 @@ package jgo.compiler
 package parser
 package scoped
 
+import message._
 import scope._
 import interm._
 import symbol._
@@ -11,10 +12,11 @@ trait GrowablyScoped extends Scoped {
   
   def growable: GrowableScope
   
-  def bind(name: String, target: Symbol) {
-    if (!growable.alreadyDefined(name))
+  def bind[S <: Symbol](name: String, target: S)(implicit pos: Pos): M[S] =
+    if (!growable.alreadyDefined(name)) {
       growable.put(name, target)
+      Result(target)
+    }
     else
-      recordErr("symbol `%s' already defined in current scope", name)
-  }
+      Problem("symbol `%s' already defined in current scope", name)
 }

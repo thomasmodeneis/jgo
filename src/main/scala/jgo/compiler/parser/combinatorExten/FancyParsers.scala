@@ -12,6 +12,10 @@ trait FancyParsers extends Parsers with ImplicitConversions {
   implicit def conv[A, B, C, D, E, F](f: (A, B, C, D, E) => F) = flatten5(f)
   */
   
+  object InPos extends Parser[Pos] {
+    def apply(in: Input): ParseResult = Success(in.pos, in)
+  }
+  
   class FancyParserOps[+T](p: Parser[T]) {
     def ~>! [U] (q: => Parser[U]): Parser[U] = p ~> commit(q)
     def <~! [U] (q: => Parser[U]): Parser[T] = p <~ commit(q)
