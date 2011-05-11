@@ -5,10 +5,24 @@ import parser.exprs._
 import parser.scoped._
 
 import interm._
+import expr._
+import expr.{Combinators => C}
+import types._
+import symbol._
 import codeseq._
 import instr._
 
 trait Statements extends Expressions with SimpleStmts with Declarations with StackScoped with StmtUtils {
+  
+  /**
+   * Returns `(new LocalVar(name, typeOf), Decl(<that variable>))`.
+   * This method is required by Declarations.
+   */
+  protected def mkVariable(name: String, typeOf: Type): (Variable, CodeBuilder) = {
+    val res = new LocalVar(name, typeOf)
+    (res, Decl(res))
+  }
+  
   lazy val statement: PM[CodeBuilder] =                           "statement" $
     ( block
 //    | labeledStmt
@@ -63,14 +77,14 @@ trait Statements extends Expressions with SimpleStmts with Declarations with Sta
   
   lazy val forStmt: PM[CodeBuilder] =                         "for statement" $
     "for" ~>!
-      ( (block                &@ "for with no clause: forever")            ^^ makeInfLoop
-      | (expression  ~ block  &@ "for with while-esq conditional clause")  ^^ makeWhile
-      | scoped(forClause   ~ block  &@ "for with ordinary for-clause")     ^^ makeFor
-//      | (rangeClause ~ block  &@ "for with range clause")
+      (                               block   ^^ map(makeInfLoop)
+      |        withPos(expression)  ~ block   ^^ makeWhile
+      | scoped(forClause            ~ block)  ^^ makeFor
+//    | (rangeClause ~ block  &@ "for with range clause")
       )
   
   lazy val forClause =             "for-clause: ordinary, ternary for clause" $
-    (simpleStmt.? <~ ";") ~ (expression.? <~ ";") ~ simpleStmt.?
+    (simpleStmt.? <~ ";") ~ withPos(expression.? <~ ";") ~ simpleStmt.?
   
   lazy val rangeClause: P_ =                "range clause of a for statement" $
     expression ~ ("," ~> expression).? ~ (("=" | ":=") ~> "range" ~> expression)
@@ -105,54 +119,67 @@ trait Statements extends Expressions with SimpleStmts with Declarations with Sta
 //  private implicit def ls2code(ls: List[CodeBuilder]): CodeBuilder =
 //    ls reduceLeft { _ |+| _ }
   
-  private def makeBlock(stmtsM: M[List[CodeBuilder]], undeclCode: CodeBuilder): M[CodeBuilder] =
+  private def makeBlock(stmtsM: M[List[CodeBuilder]], undeclCode: CodeBuilder) =
     for (stmts <- stmtsM)
-    yield (stmts foldLeft CodeBuilder())(_ |+| _) |+| undeclCode
+    yield (stmts foldLeft CodeBuilder()) { _ |+| _ } |+| undeclCode
   
   private def makeIfStmt(
-    init:       Option[CodeBuilder],
-    cond:       Expr,
-    body:       CodeBuilder,
-    els:        Option[CodeBuilder],
-    undeclCode: CodeBuilder
-  ): CodeBuilder = cond match {
+      initUgly:   Option[M[CodeBuilder]],
+      condWPos:   (M[Expr], Pos),
+      bodyM:      M[CodeBuilder],
+      elseUgly:   Option[M[CodeBuilder]],
+      undeclCode: CodeBuilder
+  ): M[CodeBuilder] = {
+    val initM: M[Option[CodeBuilder]] = initUgly
+    val elseM: M[Option[CodeBuilder]] = elseUgly
+    val (condM, condPos) = condWPos
     
-    case bool: BoolExpr =>
-      init |+|
-      (els match {
-        case None           => bool.mkIf(body)
-        case Some(elseCode) => bool.mkIfElse(body, elseCode)
-      }) |+|
-      undeclCode
-      
-    case _ => badStmt("condition of if statement not a boolean expression")
+    for {
+      (init, cond, body, els) <- (initM, condM, bodyM, elseM)
+      bool <- C.boolean(cond)(condPos)
+    }
+    yield init |+| (els match {
+      case None           => bool.mkIf(body)
+      case Some(elseCode) => bool.mkIfElse(body, elseCode)
+    }) |+| undeclCode
   }
   
-  private def makeInfLoop(body: CodeBuilder): CodeBuilder = {
+  private def makeInfLoop(body: CodeBuilder) = {
     val top = new Label("top of unconditional for loop")
     Lbl(top) |+| body |+| Goto(top)
   }
   
-  private def makeWhile(cond: Expr, body: CodeBuilder) = cond match {
-    case bool: BoolExpr => bool.mkWhile(body)
-    case _ => badStmt("condition of for statement not a boolean expression")
+  private def makeWhile(condWPos: (M[Expr], Pos), bodyM: M[CodeBuilder]) = {
+    val (condM, condPos) = condWPos
+    for {
+      (cond, body) <- (condM, bodyM)
+      bool <- C.boolean(cond)(condPos)
+    }
+    yield bool.mkWhile(body)
   }
   
   private def makeFor(
-    init:       Option[CodeBuilder],
-    cond:       Option[Expr],
-    incrStmt:   Option[CodeBuilder],
-    body:       CodeBuilder,
-    undeclCode: CodeBuilder
-  ): CodeBuilder = cond match {
+      initUgly:   Option[M[CodeBuilder]],
+      condWPos:   (Option[M[Expr]], Pos),
+      incrUgly:   Option[M[CodeBuilder]],
+      bodyM:      M[CodeBuilder],
+      undeclCode: CodeBuilder
+  ): M[CodeBuilder] = {
+    val initM: M[Option[CodeBuilder]] = initUgly
+    val incrM: M[Option[CodeBuilder]] = incrUgly
+    val (condUgly, condPos) = condWPos
     
-    case Some(bool: BoolExpr) =>
-      init |+|
-      bool.mkWhile(body |+| incrStmt) |+|
-      undeclCode
+    condUgly match {
+      case Some(condM) =>
+        for {
+          (init, cond, incr, body) <- (initM, condM, incrM, bodyM)
+          bool <- C.boolean(cond)(condPos)
+        }
+        yield init |+| bool.mkWhile(body |+| incr) |+| undeclCode
       
-    case Some(_) => badStmt("condition of for statement not a boolean expression")
-    
-    case None => init |+| makeInfLoop(body |+| incrStmt) |+| undeclCode
+      case None =>
+        for ((init, incr, body) <- (initM, incrM, bodyM))
+        yield init |+| makeInfLoop(body |+| incr) |+| undeclCode
+    }
   }
 }

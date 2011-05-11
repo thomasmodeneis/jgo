@@ -163,6 +163,22 @@ object Messaged {
     case _ => new Problem(e(a, b, c), w(a, b, c), n(a, b, c))
   }
   
+  def together[A, B, C, D](a: Messaged[A], b: Messaged[B], c: Messaged[C], d: Messaged[D]): Messaged[(A, B, C, D)] = {
+    val collected = a then b then c then d
+    (a, b, c, d) match {
+      case (Result(r1), Result(r2), Result(r3), Result(r4)) => collected then ((r1, r2, r3, r4))
+      case _ => collected.asInstanceOf[Problem] //Yeah... invariants are invariants...
+    }
+  }
+  
+  def together[A, B, C, D, E](a: Messaged[A], b: Messaged[B], c: Messaged[C], d: Messaged[D], e: Messaged[E]): Messaged[(A, B, C, D, E)] = {
+    val collected = a then b then c then d then e
+    (a, b, c, d, e) match {
+      case (Result(r1), Result(r2), Result(r3), Result(r4), Result(r5)) => collected then ((r1, r2, r3, r4, r5))
+      case _ => collected.asInstanceOf[Problem] //and hackish solutions are hackish solutions.
+    }
+  }
+  
   @inline private def e[A, B](a: Messaged[A], b: Messaged[B]) = b.e ::: a.e
   @inline private def w[A, B](a: Messaged[A], b: Messaged[B]) = b.w ::: a.w
   @inline private def n[A, B](a: Messaged[A], b: Messaged[B]) = b.n ::: a.n
@@ -177,7 +193,7 @@ object Result {
   def apply[T](r: T) = new Result(r, Nil, Nil)
   
   def unapply[T](m: Messaged[T]) = m match {
-    case r: Result[_] => Some(r.result, r.warnings, r.notes)
+    case r: Result[_] => Some(r.result.asInstanceOf[T]) //no way around that one...
     case _ => None
   }
 }

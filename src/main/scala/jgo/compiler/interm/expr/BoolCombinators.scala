@@ -13,6 +13,9 @@ import codeseq._
 import Utils._
 
 trait BoolCombinators extends Combinators with TypeChecks {
+  def boolean(e: Expr) (implicit pos: Pos): M[BoolExpr] =
+    boolExpr(e, "expression")
+  
   def and(e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr] = for {
     (b1, b2) <- sameBoolExpr(e1, e2)
   } yield new And(b1, b2)

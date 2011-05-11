@@ -17,11 +17,14 @@ import interm.instr._
 trait Declarations extends Expressions with GrowablyScoped with StmtUtils {
   private var iotaValue = 0
   
-  protected def mkVariable(name: String, typeOf: Type): (Variable, CodeBuilder) = {
-    val res = new LocalVar(name, typeOf)
-    (res, Decl(res))
-  }
-  
+  /**
+   * Creates a variable of the appropriate kind (i.e., local vs. global) with the specified
+   * name and type, returning that variable and any associated declaration code, if appropriate.
+   * Subtraits implement this method to specify which of LocalVar or GlobalVar is to be used.
+   * In the case of GlobalVar, there would be no declaration code, so an empty code builder
+   * is returned instead.
+   */
+  protected def mkVariable(name: String, typeOf: Type): (Variable, CodeBuilder)
   
   lazy val declaration: PM[CodeBuilder] =                       "declaration" $
     ( varDecl

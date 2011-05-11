@@ -61,6 +61,8 @@ trait Combinators {
     if (targetType <<= e.t) Result(e)
     else Problem("expression not assignable to target type %s", targetType)
   
+  def boolean(e: Expr) (implicit pos: Pos): M[BoolExpr]
+  
   def eval(e: Expr) =
     e.eval
 }
@@ -112,6 +114,8 @@ object Combinators {
   def decr(e: Expr) (pos: Pos): M[CodeBuilder] = c.decr(e)(pos)
   
   def assign(left: List[Expr], right: List[Expr]) (pos: Pos): M[CodeBuilder] = c.assign(left, right)(pos)
+  
+  def boolean(e: Expr) (implicit pos: Pos): M[BoolExpr] = c.boolean(e)(pos)
   
   def eval(e: Expr) = c.eval(e)
 }
