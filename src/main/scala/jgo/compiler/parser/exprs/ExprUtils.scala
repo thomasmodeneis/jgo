@@ -10,8 +10,15 @@ import interm.expr.Combinators._
 trait ExprUtils {
   self: Base =>
   
-  protected implicit def convUnary[A, R](f: A => Pos => M[R]): (Pos ~ M[A]) => M[R] = {
+  protected implicit def convPrefix[A, R](f: A => Pos => M[R]): (Pos ~ M[A]) => M[R] = {
     case p ~ aM => for {
+      a <- aM
+      res <- f(a)(p)
+    } yield res
+  }
+  
+  protected implicit def convSuffix[A, R](f: A => Pos => M[R]): (M[A] ~ Pos) => M[R] = {
+    case aM ~ p => for {
       a <- aM
       res <- f(a)(p)
     } yield res
@@ -31,4 +38,6 @@ trait ExprUtils {
       res <- f(e1, e2, e3)(p)
     } yield res
   }
+  
+  protected def map[A, B](f: A => B): M[A] => M[B] = _ map f
 }

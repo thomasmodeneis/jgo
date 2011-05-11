@@ -10,16 +10,25 @@ import scala.collection.mutable.HashMap
 trait Tokens extends Parsers {
   type Elem = Token
   
-  protected val keywordCache : HashMap[String, Parser[String]] = HashMap.empty
+  protected val keywordParserCache : HashMap[String, Parser[Pos]] = HashMap()
 
-  /** A parser which matches a single keyword token.
-   *
+  /**
+   * Produces a parser that accepts a Keyword containing the given string
+   * (the provided string must actually be recognized as a keyword
+   * by the lexer).  The result of the returned parser is the position in
+   * the input where the keyword occurred.
+   * 
    * @param chars    The character string making up the matched keyword.
    * @return a `Parser' that matches the given string
    */
-  implicit def keyword(chars: String): Parser[String] = {
+  implicit def keyword(chars: String): Parser[Pos] = {
     //println("   looking for `" + chars + "'")
-    keywordCache.getOrElseUpdate(chars, accept("`" + chars + "'", { case Keyword(str) if str == chars => chars }))
+    keywordParserCache.getOrElseUpdate(chars,
+      Parser { in => in.first match {
+        case Keyword(str) if str == chars => Success(in.pos, in.rest)
+        case _ => Failure("`" + chars + "' expected", in)
+      } }
+    )
   }
   
   /** A parser which matches an identifier */
