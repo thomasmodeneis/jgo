@@ -31,6 +31,9 @@ trait EnclosedScope extends Scope {
   
   abstract override def alreadyDefined(name: String): Boolean =
     super.alreadyDefined(name)
+  
+  abstract override def iterator =
+    super.iterator ++ enclosing.iterator
 }
 
 trait PoppableScope[Repr <: PoppableScope[Repr]] extends EnclosedScope {
@@ -48,6 +51,8 @@ abstract class MapScope extends Scope {
   def alreadyDefined(name: String)      = bindings contains name
   
   def iterator = bindings.valuesIterator
+  
+  override def toString = bindings mkString "\n"
 }
 
 class GrowableMapScope private (protected val bindings: mut.Map[String, Symbol]) extends MapScope with GrowableScope {
