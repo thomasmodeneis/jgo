@@ -117,7 +117,7 @@ trait TypeSyntax extends Symbols with TypeUtils {
   }
   
   private def mkMap(kM: M[Type], vM: M[Type]) =
-    for ((k, v) <- together2(kM, vM))
+    for ((k, v) <- (kM, vM))
     yield MapType(k, v)
   
   private def chan(recv: Boolean, send: Boolean)(elemTM: M[Type]) = elemTM map { elemT =>
@@ -147,7 +147,7 @@ trait TypeSyntax extends Symbols with TypeUtils {
   
   private def func(paramInfoM: M[(List[Type], Boolean)], resultInfoUgly: Option[M[List[Type]]]) = {
     val resultInfoM: M[Option[List[Type]]] = resultInfoUgly
-    for (((params, isVariadic), resultInfo) <- together2(paramInfoM, resultInfoM))
+    for (((params, isVariadic), resultInfo) <- (paramInfoM, resultInfoM))
     yield resultInfo match {
       case Some(results) => FuncType(params, results, isVariadic)
       case None          => FuncType(params,     Nil, isVariadic)

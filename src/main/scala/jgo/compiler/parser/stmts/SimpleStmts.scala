@@ -29,9 +29,9 @@ trait SimpleStmts extends Expressions with Symbols with GrowablyScoped with Expr
     expression ~ "<-" ~ expression  ^^ C.chanSend
   
   lazy val incOrDecStmt: PM[CodeBuilder] =        "increment or decrement statement" $
-    ( expression ~ "++"  ^^ C.incr
-    | expression ~ "--"  ^^ convSuffix(C.decr) //Not sure why the conversion isn't being applied implicitly,
-  //| failure("`++' or `--' expected")         //but don't have the time to find out right now.
+    ( expression ~ "++"  ^^ convSuffix(C.incr) //Not sure why the conversion isn't being applied implicitly,
+    | expression ~ "--"  ^^ convSuffix(C.decr) //but don't have the time to find out right now.
+  //| failure("`++' or `--' expected")         
     )
   
   lazy val assignment: PM[CodeBuilder] =                      "assignment statement" $
@@ -74,7 +74,7 @@ trait SimpleStmts extends Expressions with Symbols with GrowablyScoped with Expr
       if (actuallySawDecl)
         for {
           leftVars <- leftVarsM
-          assignCode <- C.assign(leftVars, right)(eqPos)
+          assignCode <- C.assign(leftVars map varLval, right)(eqPos)
         } yield declCode |+| assignCode
       else
         Problem("no new variables on left side of :=")(eqPos)

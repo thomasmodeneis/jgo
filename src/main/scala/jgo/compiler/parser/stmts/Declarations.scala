@@ -30,6 +30,7 @@ trait Declarations extends Expressions with GrowablyScoped with StmtUtils {
     ( varDecl
     | typeDecl  ^^^ noCode
 //  | constDecl
+    | failure("not a declaration")
     )
   
   lazy val constDecl: P_ =                                "const declaration" $
@@ -80,7 +81,7 @@ trait Declarations extends Expressions with GrowablyScoped with StmtUtils {
   
   private def foldCodeTogether(ls: List[M[CodeBuilder]]): M[CodeBuilder] =
     (ls foldLeft M(CodeBuilder.empty)) { (accM, nextM) =>
-      for ((acc, next) <- together2(accM, nextM))
+      for ((acc, next) <- (accM, nextM))
       yield acc |+| next
     }
   
@@ -118,14 +119,14 @@ trait Declarations extends Expressions with GrowablyScoped with StmtUtils {
           } //implicit conv
         for {
           leftVars <- leftVarsM
-          assignCode <- C.assign(leftVars, right)(eqPos)
+          assignCode <- C.assign(leftVars map varLval, right)(eqPos)
         } yield declCode |+| assignCode
       }
     }
   
   //Fix this function next.
   private def procVarSpecTypeAndAssign(left: List[(String, Pos)], typeOfM: M[Type], eqPos: Pos, rightM: M[List[Expr]]): M[CodeBuilder] = 
-    together2(typeOfM, rightM) flatMap { case (typeOf, right) =>
+    (typeOfM, rightM) flatMap { case (typeOf, right) =>
       var declCode = CodeBuilder()
       val newVarsM: M[List[Variable]] = //implicit conv
         for ((name, pos) <- left)
@@ -136,7 +137,7 @@ trait Declarations extends Expressions with GrowablyScoped with StmtUtils {
         }
       for {
         newVars <- newVarsM
-        assignCode <- C.assign(newVars, right)(eqPos)
+        assignCode <- C.assign(newVars map varLval, right)(eqPos)
       } yield declCode |+| assignCode
     }
 }

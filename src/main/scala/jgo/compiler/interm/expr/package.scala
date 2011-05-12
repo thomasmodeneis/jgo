@@ -24,8 +24,9 @@ package object expr {
     else Problem("%s is out of range", value)
   
   
-  implicit def varLval(v: Variable): Expr = VarLval(v)
+  def varLval(v: Variable): Expr = VarLval(v) //should these be in Combinators?
   
+  def funcExpr(f: Function): Expr = FuncExpr(f)
   
   implicit def mappedToExpr[A](ls: List[A])(implicit ev: A => Expr): List[Expr] =
     ls map ev

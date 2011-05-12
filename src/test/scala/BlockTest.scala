@@ -3,6 +3,9 @@ import parser.BlockLang
 import parser.combinatorExten.TracePrintingParsers
 import lexer.Scanner
 
+import message._
+import interm.codeseq._
+
 object BlockTest {
   def main(args: Array[String]) {
     test("{ }")
@@ -21,6 +24,16 @@ object BlockTest {
   var u uint
   x << u
   x >> u
+}""")
+    test("""
+{
+  var x, y int //literals not yet supported in the grammar
+  var s string
+  if x < y {
+    s = s + s
+  }
+  x++
+  y--
 }""")
     test("""
 {
@@ -144,11 +157,17 @@ object BlockTest {
       println()
       
       val bl = new BlockLang(sc) //with TracePrintingParsers
-      if (bl.hasErrs) {
-        println("compilation errors:")
-        bl.errors foreach { err => println(err.longString) }
-      } else {
-        println(bl.result map { "\n" + _.listing })
+      bl.result match {
+        case ns: bl.NoSuccess =>
+          println("syntax error:\n" + ns)
+        
+        case bl.Success(outM, _) =>
+          if (outM.isDefined)
+            println("\n" + outM.get.listing)
+          else {
+            println("compilation errors:")
+            outM.errors foreach { err => println(err.longString) }
+          }
       }
     }
     catch {

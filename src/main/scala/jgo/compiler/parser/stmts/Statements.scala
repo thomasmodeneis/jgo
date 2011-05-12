@@ -38,6 +38,7 @@ trait Statements extends Expressions with SimpleStmts with Declarations with Sta
 //    | deferStmt
     | declaration
     | simpleStmt  //contains the empty statement, so must come last
+    | failure("not a statement")
     )
   
   lazy val block: PM[CodeBuilder] =                                   "block" $
@@ -47,8 +48,9 @@ trait Statements extends Expressions with SimpleStmts with Declarations with Sta
     (ident <~ ":") ~ statement
   
   lazy val ifStmt: PM[CodeBuilder] =                           "if statement" $
-    "if" ~>!
-      scoped((simpleStmt <~ ";").? ~ expression ~ block ~ ("else" ~>! statement).?)  ^^ makeIfStmt
+    "if" ~>! scoped(
+      (simpleStmt <~ ";").? ~ withPos(expression) ~ block ~ ("else" ~>! statement).?
+    )  ^^ makeIfStmt
   
   lazy val switchStmt: P_ =                                "switch statement" $
     "switch" ~>!

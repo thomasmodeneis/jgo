@@ -16,13 +16,14 @@ trait PrimaryExprs extends Operands with TypeSyntax with Scoped with ExprUtils {
   self: Expressions =>
   
   lazy val primaryExpr: PPM[Expr] =                          "primary expression" $
-    ( primaryExpr ~ pos("[") ~ expression <~ "]"                            ^^ C.index
-    | primaryExpr ~ pos("[") ~ (expression.? <~ ":") ~ expression.? <~ "]"  ^^ C.slice
-//  | primaryExpr ~ pos(".") ~ ident
-    | primaryExpr ~ pos(".") ~ ("(" ~> goType <~ ")")                       ^^ C.typeAssert
-    | primaryExpr ~ pos("(") ~ exprList <~ ")"                              ^^ C.invoke
+    ( primaryExpr ~ "[" ~ expression <~ "]"                            ^^ C.index
+    | primaryExpr ~ "[" ~ (expression.? <~ ":") ~ expression.? <~ "]"  ^^ C.slice
+//  | primaryExpr ~ "." ~ ident
+    | primaryExpr ~ "." ~ ("(" ~> goType <~ ")")                       ^^ C.typeAssert
+    | primaryExpr ~ "(" ~ exprList <~ ")"                              ^^ C.invoke
 //  | (goType <~ "(") ~ expression <~ ")"                     &@ "unambiguous type conversion"
 //  | specialBuiltinTypeCall //not yet supported
     | operand
+    | failure("not a primary expression")
     )
 }

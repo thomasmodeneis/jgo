@@ -5,6 +5,7 @@ package exprs
 //import interm._
 import interm.types._
 import interm.expr._
+import interm.expr.{Combinators => C}
 
 trait Operands extends CompositeLiterals /*with FunctionLiterals*/ {
   self: Expressions =>
@@ -19,8 +20,9 @@ trait Operands extends CompositeLiterals /*with FunctionLiterals*/ {
 //  | qualifiedIdent
 //  | methodAsFunc
 //  | literal
-//  | onlyVarSymbol   ^^ VarLval //yes, this *must* be last, to prevent preemptive prefix-matching (I hope you/I remember what this means!)
-//  | onlyFuncSymbol  ^^ FuncExpr
+    | onlyVarSymbol   ^^ { v => M(varLval(v)) }  //yes, this *must* be last, to prevent preemptive prefix-matching (I hope you/I remember what this means!)
+    | onlyFuncSymbol  ^^ { f => M(funcExpr(f)) }
+    | failure("not an operand")
     )
   
   /*
