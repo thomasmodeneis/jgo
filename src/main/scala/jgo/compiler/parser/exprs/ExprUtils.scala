@@ -37,7 +37,9 @@ trait ExprUtils {
   protected implicit def convSlice(f: (Expr, Option[Expr], Option[Expr]) => Pos => M[Expr])
       : (M[Expr] ~ Pos ~ Option[M[Expr]] ~ Option[M[Expr]]) => M[Expr] = {
     case e1M ~ p ~ e2Ugly ~ e3Ugly =>
-      val (e2M: M[Option[Expr]], e3M: M[Option[Expr]]) = (e2Ugly, e3Ugly) //conversion!
+      //val (e2M: M[Option[Expr]], e3M: M[Option[Expr]]) = (e2Ugly, e3Ugly) //conversion!
+      val e2M: M[Option[Expr]] = e2Ugly
+      val e3M: M[Option[Expr]] = e3Ugly
       for {
         (e1, e2, e3) <- (e1M, e2M, e3M)
         res <- f(e1, e2, e3)(p)

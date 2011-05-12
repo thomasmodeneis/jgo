@@ -1,6 +1,6 @@
 import jgo.compiler._
 import parser.BlockLang
-import parser.combinatorExten.TracePrintingParsers
+import parser.combinatorExten._
 import lexer.Scanner
 
 import message._
@@ -156,7 +156,7 @@ object BlockTest {
       println()
       println()
       
-      val bl = new BlockLang(sc) //with TracePrintingParsers
+      val bl = new BlockLang(sc) with ExceptionTracing //with TracePrintingParsers
       bl.result match {
         case ns: bl.NoSuccess =>
           println("syntax error:\n" + ns)

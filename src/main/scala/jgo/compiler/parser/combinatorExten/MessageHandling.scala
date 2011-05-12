@@ -56,9 +56,11 @@ trait MessageHandling extends Parsers {
       case r => r
     }
   
+  /*
   abstract override def Parser[T](f: Input => ParseResult[T]): Parser[T] =
     super.Parser(wrap(f))
   
   abstract override def OnceParser[T](f: Input => ParseResult[T]): OnceParser[T] =
     super.OnceParser(wrap(f))
+  */
 }

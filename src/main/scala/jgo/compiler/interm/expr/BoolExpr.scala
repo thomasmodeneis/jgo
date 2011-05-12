@@ -76,7 +76,7 @@ private class BoolValueExpr(evalCode: => CodeBuilder) extends BoolExpr {
   def branch(t: Target, f: Target) = (t, f) match {
     case (Jump(tLbl), Jump(fLbl)) => evalCode |+| Branch(IsTrue, tLbl) |+| Goto(fLbl)
     case (Jump(tLbl), Fall)       => evalCode |+| Branch(IsTrue, tLbl)
-    case (Fall,       Jump(fLbl)) => evalCode |+| Branch(IfNot(IsTrue), fLbl)
+    case (Fall,       Jump(fLbl)) => evalCode |+| BranchNot(IsTrue, fLbl)
     
     case (Fall, Fall) => throw new AssertionError("impl error: no reason why both branches should be Fall")
   }
@@ -115,7 +115,7 @@ private sealed abstract class CompExpr(comp: Comparison) extends BoolExpr {
   private[expr] def branch(trueBr: Target, falseBr: Target): CodeBuilder = (trueBr, falseBr) match {
     case (Jump(tLbl), Jump(fLbl)) => e1.eval |+| e2.eval |+| Branch(comp, tLbl) |+| Goto(fLbl)
     case (Jump(tLbl), Fall)       => e1.eval |+| e2.eval |+| Branch(comp, tLbl)
-    case (Fall,       Jump(fLbl)) => e1.eval |+| e2.eval |+| Branch(IfNot(comp), fLbl)
+    case (Fall,       Jump(fLbl)) => e1.eval |+| e2.eval |+| BranchNot(comp, fLbl)
     
     case (Fall, Fall) => throw new AssertionError("impl error: no reason why both branches should be Fall")
   }
