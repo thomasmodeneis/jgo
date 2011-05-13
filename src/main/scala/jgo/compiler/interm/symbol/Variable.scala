@@ -13,7 +13,7 @@ sealed abstract class Variable extends ValueSymbol
 }*/
 
 class GlobalVar(name: String, val typeOf: Type) extends Variable {
-  override def toString = "global var " + name + ": " + typeOf
+  override def toString = "<global " + name + ": " + typeOf + ">"
 }
 
 class LocalVar(val name: String, val typeOf: Type) extends Variable with Freezable {
@@ -39,5 +39,5 @@ class LocalVar(val name: String, val typeOf: Type) extends Variable with Freezab
    */
   def isClosedOver: Boolean = closedOver
   
-  override def toString = "local var " + name + ": " + typeOf
+  override def toString = "<" + name + ": " + typeOf + ">"
 }

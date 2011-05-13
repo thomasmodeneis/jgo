@@ -227,6 +227,124 @@ object BlockTest {
   cRecv <- x //bad
   x = <-cRecv
 }""")
+    test("""
+{
+  x, y, z := 1, 2, 3
+  
+  hello := 5 / 3 + 7 * 5 - 1
+  
+  w := -(-(-(-(x))))
+  
+  a := x + 5
+  b := x - 6
+  c := x * 7
+  d := x / 8
+  e := x * -9
+  f := x - -10
+  g := 5 + x
+  h := 6 - x
+  i := 7 * x
+  j := 8 / x
+  k := -9 * x
+  l := -10 / x
+  
+  enough := "STOP!!!"
+  zero, one := 4 % 2, 3 % 2
+  reply := "OK.  Done.  Happy now?\n"
+}""")
+    test("""
+{
+  a := 1
+  b := 2
+  {
+    c, d := 3, 4
+    {
+      e := 5
+    }
+    {
+      f := "hello"
+      {
+        g := "goodbye"
+      }
+      h := "Harrison"
+      {
+        i := "I never get tired of scoping!"
+      }
+      {
+        {
+          {
+            {
+              j := "Eh. Ok, perhaps I do."
+            }
+          }
+        }
+      }
+    }
+  }
+}""")
+    test("""
+{
+  a := 1
+  b := 2
+  a++
+  {
+    c, d := 3, 4
+    c++
+    a++
+    {
+      e := 5
+      c++
+      e++
+      a++
+    }
+    {
+      f := "hello"
+      f = f + "!"
+      c++
+      a++
+      {
+        g := "goodbye"
+        g = g + "!"
+        f = f + "!"
+        c++
+        a++
+      }
+      h := "Harrison"
+      h = h + "!"
+      f = f + "!"
+      c++
+      a++
+      {
+        i := "I never get tired of scoping"
+        i = i + "!"
+        h = h + "!"
+        f = f + "!"
+        c++
+        a++
+      }
+      h = h + "!"
+      f = f + "!"
+      c++
+      a++
+      {
+        a++
+        {
+          a++
+          {
+            a++
+            {
+              a++
+              j := "Eh. Ok, perhaps I do"
+              j = j + "!"
+              a++
+            }
+          }
+        }
+      }
+      b++ //WOAH!  Unprecedented!
+    }
+  }
+}""")
   }
   
   def test(in: String) {

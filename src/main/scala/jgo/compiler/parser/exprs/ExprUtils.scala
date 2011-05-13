@@ -10,6 +10,9 @@ import interm.expr.Combinators._
 trait ExprUtils {
   self: Base =>
   
+  protected implicit def convTuple[A, R](f: (A, Pos) => R): ((A, Pos)) => R =
+    f.tupled
+  
   protected implicit def convPrefix[A, R](f: A => Pos => M[R]): (Pos ~ M[A]) => M[R] = {
     case p ~ aM => for {
       a <- aM

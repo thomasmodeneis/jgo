@@ -40,6 +40,8 @@ trait Base extends Tokens with PackratParsers with FancyParsers with MessageHand
     case a ~ b => new ~(a, ev(b))
   }
   
+  implicit def pRes2Msgd[T](p: Parser[T]): Parser[M[T]] = p ^^ M
+  
   implicit def pLiftList[T](p: Parser[List[M[T]]]): Parser[M[List[T]]] =
     p ^^ Messaged.lsM2mLs
   

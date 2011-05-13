@@ -6,7 +6,9 @@ import symbol._
 import types._
 import member._
 
-sealed abstract class Instr
+sealed abstract class Instr extends Product {
+  override def toString = productIterator.mkString(productPrefix + " ", ", ", "")
+}
 
 case class Decl(v: LocalVar)   extends Instr
 case class Undecl(v: LocalVar) extends Instr
@@ -87,7 +89,7 @@ case class BitwiseCompl(t: Integral)    extends Instr
 case class Incr(v: Variable, n: Int, t: Integral)  extends Instr
 case class Decr(v: Variable, n: Int, t: Integral)  extends Instr
 
-case class  PushStr  (s: String)              extends Instr
+case class  PushStr  (s: String)              extends Instr { override def toString = "PushStr \"" + s + "\"" }
 case class  PushInt  (i: Long,   t: Integral) extends Instr
 case class  PushFloat(i: Double, t: Floating) extends Instr
 case class  PushBool (b: Boolean)             extends Instr

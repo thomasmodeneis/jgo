@@ -10,7 +10,7 @@ import symbol._
 import expr._
 import expr.{Combinators => C}
 
-trait Operands extends CompositeLiterals /*with FunctionLiterals*/ {
+trait Operands extends CompositeLiterals with ExprUtils /*with FunctionLiterals*/ {
   self: Expressions =>
   
 //def symbols: Scope
@@ -20,24 +20,21 @@ trait Operands extends CompositeLiterals /*with FunctionLiterals*/ {
   //in general, "E = E ~ t2 | t1" MUST be used instead of "E = t1 | E ~ t2"
   lazy val operand: PM[Expr] =    "operand" $
     ( "(" ~> expression <~ ")"
-//  | qualifiedIdent
 //  | methodAsFunc
-//  | literal
+    | literal
     | InPos ~ symbol  ^^ procSymbOperand //yes, this *must* be last, to prevent preemptive prefix-matching
     | failure("not an operand")
     )
   
-  /*
-  lazy val literal: P[Expr] =   "literal value" $
-    ( intLit
-    | floatLit
+  lazy val literal: PM[Expr] =   "literal value" $
+    ( intLit       ^^ { _.value } ^^ IntConstant
+    | floatLit     ^^ { _.value } ^^ FloatConstant
 //  | imaginaryLit
-    | charLit
-    | stringLit
+//  | charLit
+    | stringLit    ^^ StringConst.apply
 //  | compositeLit //nonterminal
 //  | functionLit  //nonterminal
     )
-  */
   
   protected def procSymbOperand(pos: Pos, symbM: M[Symbol]): M[Expr] =
     symbM flatMap {
