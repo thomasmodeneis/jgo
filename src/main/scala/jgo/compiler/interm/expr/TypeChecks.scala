@@ -13,7 +13,7 @@ import codeseq._
 trait TypeChecks {
   protected def boolExpr(e: Expr, desc: String) (implicit pos: Pos): M[BoolExpr] = e match {
     case b: BoolExpr => Result(b)
-    case HasType(BoolType) => Problem("%s has type %s; boolean newtypes not yet supported", desc, e.t)
+    case HasType(BoolType) => Result(new BoolValueExpr(e.eval))
     case _ => Problem("%s has type %s; boolean type required", desc, e.t)
   }
   protected def sameBoolExpr(e1: Expr, e2: Expr) (implicit pos: Pos): M[(BoolExpr, BoolExpr)] = for {

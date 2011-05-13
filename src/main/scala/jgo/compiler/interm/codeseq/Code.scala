@@ -18,8 +18,8 @@ object Code {
   }
 }
 
-sealed abstract class Code extends LinearSeqOptimized[Instr, Code] with Equals {
-  def newBuilder: Builder[Instr, Code] = new CodeBuilder
+sealed abstract class Code extends LinearSeq[Instr] with LinearSeqOptimized[Instr, Code] {
+  override def newBuilder: Builder[Instr, Code] = new CodeBuilder
   
   def ::: (instr: Instr): Code = new :::(instr, this)
   

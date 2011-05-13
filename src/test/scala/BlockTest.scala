@@ -80,6 +80,7 @@ object BlockTest {
   x++
   y--
 }""")
+    
     test("""
 {
   var x, y int //literals not yet supported in the grammar
@@ -102,8 +103,89 @@ object BlockTest {
   
   b := x < y && x > y || x == y || x != y && !(x == y)
   
-  //b2 := !!!!!!!!b
+  b = !b
+  b = !!b
+  b = !!!b
+  b = !!!!b
+  b = !!!!!b
 }""")
+    test("""
+{
+  var x, y int //literals not yet supported in the grammar
+  b0 := x < y
+}""")
+    test("""
+{
+  var x, y int //literals not yet supported in the grammar
+  b0 := x < y
+  b1 := x > y
+}""")
+    test("""
+{
+  var x, y int //literals not yet supported in the grammar
+  b0 := x < y
+  b1 := x > y
+  
+  var b2 bool
+  b2 = b0 && b1
+  b2 = b0 || b1
+  
+  var b3 bool
+  b3 = !b0 && b1
+  b3 = !b0 || b1
+  
+  var b4 bool
+  b4 = b0 && !b1
+  b4 = b0 || !b1
+  
+  var b5 bool
+  b5 = b0 && b1 && b2
+  b5 = b0 || b1 || b2
+  
+  var b6 bool
+  b6 = (b0 && b1) || b2
+  b6 = (b0 || b1) && b2
+  
+  bNand := !(b0 && b1)
+  bNor  := !(b0 || b1)
+  
+  bNor_, bNand_ := !b0 && !b1, !b0 || !b1
+  
+  error := false
+  if (bNand != bNand_) {
+    error = true
+  }
+  if (bNor == bNor_) {
+    //do nothing
+  } else {
+    error = true
+  }
+  
+  error2 := false
+  if (true == (bNand != bNand_)) {
+    error2 = true
+  }
+}""")
+    test("""
+{
+  b := true
+  
+  var zero int
+  b = b
+  
+  var one int
+  b = !b
+  
+  var two int
+  b = !!b
+  
+  var three int
+  b = !!!b
+  
+  var four int
+  b = !!!!b
+}""")
+    
     test("""
 {
   var x, y int //literals not yet supported in the grammar

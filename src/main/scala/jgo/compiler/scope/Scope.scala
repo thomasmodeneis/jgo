@@ -14,6 +14,12 @@ trait Scope extends PartialFunction[String, Symbol] with coll.Iterable[Symbol] {
   
   final def apply(name: String):       Symbol  = get(name).get
   final def isDefinedAt(name: String): Boolean = contains(name)
+  
+  /**
+   * Enumerates the ''immediate'' members of this scope; i.e., those members
+   * for which [alreadyDefined] would return true.
+   */
+  def iterator: Iterator[Symbol]
 }
 
 trait GrowableScope extends Scope {
@@ -32,8 +38,14 @@ trait EnclosedScope extends Scope {
   abstract override def alreadyDefined(name: String): Boolean =
     super.alreadyDefined(name)
   
-  abstract override def iterator =
-    super.iterator ++ enclosing.iterator
+  /**
+   * Returns the ''immediate'' members of this scope, in unspecified order.
+   * The members of the enclosing scope are not part of this iterator.
+   */
+  def iterator: Iterator[Symbol] //NOT ++ enclosing.iterator
+  
+  override def toString =
+    super.toString + "\n" + enclosing.toString
 }
 
 trait PoppableScope[Repr <: PoppableScope[Repr]] extends EnclosedScope {
@@ -52,7 +64,7 @@ abstract class MapScope extends Scope {
   
   def iterator = bindings.valuesIterator
   
-  override def toString = bindings mkString "\n"
+  override def toString = bindings mkString ("[\n  ", "\n  ", "\n]")
 }
 
 class GrowableMapScope private (protected val bindings: mut.Map[String, Symbol]) extends MapScope with GrowableScope {

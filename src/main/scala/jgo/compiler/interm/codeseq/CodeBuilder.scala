@@ -54,7 +54,7 @@ class CodeBuilder extends mut.Builder[Instr, Code] with Expendable {
   
   def isEmpty: Boolean = {
     errIfExpended()
-    first == CodeNil && last == CodeNil
+    (first eq CodeNil) && (last eq CodeNil)
   }
   
   def clear() {
