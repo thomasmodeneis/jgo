@@ -38,7 +38,7 @@ trait LvalCombinators extends Combinators with TypeChecks {
   
   
   private def mkIndex(arr: Expr, indx: Expr) (implicit pos: Pos) = {
-    @inline def isIntegral = indx.isOfType[IntegralType]
+    @inline def isIntegral = indx.t.underlying.isInstanceOf[IntegralType]
     
     arr match {
       case HasType(ArrayType(_, elemT)) =>

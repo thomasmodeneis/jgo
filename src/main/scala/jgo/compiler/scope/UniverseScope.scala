@@ -2,8 +2,9 @@ package jgo.compiler
 package scope
 
 import interm._
-import interm.types._
-import interm.symbol._
+import types._
+import symbol._
+import expr._
 
 object UniverseScope extends MapScope {
   private implicit def t(p: (String, Type)): (String, TypeSymbol) =
@@ -29,18 +30,16 @@ object UniverseScope extends MapScope {
     "float32"    -> new TypeAlias("float32", Float32),
     "float64"    -> new TypeAlias("float64", Float64),
     "complex64"  -> new TypeAlias("complex64",  Complex64),
-    "complex128" -> new TypeAlias("complex128", Complex128)
+    "complex128" -> new TypeAlias("complex128", Complex128),
     
     /*
     "uintptr" ->
     */
     
-    /*
-    "true"  ->
-    "false" ->
-    "iota"  ->
-    "nil"   ->
-    */
+    "true"  -> new ConstSymbol(BoolConst(true)),
+    "false" -> new ConstSymbol(BoolConst(false)),
+    "iota"  -> IotaSymbol,
+    "nil"   -> new ConstSymbol(NilConst)
     
     /*
     "append"

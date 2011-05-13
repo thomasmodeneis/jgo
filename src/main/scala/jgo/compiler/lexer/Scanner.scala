@@ -1,8 +1,6 @@
 package jgo.compiler
 package lexer
 
-import Lexical.token
-
 import scala.util.parsing._
 import input._
 import combinator._
@@ -11,11 +9,11 @@ import combinator._
 final class Scanner private(prev: Option[Token], in: Reader[Char]) extends Reader[Token] {
   private def this(in: Reader[Char]) = this(None, in)
   
-  private val (tok, remainingIn) = token(prev, in)
+  private val (tok, remainingIn) = Lexical.token(prev, in)
   
   def      first = { /*println("      " + tok + " at " + pos);*/ tok }
   lazy val rest  = new Scanner(Some(tok), remainingIn)
-  def      pos   = remainingIn.pos
+  lazy val pos   = Lexical.stripWhitespace(in).pos
   def      atEnd = tok == EOF
   
   override def source = in.source

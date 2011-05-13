@@ -12,7 +12,7 @@ sealed abstract class Variable extends ValueSymbol
   override def toString = "var " + pkg.name + "." + name + ", type = " + typeOf
 }*/
 
-case class GlobalVar(name: String, typeOf: Type) extends Variable {
+class GlobalVar(name: String, val typeOf: Type) extends Variable {
   override def toString = "global var " + name + ": " + typeOf
 }
 

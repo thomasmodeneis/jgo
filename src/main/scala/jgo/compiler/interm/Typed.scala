@@ -16,10 +16,11 @@ trait Typed {
   }
   
   def isOfType(otherT: Type): Boolean =
-    typeOf.underlying == otherT || (typeOf.underlying eq TypeError) //== would always be true
+    typeOf.underlying == otherT
   
+  @deprecated("apparently, this doesn't work. too bad.", "May 13, 2011")
   def isOfType[T <: Type] =
-    typeOf.underlying.isInstanceOf[T] || (typeOf.underlying eq TypeError)
+    typeOf.underlying.isInstanceOf[T]
 }
 
 object OfType {

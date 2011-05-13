@@ -138,6 +138,7 @@ object BlockTest {
   b4 = b0 && !b1
   b4 = b0 || !b1
   
+  /*
   var b5 bool
   b5 = b0 && b1 && b2
   b5 = b0 || b1 || b2
@@ -145,6 +146,7 @@ object BlockTest {
   var b6 bool
   b6 = (b0 && b1) || b2
   b6 = (b0 || b1) && b2
+  */
   
   bNand := !(b0 && b1)
   bNor  := !(b0 || b1)

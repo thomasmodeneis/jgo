@@ -11,11 +11,6 @@ import types._
 trait StmtUtils {
   self: Base =>
   
-  def badStmt(msg: String, args: Any*): CodeBuilder = {
-    recordErr(msg, args: _*)
-    CodeBuilder.empty
-  }
-  
   def checkArity(left: List[_], right: List[Expr]): Boolean = {
     val (lLen, rLen) = (left length, right length)
     if (lLen != rLen) {

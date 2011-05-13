@@ -52,13 +52,3 @@ case object TopType     extends BuiltinRefType
 case object NilType     extends BuiltinRefType
 case object BottomType  extends BuiltinRefType
 case object UnitType    extends BuiltinRefType
-
-case object TypeError extends BuiltinRefType {
-  //I don't know of any way of overriding hashCode
-  //to be consistent with this, so I don't try.
-  //Also, this totally breaks the transitivity of ==.
-  //This is the conceptually correct behavior, actually!
-  //Just don't go putting TypeErrors in a HashSet or something...
-  //override def equals(other: Any): Boolean = other.isInstanceOf[Type]
-  val name = "<type error>"
-}

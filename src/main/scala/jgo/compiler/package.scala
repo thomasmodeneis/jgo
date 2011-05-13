@@ -19,10 +19,10 @@ package object compiler {
    */
   implicit def M[T](t: T): M[T] = Result(t)
   
-  @deprecated("use mTupled2 instead")
+  @deprecated("use mTupled2 instead", "early May, 2011")
   def together2[A, B]   (a: M[A], b: M[B])          = Messaged.together(a, b)
   
-  @deprecated("use mTupled3 instead")
+  @deprecated("use mTupled3 instead", "early May, 2011")
   def together3[A, B, C](a: M[A], b: M[B], c: M[C]) = Messaged.together(a, b, c)
   
   implicit def mTupled2[A, B](v: (M[A], M[B])) = v match {

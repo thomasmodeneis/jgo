@@ -45,10 +45,41 @@ sealed abstract class Code extends LinearSeq[Instr] with LinearSeqOptimized[Inst
     if (isEmpty)
       return ""
     val sb = new StringBuilder("\n")
+    var first = true
+    var prevJump, prevLbl, prevDecl, prevUndecl = false
     for (instr <- this) {
-      if (instr.isInstanceOf[Lbl])
-        sb append "\n"
-      sb append instr append "\n"
+      var sawJump, sawLbl, sawDecl, sawUndecl = false
+      instr match {
+        case _: ControlFlow =>
+          sb append instr append "\n\n"
+          sawJump = true
+        
+        case _: Lbl =>
+          if (!prevJump)
+            sb append "\n"
+          sb append instr append "\n"
+          sawLbl = true
+        
+        case _: Decl =>
+          if (!prevJump && !prevLbl && !prevDecl && !first)
+            sb append "\n"
+          sb append instr append "\n"
+          sawDecl = true
+        
+        case _: Undecl =>
+          sb append instr append "\n"
+          sawUndecl = true
+        
+        case _ =>
+          if (prevUndecl)
+            sb append "\n"
+          sb append instr append "\n"
+      }
+      first = false
+      prevJump   = sawJump
+      prevLbl    = sawLbl
+      prevDecl   = sawDecl
+      prevUndecl = sawUndecl
     }
     sb.result
   }

@@ -40,10 +40,10 @@ trait Base extends Tokens with PackratParsers with FancyParsers with MessageHand
     case a ~ b => new ~(a, ev(b))
   }
   
-  implicit def liftList[T](p: Parser[List[M[T]]]): Parser[M[List[T]]] =
+  implicit def pLiftList[T](p: Parser[List[M[T]]]): Parser[M[List[T]]] =
     p ^^ Messaged.lsM2mLs
   
-  implicit def liftOpt[T](p: Parser[Option[M[T]]]): Parser[M[Option[T]]] =
+  implicit def pLiftOpt[T](p: Parser[Option[M[T]]]): Parser[M[Option[T]]] =
     p ^^ Messaged.optM2mOpt
   
   

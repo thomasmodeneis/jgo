@@ -39,6 +39,14 @@ trait Symbols extends Base with Scoped {
       }
     }
   
+  lazy val constSymbol: PM[ConstSymbol] =
+    withPos(symbol) ^^ { case (sM, p) =>
+      sM flatMap {
+        case c: ConstSymbol => Result(c)
+        case s              => Problem("not a constant: %s", s)(p)
+      }
+    }
+  
   lazy val varSymbol: PM[Variable] =
     withPos(symbol) ^^ { case (sM, p) =>
       sM flatMap {

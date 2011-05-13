@@ -195,6 +195,7 @@ object Lexical {
     else (Right(""), in)
   
   def processPrefix(prev: Option[Token], in: Reader[Char]): (Option[Token], Reader[Char]) = prev match {
+    case None => (None, stripWhitespace(in))
     case Some(id:    Identifier) => procForSemi(in)
     case Some(int:   IntLit)     => procForSemi(in)
     case Some(float: FloatLit)   => procForSemi(in)

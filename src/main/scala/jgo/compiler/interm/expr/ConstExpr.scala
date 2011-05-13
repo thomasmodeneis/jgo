@@ -9,30 +9,45 @@ import codeseq._
 
 import PartialFunction._
 
-sealed abstract class Constant extends Expr
+sealed abstract class ConstExpr extends Expr
 
-private case class StringConst(value: String) extends Constant {
+case class StringConst(value: String) extends ConstExpr {
   val typeOf = StringType
   def eval   = PushStr(value)
 }
 
-private case class BoolConst(value: Boolean) extends Constant {
+/*object BoolConst {
+  val True  = new BoolConst(true)
+  val False = new BoolConst(false)
+  
+  @inline
+  def apply(bool: Boolean): BoolConst =
+    if (bool) True
+    else False
+}*/
+
+case class BoolConst(value: Boolean) extends ConstExpr {
   val typeOf = BoolType
   def eval   = PushBool(value)
 }
 
-private case class IntConst(value: Int) extends Constant {
+private case class IntConst(value: Int) extends ConstExpr {
   val typeOf = Int32
   def eval   = PushInt(value, typeOf)
 }
 
-private case class FloatConst(value: Double) extends Constant {
+private case class FloatConst(value: Double) extends ConstExpr {
   val typeOf = Float64
   def eval   = PushFloat(value, typeOf)
 }
 
+object NilConst extends ConstExpr {
+  val typeOf = NilType
+  def eval   = PushNil
+}
+
 /*
-private sealed abstract class RealConst extends Constant {
+private sealed abstract class RealConst extends ConstExpr {
   val value: BigDecimal
 }
 

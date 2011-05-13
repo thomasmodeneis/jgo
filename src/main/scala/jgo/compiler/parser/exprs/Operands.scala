@@ -2,10 +2,13 @@ package jgo.compiler
 package parser
 package exprs
 
-//import interm._
-import interm.types._
-import interm.expr._
-import interm.expr.{Combinators => C}
+import message._
+
+import interm._
+import types._
+import symbol._
+import expr._
+import expr.{Combinators => C}
 
 trait Operands extends CompositeLiterals /*with FunctionLiterals*/ {
   self: Expressions =>
@@ -20,8 +23,7 @@ trait Operands extends CompositeLiterals /*with FunctionLiterals*/ {
 //  | qualifiedIdent
 //  | methodAsFunc
 //  | literal
-    | onlyVarSymbol   ^^ { v => M(varLval(v)) }  //yes, this *must* be last, to prevent preemptive prefix-matching (I hope you/I remember what this means!)
-    | onlyFuncSymbol  ^^ { f => M(funcExpr(f)) }
+    | InPos ~ symbol  ^^ procSymbOperand //yes, this *must* be last, to prevent preemptive prefix-matching
     | failure("not an operand")
     )
   
@@ -36,4 +38,12 @@ trait Operands extends CompositeLiterals /*with FunctionLiterals*/ {
 //  | functionLit  //nonterminal
     )
   */
+  
+  protected def procSymbOperand(pos: Pos, symbM: M[Symbol]): M[Expr] =
+    symbM flatMap {
+      case ConstSymbol(c) => Result(c)
+      case v: Variable    => Result(varLval(v))
+      case f: Function    => Result(funcExpr(f))
+      case s => Problem("invalid operand: not a variable, constant, or function: %s", s)(pos)
+    }
 }
