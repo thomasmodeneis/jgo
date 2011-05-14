@@ -5,103 +5,90 @@ import scala.util.parsing._
 import input._
 import CharSequenceReader.EofCh
 import combinator._
-import scala.annotation.tailrec
+import scala.annotation.{tailrec, switch}
+
+import java.lang.Long.parseLong
+import java.lang.Double.parseDouble
 
 //portions of this object taken from scala.util.parsing.combinator.lexical.{Lexical, StdLexical}
 object Lexical {
+  private type Input = Reader[Char]
   
-  private implicit def extractor2Predicate(ex: CharExtractor): Char => Boolean =
-    ex.unapply(_).isDefined
-  private implicit def toExtractor(chr: Char): CharExtractor = new CharExtractor {
-    def unapply(ch: Char): Option[Char] =
-      if (ch == chr) Some(ch)
-      else None
-  }
-  
-  def token(prev: Option[Token], in0: Reader[Char]): Pair[Token, Reader[Char]] = {
+  def token(prev: Option[Token], in0: Input): Pair[Token, Input] = {
     val (tok, in) = processPrefix(prev, in0)
+    val inRest = in.rest
     if (tok isDefined) (tok.get, in)
-    else in match {
-      case IdentLetter(_) ~: _ =>
-        val (id, rest) = span(in)(IdentChar)
-        (procIdentLike(id.mkString), rest)
-      
-      case '0' ~: post0 => post0 match {
-        case x ~: hex if x.toLower == 'x' =>
-          val (num, rest) = span(hex)(Range('0' -> '9', 'a' -> 'f', 'A' -> 'F'))
-          (IntLit("0x" + num.mkString, 16), rest)
+    else (in.first: @switch) match {
+      case '0' => (inRest.first: @switch) match {
+        case 'x' | 'X' =>
+          val (num, suffix) = spanHexDigit(inRest.rest)
+          (IntLit("0x" + num.mkString, 16), suffix)
         
-        case b ~: bin if b.toLower == 'b' =>
-          val (num, rest) = span(bin)(Or('0', '1'))
-          (IntLit("0b" + num.mkString, 2), rest)
+        //I add support for binary literals because I think they are extremely useful and helpful.
+        //Plus, they're pretty easy to implement.
+        case 'b' | 'B' =>
+          val (num, suffix) = spanNeq(inRest.rest, '0', '1')
+          (IntLit("0b" + num.mkString, 2), suffix)
         
         case _ => digitInitNumeric(in)
       }
       
-      case Digit(_) ~: _ => digitInitNumeric(in)
-      
-      case '.' ~: Digit(_) ~: _ => dotInitFloatLit(in.rest)
-      
-      case '\'' ~: suf =>
-        val (quote, restStartingWithDelim) = suf.first match {
+      //char literal
+      case '\'' =>
+        val (contents, restStartingWithDelim) = inRest.first match {
+          //escape sequence
           case '\\' =>
-            val (escTail, rest) = span(suf.rest.rest) { ch => ch != '\'' && ch != '\n' && ch != EofCh } //skip char after \
-            ("\\" + suf.rest.first + escTail, rest)
-          case noEsc =>
-            span(suf) { ch => ch != '\'' && ch != '\n' && ch != EofCh }
+            //"inRest.rest.rest" -> skip char after \
+            val (escTail, postEsc) = spanNeq(inRest.rest.rest, '\'', '\n', EofCh)
+            ("\\" + inRest.rest.first + escTail, postEsc)
+          
+          case _ => spanNeq(inRest, '\'', '\n', EofCh)
         }
         restStartingWithDelim.first match {
-          case '\'' => (CharLit(quote), restStartingWithDelim.rest)
-          case _ => (ErrorToken("Unenclosed character literal"), restStartingWithDelim)
+          case '\'' => (CharLit(contents), restStartingWithDelim.rest)
+          case _ => (ErrorToken("unenclosed character literal"), restStartingWithDelim)
         }
       
-      case '"' ~: suf =>
-        val (quote, restStartingWithDelim) = {
-          var (qFirstPart, r) = span(suf) { ch => ch != '"' && ch != '\\' && ch != '\n' && ch != EofCh }
+      //string literal
+      case '"' =>
+        val (contents, restStartingWithDelim) = {
+          var (qFirstPart, r) = spanNeq(inRest, '"', '\\', '\n', EofCh)
           val sb = new StringBuilder(qFirstPart)
-          //println("the buffer is: " + sb)
           while (r.first == '\\') {
             val afterBackslash = r.rest.first
-            val (qPart, r2) = span(r.rest.rest) { ch => ch != '"' && ch != '\\' && ch != '\n' && ch != EofCh } //skip the char after \
+            val (qPart, r2) = spanNeq(r.rest.rest, '\\', '\n', '"', EofCh) //skip the char after \
             r = r2
-            //println("r.rest.first = " + afterBackslash + ", qPart = " + qPart)
-            ((sb += '\\') += afterBackslash) ++= qPart //make sure to include the character immediately after \ which was skipped in the span
-            //println("the buffer is: " + sb)
+            sb ensureCapacity (sb.length + qPart.length + 2)
+            //make sure to include the character immediately after \ which was skipped in the span
+            (sb += '\\' += afterBackslash) append qPart
           }
           (sb.result, r)
         }
         restStartingWithDelim.first match {
-          case '"' => (StringLit.interp(quote), restStartingWithDelim.rest)
-          case _ => (ErrorToken("Unenclosed string literal"), restStartingWithDelim)
+          case '"' => (StringLit.interp(contents), restStartingWithDelim.rest)
+          case _ => (ErrorToken("unenclosed string literal"), restStartingWithDelim)
         }
-    
-//      case '"' ~: suf =>
-//        val (quote, restStartingWithDelim) = {
-//          var tuple = span(suf) { ch => ch != '"' && ch != '\\' && ch != '\n' && ch != EofCh }
-//          while (tuple._2.first == '\\')
-//            tuple = span(tuple._2.rest) { ch => ch != '"' && ch != '\\' && ch != '\n' && ch != EofCh }
-//          tuple
-//        }
-//        restStartingWithDelim.first match {
-//          case '"' => (StringLit.interp(quote), restStartingWithDelim.rest)
-//          case _ => (ErrorToken("Unenclosed interpreted string literal"), restStartingWithDelim)
-//        }
       
-      case '`' ~: suf =>
-        val (quote, restStartingWithBacktick) = span(suf){ch => ch != '`' && ch != EofCh}
+      //raw string literal
+      case '`' =>
+        val (contents, restStartingWithBacktick) = spanNeq(inRest, '`', EofCh)
         if (restStartingWithBacktick.first == EofCh)
           (ErrorToken("EOF in raw string literal"), restStartingWithBacktick)
         else
-          (StringLit.raw(quote), restStartingWithBacktick.rest)
-    
-      case EofCh ~: _ => (EOF, in)
-    
-      case other =>
-        val (opt, rest) = opsAndDelims.matchingPrefixOf(other)
-        opt match {
-          case Some(opOrDelim) => (Keyword(opOrDelim), rest)
-          case None => (ErrorToken("Error: unexpected pattern, init char: " + in.first), in.rest)
-        }
+          (StringLit.raw(contents), restStartingWithBacktick.rest)
+      
+      case EofCh => (EOF, in)
+      
+      //dot-initial float literal, ".", or "..."
+      case '.' =>
+        if (inRest.first.isDigit) dotInitFloatLit(in.rest)
+        else opOrDelim(in)
+      
+      //other cases
+      case ch =>
+        if (ch.isLetter || ch == '_') identLike(in)
+        else if (ch.isDigit) digitInitNumeric(in)
+        else opOrDelim(in)
     }
   }
   
@@ -117,84 +104,89 @@ object Lexical {
                      "interface", "map", "package", "range", "return", "select", "struct",
                      "switch", "type", "var")
   
-  def procIdentLike(id: String): Token = 
-    if (reserved contains id) Keyword(id) else Identifier(id)
   
-  def parseLong(num: String, radix: Int): Long = java.lang.Long.parseLong(num, radix)
-  def parseDouble(num: String): Double = java.lang.Double.parseDouble(num)
+  private def identLike(in: Input): (Token, Input) = {
+    val idBuilder = new StringBuilder
+    var cur = in
+    while (cur.first.isLetter || cur.first == '_' || cur.first.isDigit) {
+      idBuilder += cur.first
+      cur = cur.rest
+    }
+    val idStr = idBuilder.result
+    val id = if (reserved contains idStr) Keyword(idStr) else Identifier(idStr)
+    (id, cur)
+  }
   
-  def digitInitNumeric(in: Reader[Char]): Pair[Token, Reader[Char]] = {
-    val (digits, suf) = span(in)(Digit)
-    suf match {
-      case '.' ~: suf2 =>
-        val (digits2, suf3) = span(suf2)(Digit)
-        val (possExp, rest) = floatExpPart(suf3)
-        possExp match {
-          case Right(expStr) =>
-           (FloatLit(digits.mkString + '.' + digits2.mkString + expStr), rest)
-          case Left(errMsg) =>
-            (ErrorToken(errMsg), rest)
-        }
-      
-      case exp if exp.first.toLower == 'e' => floatExpPart(exp) match {
-        case (Right(exp1), rest) => (FloatLit(digits.mkString + exp1), rest)
-        case (Left(err),  rest) => (ErrorToken(err), rest)
-      }
-      
-      case _ => digits(0) match {
-        case '0' =>
-          //val (digits2, innerSuf) = digits span Range('0' -> '7')
-          //val rest = (innerSuf.view.reverse :\ suf) ((_: Char) ~: (_: ReaderStream[Char]))
-          //I should hope that innerSuf is empty; otherwise, we've recieved input like:
-          //"const i = 077723983", which (though eventually invalid) must be lexed as:
-          //Keyword("const"), Identifier("i"), Keyword("="),
-          //IntLit(parseLong("077723", 8)), IntLit(983).
-          //That is, we make sure to push "983" back onto the input by concat-ing it
-          //to suf
-          //eh.  I don't really care
-          (IntLit(digits.mkString, 8), suf)
-        case _ =>
-          (IntLit(digits.mkString, 10), suf)
-      }
+  private def opOrDelim(in: Input): (Token, Input) = {
+    val (opt, rest) = opsAndDelims.matchingPrefixOf(in)
+    opt match {
+      case Some(op) => (Keyword(op), rest)
+      case None => (ErrorToken("invalid sequence, init char: " + in.first), in.rest)
     }
   }
   
   //in has the dot already stripped from it
-  def dotInitFloatLit(in: Reader[Char]): Pair[Token, Reader[Char]] = {
-    val (decimals, suf) = span(in)(Digit)
-    if (suf.first.toLower == 'e') floatExpPart(suf) match {
-      case (Right(exp), rest) => (FloatLit("." + decimals + exp), rest)
-      case (Left(err),  rest) => (ErrorToken(err), rest)
+  private def dotInitFloatLit(in: Input): (Token, Input) = {
+    val (decimals, suf) = spanDigit(in)
+    if (suf.first == 'e' || suf.first == 'E') {
+      val (exp, rest) = floatExpPart(suf)
+      (FloatLit("." + decimals + exp), rest)
     }
     else
-      (FloatLit("." + decimals.mkString), suf)
+      (FloatLit("." + decimals), suf)
   }
   
-  //if in is prefixed with an 'e', that exponent paired with tail,
-  //but if exponent invalid, None paired with in
-  //else "" paired with in
-  def floatExpPart(in: Reader[Char]): Pair[Either[String, String], Reader[Char]] =
-    if (in.first.toLower == 'e') in.rest match {
-      case '+' ~: Digit(d) ~: suf =>
-        val (ds, rest) = span(suf)(Digit)
-        val exp = "e+" + d + ds.mkString
-        (Right(exp), rest)
-    
-      case '-' ~: Digit(d) ~: suf =>
-        val (ds, rest) = span(suf)(Digit)
-        val exp: String = "e-" + d + ds.mkString
-        (Right(exp), rest)
+  private def digitInitNumeric(in: Input): (Token, Input) = {
+    val (digits, suf) = spanDigit(in)
+    (suf.first: @switch) match {
+      //We've encountered a ".", so this must be a float lit
+      case '.' =>
+        val (digits2, suf2) = spanDigit(suf.rest)
+        val (exp, rest) = floatExpPart(suf2)
+        (FloatLit(digits + "." + digits2 + exp), rest)
       
-      case Digit(d) ~: suf =>
-        val (ds, rest) = span(suf)(Digit)
-        val exp: String = "e" + d + ds.mkString
-        (Right(exp), rest)
-    
-      case _ => (Left("Malformed floating-point literal exponent part"), in)
+      //We've encountered an exponent, so this must be a float lit
+      case 'e' | 'E' => 
+       val (exp, rest) = floatExpPart(suf)
+       (FloatLit(digits + exp), rest)
+      
+      //We haven't encountered any of the above, so int lit
+      case _ => digits(0) match {
+        //Subtlety:  In the event of "0773999", digits will contain that entire string
+        //The following code does NOT check for cases like that (which should be lexed,
+        //in theory, as two separate int literals: the octal "0773" and the decimal "999")
+        //since we know that they are ungrammatical anyway (the grammar doesn't permit
+        //adjacent int literals).  So, we take the whole "0773999" as our "octal" literal
+        //and let the IntLit injector cry error.
+        case '0' => (IntLit(digits.mkString, 8), suf)  //octal
+        case _   => (IntLit(digits.mkString, 10), suf) //decimal
+      }
     }
-    else (Right(""), in)
+  }
   
-  def processPrefix(prev: Option[Token], in: Reader[Char]): (Option[Token], Reader[Char]) = prev match {
+  //Check if this abides by the spec.
+  //Right now, if in has a prefix like "e+abc", we return "e+",
+  //followed by the remaining input starting with "abc".
+  //When it comes time to implement imag literals, this function
+  //will return a third value -- a boolean indicating whether
+  //"i" was seen.
+  private def floatExpPart(in: Input): (String, Input) =
+    if (in.first == 'e' || in.first == 'E') (in.rest.first: @switch) match {
+      case '+' =>
+        val (ds, rest) = spanDigit(in.rest.rest)
+        ("e+" + ds, rest)
+    
+      case '-' =>
+        val (ds, rest) = spanDigit(in.rest.rest)
+        ("e-" + ds, rest)
+      
+      case _ =>
+        val (ds, rest) = spanDigit(in.rest)
+        ("e" + ds, rest)
+    }
+    else ("", in)
+  
+  def processPrefix(prev: Option[Token], in: Input): (Option[Token], Input) = prev match {
     case None => (None, stripWhitespace(in))
     case Some(id:    Identifier) => procForSemi(in)
     case Some(int:   IntLit)     => procForSemi(in)
@@ -215,144 +207,146 @@ object Lexical {
     case _ => (None, stripWhitespace(in))
   }
   
-  /*  //old version; changed on Apr 24
-  def processPrefix(prev: Option[Token], in: Reader[Char]): (Option[Token], Reader[Char]) = {
-    if (prev match {
-          case Some(id:    Identifier) => true
-          case Some(int:   IntLit)     => true
-          case Some(float: FloatLit)   => true
-        //case Some(imag:  ImagLit)    => true
-          case Some(char:  CharLit)    => true
-          case Some(str:   StringLit)  => true
-          case Some(Keyword(k))
-            if Set("break",
-                   "continue",
-                   "fallthrough",
-                   "return",
-                   "++", "--",
-                   ")", "]", "}"
-                  ) contains k    => true
-          case _ => false
-        })
-      procForSemi(in)
-    else
-      (None, stripWhitespace(in))
-  }
-  */
-  
-  //TODO: add logic to detect empty lines and not produce ';' there
+  //TODO: add logic to detect empty lines and not produce ';' there //May 14, 2011: Necessary?
   @tailrec
-  final def procForSemi(in: Reader[Char]): (Option[Token], Reader[Char]) = {
-    if (in.atEnd)
-      (None, in) //(Some(Keyword(";")), in) //Apr 24, 2011:  I see no reason why ; before EOF. Change grammar.
-    else if (in.first == ' ' || in.first == '\t' || in.first == '\r')
-      procForSemi(in.rest)
-    else in match {
-      case '\n' ~: tl        => (Some(Keyword(";")), tl)
-    //case '}'  ~: tl        => (Some(Keyword(";")), in) //this is now part of the grammar
-    //case ')'  ~: tl        => (Some(Keyword(";")), in)
-      case '/'  ~: '/' ~: tl => (Some(Keyword(";")), clearToNewline(tl))
-      case '/'  ~: '*' ~: tl => procForSemi(clearToStarSlash(tl))
-      case other => (None, other)
-    }
+  private def procForSemi(in: Input): (Option[Token], Input) = (in.first: @switch) match {
+    case EofCh => (None, in) //(Some(Keyword(";")), in) //Apr 24, 2011:  I see no reason why ; before EOF. Change grammar.
+    
+    case ' ' | '\t' | '\r' => procForSemi(in.rest)
+    
+    case '\n' => (Some(Keyword(";")), in.rest)
+    
+    case '/' =>
+      if (in.rest.first == '/') (Some(Keyword(";")), clearToLineEnd(in.rest.rest))
+      else if (in.rest.first == '*') procForSemi(clearToStarSlash(in.rest.rest))
+      else (None, in)
+      
+    case _ => (None, in)
   }
   
   @tailrec
-  final def stripWhitespace(in: Reader[Char]): Reader[Char] =
-    if (in.atEnd)
-      in
-    else if (in.first == ' ' || in.first == '\n' || in.first == '\t' || in.first == '\r')
-      stripWhitespace(in.rest)
-    else in match {
-      case '/' ~: '/' ~: tl => stripWhitespace(clearToNewline(tl))
-      case '/' ~: '*' ~: tl => stripWhitespace(clearToStarSlash(tl))
-      case other => other
-    }
+  def stripWhitespace(in: Input): Input = (in.first: @switch) match {
+    case EofCh => in
+    case ' ' | '\t' | '\n' | '\r' => stripWhitespace(in.rest)
+    case '/' =>
+      if      (in.rest.first == '/') stripWhitespace(clearToLineEnd  (in.rest.rest))
+      else if (in.rest.first == '*') stripWhitespace(clearToStarSlash(in.rest.rest))
+      else in
+    case _ => in
+  }
   
   
-  def clearToNewline(in: Reader[Char]): Reader[Char] =
-    dropWhile(in) {ch => ch != '\n' && ch != '\r'} rest
+  private def clearToLineEnd(in: Input): Input = {
+    var cur = in
+    //Note:  By mistake, I had initially written:
+    //"cur != '\n' && cur != '\r' && cur != EofCh",
+    //which, of course, is always true.  This is a
+    //rare example of an error that Java's type
+    //system would catch, but Scala's misses.
+    while (cur.first != '\n' && cur.first != '\r' && cur.first != EofCh)
+      cur = cur.rest
+    cur.rest //char after the newline
+  }
       
   @tailrec
-  final def clearToStarSlash(in: Reader[Char]): Reader[Char] =
-    dropWhile(in)(_ != '*').rest match {
-      case '/' ~: tl => tl
-      case _   ~: tl => clearToStarSlash(tl)
+  private def clearToStarSlash(in: Input): Input = {
+    val cur = {
+      var cur1 = in
+      while (cur1.first != '*')
+        cur1 = cur1.rest
+      cur1.rest //char right after the next * encountered
     }
+    cur.first match {
+      case '/' => cur.rest
+      case _   => clearToStarSlash(cur)
+    }
+  }
   
-  private def span(r: Reader[Char])(p: Char => Boolean): (String, Reader[Char]) = {
+  
+  
+  private def spanDigit(in: Input): (String, Input) = {
     val str = new StringBuilder
-    var cur = r
-    while (p(cur.first)) {
-      str += cur.first
+    var cur = in
+    while (true) (cur.first: @switch) match {
+      case '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' =>
+        str += cur.first
+        cur = cur.rest
+      case _ => return (str.result, cur)
+    }
+    throw new AssertionError("impl error: unreachable code reached")
+  }
+  
+  private def spanHexDigit(in: Input): (String, Input) = {
+    val str = new StringBuilder
+    var cur = in
+    while (true) (cur.first: @switch) match {
+      case '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' |
+           'a' | 'b' | 'c' | 'd' | 'e' | 'f' |
+           'A' | 'B' | 'C' | 'D' | 'E' | 'F' =>
+        str += cur.first
+        cur = cur.rest
+      case _ => return (str.result, cur)
+    }
+    throw new AssertionError("impl error: unreachable code reached")
+  }
+  
+  private def spanNeq(in: Input, c1: Char): (String, Input) = {
+    val str = new StringBuilder
+    var cur = in
+    var ch = cur.first
+    while (ch != c1) {
+      str += ch
       cur = cur.rest
+      ch = cur.first
     }
     (str.result, cur)
   }
   
-  private def dropWhile(r: Reader[Char])(p: Char => Boolean): Reader[Char] = {
-    var cur = r
-    while (p(cur.first))
+  private def spanNeq(in: Input, c1: Char, c2: Char): (String, Input) = {
+    val str = new StringBuilder
+    var cur = in
+    var ch = cur.first
+    while (ch != c1 && ch != c2) {
+      str += ch
       cur = cur.rest
-    cur
+      ch = cur.first
+    }
+    (str.result, cur)
   }
   
-  private object ~: {
-    def unapply[A](r: Reader[A]): Option[Pair[A, Reader[A]]] =
-      Some(r.first, r.rest)
+  private def spanNeq(in: Input, c1: Char, c2: Char, c3: Char): (String, Input) = {
+    val str = new StringBuilder
+    var cur = in
+    var ch = cur.first
+    while (ch != c1 && ch != c2 && ch != c3) {
+      str += ch
+      cur = cur.rest
+      ch = cur.first
+    }
+    (str.result, cur)
   }
   
-  private sealed abstract class CharExtractor {
-    def unapply(ch: Char): Option[Char]
-  }
-  private object Or {
-    def apply(a: CharExtractor, b: CharExtractor) = new CharExtractor {
-      def unapply(ch: Char): Option[Char] = a unapply ch match {
-        case Some(c) => Some(c)
-        case None    => b unapply ch
-      }
+  private def spanNeq(in: Input, c1: Char, c2: Char, c3: Char, c4: Char): (String, Input) = {
+    val str = new StringBuilder
+    var cur = in
+    var ch = cur.first
+    while (ch != c1 && ch != c2 && ch != c3 && ch != c4) {
+      str += ch
+      cur = cur.rest
+      ch = cur.first
     }
-    def apply(exts: CharExtractor*) = new CharExtractor {
-      def unapply(ch: Char): Option[Char] = 
-        if (exts exists {_(ch)}) Some(ch)
-        else None
+    (str.result, cur)
+  }
+  
+  private def spanNeq(in: Input, c1: Char, c2: Char, c3: Char, c4: Char, c5: Char): (String, Input) = {
+    val str = new StringBuilder
+    var cur = in
+    var ch = cur.first
+    while (ch != c1 && ch != c2 && ch != c3 && ch != c4 && ch != c5) {
+      str += ch
+      cur = cur.rest
+      ch = cur.first
     }
-  }
-  private object Range {
-    def apply(ls: Pair[Char, Char]*) = new CharExtractor {
-      def unapply(ch: Char): Option[Char] = 
-        if (ls exists {pair => pair._1 <= ch && ch <= pair._2})
-          Some(ch)
-        else
-          None
-    }
-  }
-  private object Not {
-    def apply(a: CharExtractor) = new CharExtractor {
-      def unapply(ch: Char): Option[Char] = a unapply ch match {
-        case Some(_) => None
-        case None    => Some(ch)
-      }
-    }
-  }
-  private object Letter extends CharExtractor {
-    def unapply(ch: Char): Option[Char] =
-      if (ch.isLetter) Some(ch)
-      else None
-  }
-  private object IdentLetter extends CharExtractor {
-    def unapply(ch: Char): Option[Char] =
-      if (ch.isLetter || ch == '_') Some(ch)
-      else None
-  }
-  private object Digit extends CharExtractor {
-    def unapply(ch: Char): Option[Char] =
-      if (ch.isDigit) Some(ch)
-      else None
-  }
-  private object IdentChar extends CharExtractor {
-    def unapply(ch: Char): Option[Char] =
-      if (ch.isLetter || ch == '_' || ch.isDigit) Some(ch)
-      else None
+    (str.result, cur)
   }
 }
