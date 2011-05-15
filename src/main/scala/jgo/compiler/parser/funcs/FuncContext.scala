@@ -1,5 +1,6 @@
 package jgo.compiler
 package parser
+package funcs
 
 import scope._
 
@@ -11,11 +12,12 @@ import codeseq._
 import symbol._
 
 import scala.collection.mutable.{HashMap, HashSet}
+import scala.{collection => coll}
 
 trait FuncContext extends Base with StackScoped {
   protected def initialEnclosing: Scope
-  def target: Func
-  def compile: M[FuncData]
+  //def target: Func
+  //def compile: M[FuncData]
   
   private val seenLbls, unseenLbls = HashSet[String]()
   private val lbls = HashMap[String, UserLabel]()
@@ -57,4 +59,6 @@ trait FuncContext extends Base with StackScoped {
     (breakTargets    getOrElseUpdate (lbl, new UserLabel(lbl)),
      continueTargets getOrElseUpdate (lbl, new UserLabel(lbl + "#")))
   }
-} 
+  
+  def undecledLbls: coll.Set[String] = unseenLbls
+}

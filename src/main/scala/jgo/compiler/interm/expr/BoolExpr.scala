@@ -58,15 +58,41 @@ sealed abstract class BoolExpr extends Expr {
     branch(t, Fall) |+| Lbl(f) |+| elseBranch |+| Goto(end) |+| Lbl(t) |+| ifBranch |+| Lbl(end)
   }
   
-  def mkWhile(loopBody: CodeBuilder): CodeBuilder = {
+  /**
+   * Produces the code for a while loop whose condition is this boolean
+   * expression and whose body is the code specified, also returning
+   * the labels for break and continue, in that order.
+   */
+  def mkWhile(loopBody: CodeBuilder): (CodeBuilder, Label, Label) = {
     val g    = new LabelGroup
-    val end  = new Label("end of loop", g)
-    val top  = new Label("top of loop", g)
-    val cond = new Label("cond of loop", g)
-    Goto(cond) |+|
-    Lbl(top)   |+| loopBody |+|
-    Lbl(cond)  |+| branch(top, Fall) |+|
-    Lbl(end)
+    val end  = new Label("end of while", g)
+    val top  = new Label("top of while", g)
+    val cond = new Label("cond of while", g)
+    
+    val code =
+      Goto(cond) |+|
+      Lbl(top)  |+| loopBody |+|
+      Lbl(cond) |+| branch(top, Fall) |+|
+      Lbl(end)
+    
+    (code, end, cond)
+  }
+  
+  def mkFor(loopBody: CodeBuilder, incrCode: CodeBuilder): (CodeBuilder, Label, Label) = {
+    val g    = new LabelGroup
+    val end  = new Label("end of for", g)
+    val top  = new Label("top of for", g)
+    val incr = new Label("incr of for", g)
+    val cond = new Label("cond of for", g)
+    
+    val code =
+      Goto(cond) |+|
+      Lbl(top)  |+| loopBody |+|
+      Lbl(incr) |+| incrCode |+|
+      Lbl(cond) |+| branch(top, Fall) |+|
+      Lbl(end)
+    
+    (code, end, incr)
   }
 }
 

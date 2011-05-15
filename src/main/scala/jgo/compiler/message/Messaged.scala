@@ -11,7 +11,7 @@ sealed abstract class Messaged[+T] {
   def warnings: List[WarningMsg]
   def notes:    List[NoteMsg]
   
-  def getOrElse[U >: T](substitute:  U):           U
+  def getOrElse[U >: T](substitute:  U): U
   def orElse   [U >: T](alternative: Messaged[U]): Messaged[U]
   
   def asOption: Option[T]
@@ -26,23 +26,21 @@ sealed abstract class Messaged[+T] {
   
   def filter(p: T => Boolean): Messaged[T]
   
-  /**
-   * Performs a monadic bind, just like flatMap, not a functoric (?) map. 
-   * Never use this function directly, lest you (and I) look like a moron.
-   * This blatant hack permits us to use for expressions much more readily with Messaged.
-   * Witness:
-   * {{{
-   *  def neg(eM: Messaged[Expr]) =
-   *    for (e <- eM)
-   *    yield e match {
-   *      case HasType(t: NumericType) => SimpleExpr(e.eval |+| Neg(t), e.t) //Make use of an implicit conv.
-   *      case _ => Problem("operand of - (negation) is of type %s; expected numeric type", e.t)
-   *    }
-   * }}}
-   * I'll get rid of this abomination as soon as I find a cleaner way of accomplishing that.
-   */
-  //final def map[M, T2](f: T => M)(implicit ev: M <:< Messaged[T2]): Messaged[T2] =
-    //flatMap(ev compose f)
+  def apply[A, R](a: A)(implicit ev: T <:< (A => R)): Messaged[R] =
+    for (v <- this)
+    yield (ev(v))(a)
+  
+  def apply[A, B, R](a: A, b: B)(implicit ev: T <:< ((A, B) => R)): Messaged[R] =
+    for (v <- this)
+    yield (ev(v))(a, b)
+  
+  def apply[A, B, C, R](a: A, b: B, c: C)(implicit ev: T <:< ((A, B, C) => R)): Messaged[R] =
+    for (v <- this)
+    yield (ev(v))(a, b, c)
+  
+  def apply[A, B, C, D, R](a: A, b: B, c: C, d: D)(implicit ev: T <:< ((A, B, C, D) => R)): Messaged[R] =
+    for (v <- this)
+    yield (ev(v))(a, b, c, d)
   
   private[message] val e: List[ErrorMsg]
   private[message] val w: List[WarningMsg]
@@ -147,7 +145,7 @@ object Messaged {
     }
   
   implicit def optM2mOpt[T](opt: Option[Messaged[T]]): Messaged[Option[T]] = (opt: @unchecked) match {
-    case Some(r: Result[T]) => new Result(Some(r.result), r.w, r.n)
+    case Some(r @ Result(result)) => new Result(Some(result), r.w, r.n)
     case Some(p: Problem)   => p
     case None => new Result(None, Nil, Nil)
   }
