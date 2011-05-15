@@ -4,6 +4,4 @@ package symbol
 
 import types._
 
-class Function(val name: String, val typeOf: FuncType) extends ValueSymbol {
-  override val callable = true
-}
+final class Function(val name: String, val typeOf: FuncType) extends Func with ValueSymbol

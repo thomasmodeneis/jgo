@@ -1,19 +1,26 @@
 package jgo.compiler
 package interm
 
-import java.lang.Integer.toHexString
-
 object LabelGroup {
   private var curId: Long = 1
   
-  object User extends LabelGroup(0)
+  val User = new LabelGroup(0)
 }
 
-class LabelGroup private(val id: Long){
-  def this() = { this(LabelGroup.curId); LabelGroup.curId += 1 }
+final class LabelGroup private(id: Long) {
+  def this() = {
+    this(LabelGroup.curId)
+    LabelGroup.curId += 1
+  }
+  
+  def designation: String = id.toString
 }
 
-class Label(val tag: String, val group: LabelGroup) {
+sealed class Label(val tag: String, group: LabelGroup) {
   def this(tag: String) = this(tag, new LabelGroup)
-  override def toString = tag + " " + group.id
+  override def toString = tag + " " + group.designation
+}
+
+final class UserLabel(val name: String) extends Label(name, LabelGroup.User) {
+  override def toString = name
 }
