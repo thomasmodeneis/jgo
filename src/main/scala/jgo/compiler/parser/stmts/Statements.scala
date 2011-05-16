@@ -51,13 +51,16 @@ trait Statements extends Expressions
   lazy val block: PM[CodeBuilder] =                                                        "block" $
     scoped("{" ~> stmtList <~ "}")  ^^ makeBlock
   
-  /*
+  /* DOESN'T WORK! */
   lazy val labeledStmt: P_ =                                                   "labeled statement" $
-    (ident ~ ":"  ^^ procLabelDecl) ~!
-      ( 
-      | statement
-      )
-  */
+    ( loop(label, forStmt)
+//  | breakable(label, switchStmt)
+//  | breakable(label, selectStmt)
+    | label ~ statement
+    )
+  
+  lazy val label: PM[String] =                                                             "label" $
+    ident ~ ":"  ^^ procLabelDecl 
   
   lazy val ifStmt: PM[CodeBuilder] =                                                "if statement" $
     "if" ~>! scoped(
