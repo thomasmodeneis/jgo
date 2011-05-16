@@ -36,6 +36,10 @@ trait Labels {
     lbls getOrElseUpdate (name, new UserLabel(name))
   }
   
+  def procGoto(pos: Pos, name: String): M[CodeBuilder] = {
+    Result(Goto(useLabel(pos, name)))
+  }
+  
   def checkForUndefedLabels: M[Unit] = {
     var issues: M[Unit] = Result(())
     for ((lblName, positions) <- unseenDefs; pos <- positions) {

@@ -40,9 +40,9 @@ trait Statements extends Expressions
 //  | breakable(selectStmt) //not yet supported in grammar
 //  | goStmt
 //  | returnStmt
-//  | breakStmt
-//  | continueStmt
-//  | gotoStmt
+    | breakStmt
+    | continueStmt
+    | gotoStmt
 //  | deferStmt
     | declaration
     | simpleStmt  //contains the empty statement, so must come last
@@ -129,8 +129,8 @@ trait Statements extends Expressions
     | "continue"          ^^ procContinue
     )
   
-  lazy val gotoStmt: P_ =                                                         "goto statement" $
-    "goto" ~>! ident
+  lazy val gotoStmt: PM[CodeBuilder] =                                            "goto statement" $
+    "goto" ~! ident  ^^ procGoto
   
   lazy val deferStmt: P_ =                                                       "defer statement" $
     "defer" ~>! primaryExpr
