@@ -67,23 +67,23 @@ trait BreaksAndContinues {
     }
   }
   
-  def procBreak(pos: Pos) = breakStack.headOption match {
-    case Some((_, target)) => Result(target)
+  def procBreak(pos: Pos): M[CodeBuilder] = breakStack.headOption match {
+    case Some((_, target)) => Result(Goto(target))
     case None => Problem("illegal break; not enclosed by loop, switch, or select")(pos)
   }
   
-  def procContinue(pos: Pos) = continueStack.headOption match {
-    case Some((_, target)) => Result(target)
+  def procContinue(pos: Pos): M[CodeBuilder] = continueStack.headOption match {
+    case Some((_, target)) => Result(Goto(target))
     case None => Problem("illegal continue; not enclosed by loop")(pos)
   }
   
-  def procBreak(pos: Pos, name: String) = validBreaks get name match {
-    case Some(target) => Result(target)
+  def procBreak(pos: Pos, name: String): M[CodeBuilder] = validBreaks get name match {
+    case Some(target) => Result(Goto(target))
     case None => Problem("illegal break target %s; not an enclosing loop, switch, or select", name)(pos)
   }
   
-  def procContinue(pos: Pos, name: String) = validContinues get name match {
-    case Some(target) => Result(target)
+  def procContinue(pos: Pos, name: String): M[CodeBuilder] = validContinues get name match {
+    case Some(target) => Result(Goto(target))
     case None => Problem("illegal continue target %s; not an enclosing loop", name)(pos)
   }
   

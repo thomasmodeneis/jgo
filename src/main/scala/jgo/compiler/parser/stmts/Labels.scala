@@ -20,7 +20,7 @@ trait Labels {
   private val unseenDecls = HashMap[String, ListBuffer[Pos]]()
   private val lbls = HashMap[String, UserLabel]()
   
-  def procLabelDecl(pos: Pos, name: String): M[UserLabel] =
+  def procLabelDecl(name: String, pos: Pos): M[UserLabel] =
     if (seenDecls contains name)
       Problem("label %s already declared", name)(pos)
     else {

@@ -53,10 +53,11 @@ trait Statements extends Expressions
   
   /*
   lazy val labeledStmt: P_ =                                                   "labeled statement" $
-    guard(ident <~ ":") ~>!
-      (
+    (ident ~ ":"  ^^ procLabelDecl) ~!
+      ( 
       | statement
-      )*/
+      )
+  */
   
   lazy val ifStmt: PM[CodeBuilder] =                                                "if statement" $
     "if" ~>! scoped(
@@ -117,8 +118,10 @@ trait Statements extends Expressions
     | "break"          ^^ procBreak
     )
   
-  lazy val continueStmt: P_ =                                                 "continue statement" $
-    "continue" ~>! ident.?
+  lazy val continueStmt: PM[CodeBuilder] =                                    "continue statement" $
+    ( "continue" ~ ident  ^^ procContinue
+    | "continue"          ^^ procContinue
+    )
   
   lazy val gotoStmt: P_ =                                                         "goto statement" $
     "goto" ~>! ident
