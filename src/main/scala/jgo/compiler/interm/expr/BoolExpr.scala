@@ -63,36 +63,26 @@ sealed abstract class BoolExpr extends Expr {
    * expression and whose body is the code specified, also returning
    * the labels for break and continue, in that order.
    */
-  def mkWhile(loopBody: CodeBuilder): (CodeBuilder, Label, Label) = {
-    val g    = new LabelGroup
-    val end  = new Label("end of while", g)
+  def mkWhile(loopBody: CodeBuilder)(brk: Label, cont: Label): CodeBuilder = {
+    val g    = brk.group
     val top  = new Label("top of while", g)
-    val cond = new Label("cond of while", g)
     
-    val code =
-      Goto(cond) |+|
-      Lbl(top)  |+| loopBody |+|
-      Lbl(cond) |+| branch(top, Fall) |+|
-      Lbl(end)
-    
-    (code, end, cond)
+    Goto(cont) |+|
+    Lbl(top)  |+| loopBody |+|
+    Lbl(cont) |+| branch(top, Fall) |+|
+    Lbl(brk)
   }
   
-  def mkFor(loopBody: CodeBuilder, incrCode: CodeBuilder): (CodeBuilder, Label, Label) = {
-    val g    = new LabelGroup
-    val end  = new Label("end of for", g)
+  def mkFor(loopBody: CodeBuilder, incrCode: CodeBuilder)(brk: Label, cont: Label): CodeBuilder = {
+    val g    = brk.group
     val top  = new Label("top of for", g)
-    val incr = new Label("incr of for", g)
     val cond = new Label("cond of for", g)
     
-    val code =
-      Goto(cond) |+|
-      Lbl(top)  |+| loopBody |+|
-      Lbl(incr) |+| incrCode |+|
-      Lbl(cond) |+| branch(top, Fall) |+|
-      Lbl(end)
-    
-    (code, end, incr)
+    Goto(cond) |+|
+    Lbl(top)  |+| loopBody |+|
+    Lbl(cont) |+| incrCode |+|
+    Lbl(cond) |+| branch(top, Fall) |+|
+    Lbl(brk)
   }
 }
 

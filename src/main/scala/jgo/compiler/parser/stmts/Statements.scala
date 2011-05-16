@@ -161,7 +161,7 @@ trait Statements extends FuncContext with BreaksAndContinues with Expressions wi
       (cond, body) <- (condM, bodyM)
       bool <- C.boolean(cond)(condPos)
     }
-    yield bool.mkWhile(body)
+    yield bool.mkWhile(body) _
   }
   
   private def makeFor(

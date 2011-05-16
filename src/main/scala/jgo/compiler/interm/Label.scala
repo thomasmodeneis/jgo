@@ -16,7 +16,7 @@ final class LabelGroup private(id: Long) {
   def designation: String = id.toString
 }
 
-sealed class Label(val tag: String, group: LabelGroup) {
+sealed class Label(val tag: String, val group: LabelGroup) {
   def this(tag: String) = this(tag, new LabelGroup)
   override def toString = tag + " " + group.designation
 }
