@@ -11,8 +11,6 @@ package object messaged {
     def isDefined: Boolean
     
     def errors:   List[ErrorMsg]
-    def warnings: List[WarningMsg]
-    def notes:    List[NoteMsg]
     
     def getOrElse[U >: T](substitute:  U): U
     def orElse   [U >: T](alternative: Messaged[U]): Messaged[U]
@@ -46,22 +44,13 @@ package object messaged {
       yield (ev(v))(a, b, c, d)
     
     private[messaged] val e: List[ErrorMsg]
-    private[messaged] val w: List[WarningMsg]
-    private[messaged] val n: List[NoteMsg]
-    private[messaged] def wnAppendedTo(w: List[WarningMsg], n: List[NoteMsg]): Messaged[T]
   }
   
-  class Result[+T] private[messaged](
-    val result: T,
-    private[messaged] val w: List[WarningMsg],
-    private[messaged] val n: List[NoteMsg])
-  extends Messaged[T] {
+  case class Result[+T](result: T) extends Messaged[T] {
     def get       = result
     def isDefined = true
     
-    def      errors   = Nil
-    lazy val warnings = w reverse
-    lazy val notes    = n reverse
+    def errors = Nil
     
     def getOrElse[U >: T](subst: U)         = result
     def orElse   [U >: T](alt: Messaged[U]) = this
@@ -71,34 +60,24 @@ package object messaged {
     
     def foreach(f: T => Any) = f(result)
     
-    def map    [T2](f: T => T2)           = new Result(f(result), w, n)
-    def flatMap[T2](f: T => Messaged[T2]) = f(result).wnAppendedTo(w, n)
+    def map    [T2](f: T => T2)           = new Result(f(result))
+    def flatMap[T2](f: T => Messaged[T2]) = f(result)
     
-    def then [T2](m: Messaged[T2]) = m.wnAppendedTo(w, n)
+    def then [T2](m: Messaged[T2]) = m
     def after[T2](m: Messaged[T2]) = m then this
     
     def filter(p: T => Boolean) =
-      if (p(result))
-        this
-      else
-        new Problem(Nil, w, n)
+      if (p(result)) this
+      else new Problem(Nil)
     
     private[messaged] val e = Nil
-    private[messaged] def wnAppendedTo(w0: List[WarningMsg], n0: List[NoteMsg]) =
-      new Result(result, w ::: w0, n ::: n0)
   }
   
-  class Problem private[messaged](
-    private[messaged] val e: List[ErrorMsg],
-    private[messaged] val w: List[WarningMsg],
-    private[messaged] val n: List[NoteMsg])
-  extends Messaged[Nothing] {
+  class Problem private[messaged](private[messaged] val e: List[ErrorMsg]) extends Messaged[Nothing] {
     def get       = throw new NoSuchElementException
     def isDefined = false
     
     lazy val errors   = e reverse
-    lazy val warnings = w reverse
-    lazy val notes    = n reverse
     
     def getOrElse[U](subst: U)         = subst
     def orElse   [U](alt: Messaged[U]) = alt
@@ -111,57 +90,45 @@ package object messaged {
     def map    [T2](f: Nothing => T2)           = this
     def flatMap[T2](f: Nothing => Messaged[T2]) = this
     
-    def then[T2](m: Messaged[T2]) = new Problem(m.e ::: e, m.w ::: w, m.n ::: n)
+    def then[T2](m: Messaged[T2]) = new Problem(m.e ::: e)
     
     def filter(p: Nothing => Boolean) = this
-    
-    private[messaged] def wnAppendedTo(w0: List[WarningMsg], n0: List[NoteMsg]) =
-      new Problem(e, w ::: w0, n ::: n0)
   }
   
   object Messaged {
-    def apply[T](t: T): Messaged[T] = new Result(t, Nil, Nil)
+    def apply[T](t: T): Messaged[T] = new Result(t)
     
     implicit def lsM2mLs[T](ms: List[Messaged[T]]): Messaged[List[T]] =
       if (ms forall { _.isDefined }) {
         var rs: List[T]          = Nil
-        var ws: List[WarningMsg] = Nil
-        var ns: List[NoteMsg]    = Nil
         for (m <- ms) {
           val res = m.asInstanceOf[Result[T]]
           rs ::= res.result
-          //ws = res.w ::: ws
-          //ns = res.n ::: ns
         }
-        new Result(rs.reverse, ws, ns)
+        new Result(rs.reverse)
       }
       else {
         var es: List[ErrorMsg]   = Nil
-        var ws: List[WarningMsg] = Nil
-        var ns: List[NoteMsg]    = Nil
-        for (m <- ms) {
+        for (m <- ms)
           es = m.e ::: es
-          //ws = m.w ::: ws
-          //ns = m.n ::: ns
-        }
-        new Problem(es, ws, ns)
+        new Problem(es)
       }
     
-    implicit def optM2mOpt[T](opt: Option[Messaged[T]]): Messaged[Option[T]] = (opt: @unchecked) match {
-      case Some(r @ Result(result)) => new Result(Some(result), r.w, r.n)
-      case Some(p: Problem)   => p
-      case None => new Result(None, Nil, Nil)
+    implicit def optM2mOpt[T](opt: Option[Messaged[T]]): Messaged[Option[T]] = opt match {
+      case Some(r @ Result(result)) => new Result(Some(result))
+      case Some(p: Problem) => p
+      case None => new Result(None)
     }
     
     
     def together[A, B](a: Messaged[A], b: Messaged[B]): Messaged[(A, B)] = (a, b) match {
-      case (r1: Result[_], r2: Result[_]) => new Result((r1.result, r2.result), w(r1, r2), n(r1, r2))
-      case _ => new Problem(e(a, b), w(a, b), n(a, b))
+      case (r1: Result[_], r2: Result[_]) => new Result((r1.result, r2.result))
+      case _ => new Problem(e(a, b))
     }
     
     def together[A, B, C](a: Messaged[A], b: Messaged[B], c: Messaged[C]): Messaged[(A, B, C)] = (a, b, c) match {
-      case (r1: Result[_], r2: Result[_], r3: Result[_]) => new Result((r1.result, r2.result, r3.result), w(r1, r2, r3), n(r1, r2, r3))
-      case _ => new Problem(e(a, b, c), w(a, b, c), n(a, b, c))
+      case (r1: Result[_], r2: Result[_], r3: Result[_]) => new Result((r1.result, r2.result, r3.result))
+      case _ => new Problem(e(a, b, c))
     }
     
     def together[A, B, C, D](a: Messaged[A], b: Messaged[B], c: Messaged[C], d: Messaged[D]): Messaged[(A, B, C, D)] = {
@@ -181,33 +148,15 @@ package object messaged {
     }
     
     @inline private def e[A, B](a: Messaged[A], b: Messaged[B]) = b.e ::: a.e
-    @inline private def w[A, B](a: Messaged[A], b: Messaged[B]) = b.w ::: a.w
-    @inline private def n[A, B](a: Messaged[A], b: Messaged[B]) = b.n ::: a.n
-    
     @inline private def e[A, B, C](a: Messaged[A], b: Messaged[B], c: Messaged[C]) = c.e ::: b.e ::: a.e
-    @inline private def w[A, B, C](a: Messaged[A], b: Messaged[B], c: Messaged[C]) = c.w ::: b.w ::: a.w
-    @inline private def n[A, B, C](a: Messaged[A], b: Messaged[B], c: Messaged[C]) = c.n ::: b.n ::: a.n
-  }
-  
-  object Result {
-    //def apply[T](r: T, w: List[WarningMsg], n: List[NoteMsg]) = new Result(r, w, n)
-    def apply[T](r: T) = new Result(r, Nil, Nil)
-    
-    def unapply[T](m: Messaged[T]) = m match {
-      case r: Result[_] => Some(r.result.asInstanceOf[T]) //no way around that one...
-      case _ => None
-    }
   }
   
   object Problem {
-    //def apply(e: List[ErrorMsg], w: List[WarningMsg], n: List[NoteMsg]) = new Problem(e, w, n)
-    //def apply(e: List[ErrorMsg]) = new Problem(e, Nil, Nil)
-    
     def apply(msg: String, args: Any*)(implicit pos: Pos) =
-      new Problem(List(ErrorMsg(msg.format(args: _*)).setPos(pos)), Nil, Nil)
+      new Problem(List(ErrorMsg(msg.format(args: _*)).setPos(pos)))
     
     def unapply(m: Messaged[_]) = m match {
-      case p: Problem => Some(p.errors, p.warnings, p.notes)
+      case p: Problem => Some(p.errors)
       case _ => None
     }
   }

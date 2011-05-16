@@ -20,12 +20,11 @@ trait FancyParsers extends Parsers with ImplicitConversions {
     def ~>! [U] (q: => Parser[U]): Parser[U] = p ~> commit(q)
     def <~! [U] (q: => Parser[U]): Parser[T] = p <~ commit(q)
     
-    def ^?#  [U <: Positional] (f: PartialFunction[T, U]): Parser[U] =
-      positioned(p ^? f)
-    def ^?#  [U <: Positional] (f: PartialFunction[T, U], error: (T) ⇒ String): Parser[U] =
-      positioned(p ^? (f, error))
-    def ^^#  [U <: Positional] (f: T => U) = positioned(p ^^ f)
-    def ^^^# [U <: Positional] (r: U) = positioned(p ^^^ r)
+    def >*> [U] (fp: Parser[T => U]): Parser[U] = Parser { in0 =>
+      p(in0) flatMapWithNext { t => in =>
+        fp(in) map { f => f(t) }
+      }
+    }
     
     def &@ (name: String): Parser[T] = nameize(p, name)
   }

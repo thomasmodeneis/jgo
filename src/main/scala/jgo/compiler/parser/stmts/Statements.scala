@@ -16,8 +16,9 @@ import instr._
 trait Statements extends Expressions
                     with SimpleStmts
                     with Declarations
-                    with BreaksAndContinues
                     with StackScoped
+                    with Labels
+                    with BreaksAndContinues
                     with StmtUtils {
   //self: FuncContext =>
   
@@ -52,15 +53,17 @@ trait Statements extends Expressions
     scoped("{" ~> stmtList <~ "}")  ^^ makeBlock
   
   /* DOESN'T WORK! */
-  lazy val labeledStmt: P_ =                                                   "labeled statement" $
-    ( loop(label, forStmt)
-//  | breakable(label, switchStmt)
-//  | breakable(label, selectStmt)
-    | label ~ statement
-    )
+  lazy val labeledStmt: PM[CodeBuilder] =                                      "labeled statement" $
+    label >> { nameAndLabel =>
+      ( labeledLoop(forStmt)(nameAndLabel)
+//    | labeledBreakable(switchStmt)(nameAndLabel)
+//    | labeledBreakable(selectStmt)(nameAndLabel)
+      | statement
+      )
+    }
   
-  lazy val label: PM[String] =                                                             "label" $
-    ident ~ ":"  ^^ procLabelDecl 
+  lazy val label: P[(String, M[UserLabel])]=                                               "label" $
+    ident ~ ":"  ^^ defLabel 
   
   lazy val ifStmt: PM[CodeBuilder] =                                                "if statement" $
     "if" ~>! scoped(

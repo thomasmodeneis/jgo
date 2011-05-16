@@ -16,29 +16,30 @@ import scala.{collection => coll}
 import coll.{immutable => imm}
 
 trait Labels {
-  private val seenDecls   = HashSet[String]()
-  private val unseenDecls = HashMap[String, ListBuffer[Pos]]()
+  private val seenDefs   = HashSet[String]()
+  private val unseenDefs = HashMap[String, ListBuffer[Pos]]()
   private val lbls = HashMap[String, UserLabel]()
   
-  def procLabelDecl(name: String, pos: Pos): M[UserLabel] =
-    if (seenDecls contains name)
-      Problem("label %s already declared", name)(pos)
+  def defLabel(name: String, pos: Pos): (String, M[UserLabel]) =
+    if (seenDefs contains name)
+      (name, Problem("label %s already defined", name)(pos))
     else {
-      seenDecls += name
-      unseenDecls -= name
-      Result(lbls getOrElseUpdate (name, new UserLabel(name)))
+      seenDefs += name
+      unseenDefs -= name
+      val label = lbls getOrElseUpdate (name, new UserLabel(name))
+      (name, Result(label))
     }
   
-  def procGoto(pos: Pos, name: String): UserLabel = {
-    if (!(seenDecls contains name))
-      unseenDecls(name) += pos
+  def useLabel(pos: Pos, name: String): UserLabel = {
+    if (!(seenDefs contains name))
+      unseenDefs(name) += pos
     lbls getOrElseUpdate (name, new UserLabel(name))
   }
   
-  def checkForUndecledLabels: M[Unit] = {
+  def checkForUndefedLabels: M[Unit] = {
     var issues: M[Unit] = Result(())
-    for ((lblName, positions) <- unseenDecls; pos <- positions) {
-      issues = issues then Problem("target not found: %s", lblName)(pos)
+    for ((lblName, positions) <- unseenDefs; pos <- positions) {
+      issues = issues then Problem("target label not found: %s", lblName)(pos)
     }
     issues
   }

@@ -39,31 +39,36 @@ trait BreaksAndContinues {
     res
   }
   
-  def breakable[T](nameP: Parser[M[String]], p: Parser[M[Label => T]]): Parser[M[T]] = Parser { in0 =>
-    p(in0) flatMapWithNext { nameM => in =>
-      val name = nameM getOrElse "<error>" //:(
-      
-      val break = new Label("(" + name + ").break")
-      
+  def labeledBreakable(p: Parser[M[Label => CodeBuilder]])(tuple: (String, M[UserLabel])): Parser[M[CodeBuilder]] = {
+    val (name, lblM) = tuple
+    
+    val g = new LabelGroup(name)
+    val break = new Label("break", g)
+    
+    Parser { in =>
       pushBreakable(break)
-      val resParseResult = p(in) map { fM => fM(break) }
+      val parseResult = p(in) map { fM => fM(break) }
       popBreakable()
-      resParseResult map { nameM then _ }
+      for (resultM <- parseResult)
+      yield for ((lbl, result) <- (lblM, resultM))
+      yield Lbl(lbl) |+| result
     }
   }
   
-  def loop[T](nameP: Parser[M[String]], p: Parser[M[(Label, Label) => T]]): Parser[M[T]] = Parser { in0 =>
-    p(in0) flatMapWithNext { nameM => in =>
-      val name = nameM getOrElse "<error>" //:(
-      
-      val g = new LabelGroup
-      val break    = new Label("(" + name + ").break", g)
-      val continue = new Label("(" + name + ").continue", g)
-      
+  def labeledLoop(p: Parser[M[(Label, Label) => CodeBuilder]])(tuple: (String, M[UserLabel])): Parser[M[CodeBuilder]] = {
+    val (name, lblM) = tuple
+    
+    val g = new LabelGroup(name)
+    val break = new Label("break", g)
+    val continue = new Label("continue", g)
+    
+    Parser { in =>  
       pushLoop(break, continue)
-      val resParseResult = p(in) map { fM => fM(break, continue) }
+      val parseResult = p(in) map { fM => fM(break, continue) }
       popLoop()
-      resParseResult map { nameM then _ }
+      for (resultM <- parseResult)
+      yield for ((lbl, result) <- (lblM, resultM))
+      yield Lbl(lbl) |+| result
     }
   }
   

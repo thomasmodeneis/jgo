@@ -4,21 +4,19 @@ package interm
 object LabelGroup {
   private var curId: Long = 1
   
-  val User = new LabelGroup(0)
+  val User = new LabelGroup("<user>") //we should never actually see that string
 }
 
-final class LabelGroup private(id: Long) {
+final class LabelGroup(val id: String) {
   def this() = {
-    this(LabelGroup.curId)
+    this(LabelGroup.curId.toString)
     LabelGroup.curId += 1
   }
-  
-  def designation: String = id.toString
 }
 
 sealed class Label(val tag: String, val group: LabelGroup) {
   def this(tag: String) = this(tag, new LabelGroup)
-  override def toString = tag + " " + group.designation
+  override def toString = group.id + "." + tag
 }
 
 final class UserLabel(val name: String) extends Label(name, LabelGroup.User) {
