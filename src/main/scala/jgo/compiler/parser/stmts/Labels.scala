@@ -20,16 +20,19 @@ trait Labels {
   private val unseenDecls = HashMap[String, ListBuffer[Pos]]()
   private val lbls = HashMap[String, UserLabel]()
   
-  def declLabel(lbl: String): M[UserLabel] = {
-    seenDecls += lbl
-    unseenDecls -= lbl
-    lbls getOrElseUpdate (lbl, new UserLabel(lbl))
-  }
+  def procLabelDecl(pos: Pos, name: String): M[UserLabel] =
+    if (seenDecls contains name)
+      Problem("label %s already declared", name)(pos)
+    else {
+      seenDecls += name
+      unseenDecls -= name
+      Result(lbls getOrElseUpdate (name, new UserLabel(name)))
+    }
   
-  def procGoto(pos: Pos, lbl: String): UserLabel = {
-    if (!(seenDecls contains lbl))
-      unseenDecls(lbl) += pos
-    lbls getOrElseUpdate (lbl, new UserLabel(lbl))
+  def procGoto(pos: Pos, name: String): UserLabel = {
+    if (!(seenDecls contains name))
+      unseenDecls(name) += pos
+    lbls getOrElseUpdate (name, new UserLabel(name))
   }
   
   def checkForUndecledLabels: M[Unit] = {

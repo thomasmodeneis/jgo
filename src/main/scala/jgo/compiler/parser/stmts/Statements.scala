@@ -112,8 +112,10 @@ trait Statements extends Expressions
   lazy val returnStmt: P_ =                                                     "return statement" $
     "return" ~>! exprList.?
   
-  lazy val breakStmt: P_ =                                                       "break statement" $
-    "break" ~>! ident.?
+  lazy val breakStmt: PM[CodeBuilder] =                                          "break statement" $
+    ( "break" ~ ident  ^^ procBreak
+    | "break"          ^^ procBreak
+    )
   
   lazy val continueStmt: P_ =                                                 "continue statement" $
     "continue" ~>! ident.?
