@@ -2,9 +2,6 @@ package jgo.compiler
 package interm
 package expr
 
-import message._
-import message.Messaged._
-
 import types._
 import instr._
 import instr.TypeConversions._
@@ -17,7 +14,7 @@ trait TypeChecks {
     case _ => Problem("%s has type %s; boolean type required", desc, e.t)
   }
   protected def sameBoolExpr(e1: Expr, e2: Expr) (implicit pos: Pos): M[(BoolExpr, BoolExpr)] = for {
-    (b1, b2) <- together(boolExpr(e1, "left operand"), boolExpr(e2, "right operand"))
+    (b1, b2) <- (boolExpr(e1, "left operand"), boolExpr(e2, "right operand"))
     result <- if (e1.t == e2.t) Result(b1, b2)
               else Problem("left and right operands have differing types %s and %s", e1.t, e2.t)
   } yield result
@@ -53,31 +50,31 @@ trait TypeChecks {
   
   
   protected def sameAddable(e1: Expr, e2: Expr) (implicit pos: Pos): M[(Expr, Expr, AddableType)] = for {
-    ((e1_, ut1), (e2_, ut2)) <- together(addable(e1, "left operand"), addable(e2, "right operand"))
+    ((e1_, ut1), (e2_, ut2)) <- (addable(e1, "left operand"), addable(e2, "right operand"))
     result <- if (e1_.t == e2_.t) Result(e1_, e2_, ut1)
               else Problem("left and right operands have differing types %s and %s", e1.t, e2.t)
   } yield result
   
   protected def sameNumeric(e1: Expr, e2: Expr) (implicit pos: Pos): M[(Expr, Expr, NumericType)] = for {
-    ((e1_, ut1), (e2_, ut2)) <- together(numeric(e1, "left operand"), numeric(e2, "right operand"))
+    ((e1_, ut1), (e2_, ut2)) <- (numeric(e1, "left operand"), numeric(e2, "right operand"))
     result <- if (e1_.t == e2_.t) Result(e1_, e2_, ut1)
               else Problem("left and right operands have differing types %s and %s", e1.t, e2.t)
   } yield result
   
   protected def sameIntegral(e1: Expr, e2: Expr) (implicit pos: Pos): M[(Expr, Expr, IntegralType)] = for {
-    ((e1_, ut1), (e2_, ut2)) <- together(integral(e1, "left operand"), integral(e2, "right operand"))
+    ((e1_, ut1), (e2_, ut2)) <- (integral(e1, "left operand"), integral(e2, "right operand"))
     result <- if (e1_.t == e2_.t) Result(e1_, e2_, ut1)
               else Problem("left and right operands have differing types %s and %s", e1.t, e2.t)
   } yield result
   
   protected def sameUnsigned(e1: Expr, e2: Expr) (implicit pos: Pos): M[(Expr, Expr, UnsignedType)] = for {
-    ((e1_, ut1), (e2_, ut2)) <- together(unsigned(e1, "left operand"), unsigned(e2, "right operand"))
+    ((e1_, ut1), (e2_, ut2)) <- (unsigned(e1, "left operand"), unsigned(e2, "right operand"))
     result <- if (e1_.t == e2_.t) Result(e1_, e2_, ut1)
               else Problem("left and right operands have differing types %s and %s", e1.t, e2.t)
   } yield result
   
   protected def sameString(e1: Expr, e2: Expr) (implicit pos: Pos): M[(Expr, Expr)] = for {
-    (e1_, e2_) <- together(string(e1, "left operand"), string(e2, "right operand"))
+    (e1_, e2_) <- (string(e1, "left operand"), string(e2, "right operand"))
     result <- if (e1_.t == e2_.t) Result(e1_, e2_)
               else Problem("left and right operands have differing types %s and %s", e1.t, e2.t)
   } yield result

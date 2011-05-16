@@ -1,12 +1,11 @@
 package jgo.compiler
 package parser.types
 
-import message._
-
 import parser.scoped._
 
-import interm.types._
-import interm.symbol._
+import interm._
+import types._
+import symbol._
 
 trait TypeSyntax extends Symbols with TypeUtils {
   lazy val goType: PM[Type] =                                                                "type" $

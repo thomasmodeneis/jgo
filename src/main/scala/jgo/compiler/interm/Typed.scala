@@ -18,9 +18,9 @@ trait Typed {
   def isOfType(otherT: Type): Boolean =
     typeOf.underlying == otherT
   
-  @deprecated("apparently, this doesn't work. too bad.", "May 13, 2011")
-  def isOfType[T <: Type] =
-    typeOf.underlying.isInstanceOf[T]
+//  @deprecated("apparently, this doesn't work. too bad.", "May 13, 2011")
+//  def isOfType[T <: Type] =
+//    typeOf.underlying.isInstanceOf[T]
 }
 
 object OfType {

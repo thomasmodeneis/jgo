@@ -2,9 +2,6 @@ package jgo.compiler
 package interm
 package expr
 
-import message._
-import message.Messaged._
-
 import types._
 import instr._
 import instr.TypeConversions._
@@ -62,13 +59,13 @@ trait BasicCombinators extends Combinators with TypeChecks {
     yield BasicExpr(e1i.eval |+| e2i.eval |+| BitwiseXor(it), e1.t)
   
   def shiftL(e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr] = for {
-    ((e1i, it1), (e2u, ut2)) <- together(integral(e1, "left operand of shift"),
-                                         unsigned(e2, "right operand of shift"))
+    ((e1i, it1), (e2u, ut2)) <- (integral(e1, "left operand of shift"),
+                                 unsigned(e2, "right operand of shift"))
   } yield BasicExpr(e1i.eval |+| e2u.eval |+| ShiftL(it1, ut2), e1.t)
   
   def shiftR(e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr] = for {
-    ((e1i, it1), (e2u, ut2)) <- together(integral(e1, "left operand of shift"),
-                                         unsigned(e2, "right operand of shift"))
+    ((e1i, it1), (e2u, ut2)) <- (integral(e1, "left operand of shift"),
+                                 unsigned(e2, "right operand of shift"))
   } yield BasicExpr(e1i.eval |+| e2u.eval |+| ShiftR(it1, ut2), e1.t)
   
   def bitCompl(e: Expr) (implicit pos: Pos): M[Expr] =

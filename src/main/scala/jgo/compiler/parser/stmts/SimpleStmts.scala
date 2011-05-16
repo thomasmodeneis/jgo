@@ -1,8 +1,6 @@
 package jgo.compiler
 package parser.stmts
 
-import message._
-
 import parser.exprs._
 import parser.scoped._
 

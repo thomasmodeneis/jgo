@@ -13,7 +13,12 @@ import symbol._
 import codeseq._
 import instr._
 
-trait Statements extends FuncContext with BreaksAndContinues with Expressions with SimpleStmts with Declarations with StackScoped with StmtUtils {
+trait Statements extends Expressions
+                    with SimpleStmts
+                    with Declarations
+                    with BreaksAndContinues
+                    with StackScoped
+                    with StmtUtils {
   //self: FuncContext =>
   
   /**
@@ -46,8 +51,12 @@ trait Statements extends FuncContext with BreaksAndContinues with Expressions wi
   lazy val block: PM[CodeBuilder] =                                                        "block" $
     scoped("{" ~> stmtList <~ "}")  ^^ makeBlock
   
+  /*
   lazy val labeledStmt: P_ =                                                   "labeled statement" $
-    (ident <~ ":") ~ statement
+    guard(ident <~ ":") ~>!
+      (
+      | statement
+      )*/
   
   lazy val ifStmt: PM[CodeBuilder] =                                                "if statement" $
     "if" ~>! scoped(

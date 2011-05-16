@@ -2,14 +2,10 @@ package jgo.compiler
 package interm
 package expr
 
-import message._
-
 import types._
 import instr._
 import instr.TypeConversions._
 import codeseq._
-
-import scala.util.parsing.input.Position
 
 trait Combinators {
   def and(e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr]

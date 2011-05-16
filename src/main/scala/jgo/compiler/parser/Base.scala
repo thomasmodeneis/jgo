@@ -2,7 +2,7 @@ package jgo.compiler
 package parser
 
 //import lexer.{Scanner, Lexical}
-import message._
+import messaged.Messaged
 import scope._
 
 import combinatorExten._

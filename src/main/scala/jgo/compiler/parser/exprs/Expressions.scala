@@ -2,11 +2,11 @@ package jgo.compiler
 package parser.exprs
 
 import parser.types._
-//import interm._
-import interm.expr._
-import interm.expr.Expr
-import interm.expr.Combinators._
-import interm.types._
+
+import interm._
+import expr._
+import expr.Combinators._
+import types._
 
 trait Expressions extends PrimaryExprs with ExprUtils {
   lazy val expression: PPM[Expr] =                       "expression" $

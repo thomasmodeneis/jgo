@@ -1,5 +1,4 @@
 package jgo.compiler
-package message
 
 import scala.util.parsing.input.{Position, Positional}
 

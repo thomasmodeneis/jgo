@@ -6,8 +6,6 @@ import parser.Base
 import message._
 
 import interm._
-import expr._
-import expr.{Combinators => C}
 import types._
 import symbol._
 import codeseq._
@@ -69,21 +67,43 @@ trait BreaksAndContinues {
     }
   }
   
-  def pushBreakable(breakTarget: Label) {
+  def procBreak(pos: Pos) = breakStack.headOption match {
+    case Some((_, target)) => Result(target)
+    case None => Problem("illegal break; not enclosed by loop, switch, or select")(pos)
+  }
+  
+  def procContinue(pos: Pos) = continueStack.headOption match {
+    case Some((_, target)) => Result(target)
+    case None => Problem("illegal continue; not enclosed by loop")(pos)
+  }
+  
+  def procBreak(pos: Pos, name: String) = validBreaks get name match {
+    case Some(target) => Result(target)
+    case None => Problem("illegal break target %s; not an enclosing loop, switch, or select", name)(pos)
+  }
+  
+  def procContinue(pos: Pos, name: String) = validContinues get name match {
+    case Some(target) => Result(target)
+    case None => Problem("illegal continue target %s; not an enclosing loop", name)(pos)
+  }
+  
+  
+  
+  private def pushBreakable(breakTarget: Label) {
     breakStack = (None, breakTarget) :: breakStack
   }
   
-  def pushBreakable(name: String, breakTarget: Label) {
+  private def pushBreakable(name: String, breakTarget: Label) {
     breakStack = (Some(name), breakTarget) :: breakStack
     validBreaks(name) = breakTarget
   }
   
-  def pushLoop(breakTarget: Label, continueTarget: Label) {
+  private def pushLoop(breakTarget: Label, continueTarget: Label) {
     breakStack    = (None, breakTarget)    :: breakStack
     continueStack = (None, continueTarget) :: continueStack
   }
   
-  def pushLoop(name: String, breakTarget: Label, continueTarget: Label) {
+  private def pushLoop(name: String, breakTarget: Label, continueTarget: Label) {
     breakStack    = (Some(name), breakTarget)    :: breakStack
     continueStack = (Some(name), continueTarget) :: continueStack
     
@@ -91,14 +111,14 @@ trait BreaksAndContinues {
     validContinues(name) = continueTarget
   }
   
-  def popBreakable() {
+  private def popBreakable() {
     val (nameOpt, _) = breakStack.head
     breakStack = breakStack.tail
     for (name <- nameOpt)
       validBreaks -= name
   }
   
-  def popLoop() {
+  private def popLoop() {
     val (nameOpt,  _) = breakStack.head
     val (name2Opt, _) = continueStack.head
     
@@ -111,25 +131,5 @@ trait BreaksAndContinues {
       validBreaks    -= name
       validContinues -= name
     }
-  }
-  
-  def break(pos: Pos) = breakStack.headOption match {
-    case Some((_, target)) => Result(target)
-    case None => Problem("illegal break; not enclosed by loop, switch, or select")(pos)
-  }
-  
-  def continue(pos: Pos) = continueStack.headOption match {
-    case Some((_, target)) => Result(target)
-    case None => Problem("illegal continue; not enclosed by loop")(pos)
-  }
-  
-  def break(pos: Pos, name: String) = validBreaks get name match {
-    case Some(target) => Result(target)
-    case None => Problem("illegal break target %s; not an enclosing loop, switch, or select", name)(pos)
-  }
-  
-  def continue(pos: Pos, name: String) = validContinues get name match {
-    case Some(target) => Result(target)
-    case None => Problem("illegal continue target %s; not an enclosing loop", name)(pos)
   }
 }

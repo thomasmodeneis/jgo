@@ -2,9 +2,6 @@ package jgo.compiler
 package interm
 package expr
 
-import message._
-import message.Messaged._
-
 import types._
 import instr._
 import instr.TypeConversions._
@@ -64,7 +61,7 @@ trait LvalCombinators extends Combinators with TypeChecks {
   
   def slice(arr: Expr, low: Option[Expr], high: Option[Expr]) (implicit pos: Pos): M[Expr] =
     for {
-      _ <- together(
+      _ <- (
         for (l <- low)  yield integral(l, "lower bound of slice"), //these Option[M[Expr]]'s are implicitly
         for (h <- high) yield integral(h, "upper bound of slice")  //converted to M[Option[Expr]]'s
       )

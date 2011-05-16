@@ -1,18 +1,16 @@
 package jgo.compiler
 package parser.stmts
 
-import message._
-
 import parser.exprs._
 import parser.scoped._
 
-//import interm._
-import interm.expr._
-import interm.expr.{Combinators => C}
-import interm.types._
-import interm.symbol._
-import interm.codeseq._
-import interm.instr._
+import interm._
+import expr._
+import expr.{Combinators => C}
+import types._
+import symbol._
+import codeseq._
+import instr._
 
 trait Declarations extends Expressions with GrowablyScoped with StmtUtils {
   private var iotaValue = 0
