@@ -7,6 +7,10 @@ import instr._
 import instr.TypeConversions._
 import codeseq._
 
+/**
+ * Provides type checking utilities common to the several
+ * Combinators implementations.
+ */
 trait TypeChecks {
   protected def boolExpr(e: Expr, desc: String) (implicit pos: Pos): M[BoolExpr] = e match {
     case b: BoolExpr => Result(b)

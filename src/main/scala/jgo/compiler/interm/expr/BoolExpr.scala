@@ -37,7 +37,10 @@ private object BoolExpr {
 }
 import BoolExpr._
 
-
+/**
+ * An expression whose value can determine the flow of control through a
+ * function.
+ */
 sealed abstract class BoolExpr extends Expr {
   val typeOf            = BoolType
   override def callable = false

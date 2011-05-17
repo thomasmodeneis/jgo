@@ -10,6 +10,14 @@ import instr._
 import instr.TypeConversions._
 import codeseq._
 
+/**
+ * An expression that can be assigned to.  Such expressions are called ''lvalues''.
+ * In addition to having evaluation code -- i.e., code that ''loads'' the current
+ * value of an lvalue -- lvalues also have methods for producing ''storage code''
+ * -- code that sets an lvalue to a certain value, given code for placing that value
+ * atop the operand stack.  Finally, lvalues support generation of ''split storage
+ * code'', a feature used in the implementation of multiple assignment.
+ */
 private sealed abstract class LvalExpr extends Expr {
   val typeOf: Type
   final def eval = load

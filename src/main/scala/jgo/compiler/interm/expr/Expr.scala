@@ -7,6 +7,11 @@ import instr._
 import instr.TypeConversions._
 import codeseq._
 
+/**
+ * An object that encapsulates information about an expression;
+ * most significantly, the type of that expression and the code
+ * which pushes its value onto the operand stack.
+ */
 trait Expr extends Typed {
   /**
    * Provides the code necessary for computing the value
@@ -16,6 +21,10 @@ trait Expr extends Typed {
    */
   private[expr] def eval: CodeBuilder
   
+  /**
+   * States whether this expression may be used as the operand
+   * of the address-of operator.
+   */
   private[expr] def addressable = false
   
   private[expr] def mkPtr: Expr = throw new UnsupportedOperationException(

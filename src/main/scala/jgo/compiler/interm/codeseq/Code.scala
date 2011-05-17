@@ -18,6 +18,9 @@ object Code {
   }
 }
 
+/**
+ * An immutable, linear-access, sequence of intermediate-code instructions.
+ */
 sealed abstract class Code extends LinearSeq[Instr] with LinearSeqOptimized[Instr, Code] {
   override def newBuilder: Builder[Instr, Code] = new CodeBuilder
   

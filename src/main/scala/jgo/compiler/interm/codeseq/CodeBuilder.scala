@@ -21,6 +21,10 @@ object CodeBuilder {
   }
 }
 
+/**
+ * A mutable builder of sequences of intermediate code which supports
+ * concatenation with other such builders.
+ */
 class CodeBuilder extends mut.Builder[Instr, Code] with Expendable {
   private[codeseq] def this(fst: Code, lst: Code) = {
     this()
