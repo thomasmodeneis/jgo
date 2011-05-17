@@ -1,8 +1,6 @@
 package jgo.compiler
 package interm
 
-import message._
-
 import types._
 import symbol._
 import instr._
@@ -20,7 +18,7 @@ package object expr {
   
   def varLval(v: Variable): Expr = VarLval(v) //should these be in Combinators?
   
-  def funcExpr(f: Function): Expr = FuncExpr(f)
+  def functionExpr(f: Function): Expr = FunctionExpr(f)
   
   implicit def mappedToExpr[A](ls: List[A])(implicit ev: A => Expr): List[Expr] =
     ls map ev

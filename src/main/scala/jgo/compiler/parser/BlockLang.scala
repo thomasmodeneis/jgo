@@ -5,7 +5,6 @@ import scala.util.parsing.input.Reader
 
 import lexer._
 import scope._
-import message._
 
 import stmts._
 

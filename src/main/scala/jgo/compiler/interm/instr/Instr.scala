@@ -16,10 +16,21 @@ case class Undecl(v: LocalVar) extends Instr
 case class LoadVar(v:  Variable) extends Instr
 case class StoreVar(v: Variable) extends Instr
 
-case class  InvokeFunc(func:  Function) extends Instr
-case class  InvokeLambda(t:   FuncType) extends Instr
-case class  Func2Lambda(func: Function) extends Instr
-case object Return                      extends Instr
+sealed abstract class InvokeInstr extends Instr {
+  val func: Func
+}
+case class InvokeFunction (func: Function) extends InvokeInstr
+case class InvokeMethod   (func:   Method) extends InvokeInstr
+case class InvokeInterface(func:   Method) extends InvokeInstr
+case class InvokeLambda   (func:   Lambda) extends InvokeInstr
+
+case class Go   (call: InvokeInstr) extends Instr
+case class Defer(call: InvokeInstr) extends Instr
+
+case class Func2Lambda(function: Function) extends Instr
+
+case object Return      extends Instr
+case object ValueReturn extends Instr
 
 case class Unbox(t: Type) extends Instr
 

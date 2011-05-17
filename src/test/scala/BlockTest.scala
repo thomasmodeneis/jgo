@@ -3,7 +3,6 @@ import parser.BlockLang
 import parser.combinatorExten._
 import lexer.Scanner
 
-import message._
 import interm.codeseq._
 
 object BlockTest {

@@ -2,8 +2,6 @@ package jgo.compiler
 package parser
 package exprs
 
-import message._
-
 import interm._
 import types._
 import symbol._
@@ -40,7 +38,7 @@ trait Operands extends CompositeLiterals with ExprUtils /*with FunctionLiterals*
     symbM flatMap {
       case ConstSymbol(c) => Result(c)
       case v: Variable    => Result(varLval(v))
-      case f: Function    => Result(funcExpr(f))
+      case f: Function    => Result(functionExpr(f))
       case s => Problem("invalid operand: not a variable, constant, or function: %s", s)(pos)
     }
 }

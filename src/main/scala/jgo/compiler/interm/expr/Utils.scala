@@ -2,9 +2,6 @@ package jgo.compiler
 package interm
 package expr
 
-import message._
-//import message.Messaged._
-
 import types._
 import instr._
 import instr.TypeConversions._

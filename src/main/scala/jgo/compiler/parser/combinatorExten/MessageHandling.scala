@@ -3,7 +3,6 @@ package parser
 package combinatorExten
 
 import jgo.compiler.interm._
-import jgo.compiler.message._
 import jgo.compiler.util._
 
 import scala.collection.mutable.ListBuffer

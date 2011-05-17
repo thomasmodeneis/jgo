@@ -16,7 +16,7 @@ final class LabelGroup(val id: String) {
 
 sealed class Label(val tag: String, val group: LabelGroup) {
   def this(tag: String) = this(tag, new LabelGroup)
-  override def toString = group.id + "." + tag
+  override def toString = group.id + ": " + tag
 }
 
 final class UserLabel(val name: String) extends Label(name, LabelGroup.User) {

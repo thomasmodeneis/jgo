@@ -2,7 +2,6 @@ package jgo.compiler
 package parser
 package scoped
 
-import message._
 import scope._
 import interm.symbol._
 import interm.types._

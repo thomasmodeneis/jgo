@@ -3,8 +3,6 @@ package parser.stmts
 
 import parser.Base
 
-import message._
-
 import interm._
 import types._
 import symbol._
