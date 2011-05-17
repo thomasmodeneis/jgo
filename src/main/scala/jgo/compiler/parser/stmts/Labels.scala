@@ -32,7 +32,7 @@ trait Labels {
   
   def useLabel(pos: Pos, name: String): UserLabel = {
     if (!(seenDefs contains name))
-      unseenDefs(name) += pos
+      unseenDefs.getOrElseUpdate(name, new ListBuffer) += pos
     lbls getOrElseUpdate (name, new UserLabel(name))
   }
   

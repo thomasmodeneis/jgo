@@ -33,7 +33,7 @@ trait Statements extends Expressions
   
   lazy val statement: PM[CodeBuilder] =                                                "statement" $
     ( block
-//  | labeledStmt
+    | labeledStmt
     | ifStmt
     | loop(forStmt)
 //  | breakable(switchStmt)
