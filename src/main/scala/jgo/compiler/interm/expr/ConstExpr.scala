@@ -9,22 +9,15 @@ import codeseq._
 
 import PartialFunction._
 
+/**
+ * An expression whose value is determined at compile-time.
+ */
 sealed abstract class ConstExpr extends Expr
 
 case class StringConst(value: String) extends ConstExpr {
   val typeOf = StringType
   def eval   = PushStr(value)
 }
-
-/*object BoolConst {
-  val True  = new BoolConst(true)
-  val False = new BoolConst(false)
-  
-  @inline
-  def apply(bool: Boolean): BoolConst =
-    if (bool) True
-    else False
-}*/
 
 case class BoolConst(value: Boolean) extends ConstExpr {
   val typeOf = BoolType
@@ -41,6 +34,9 @@ private case class FloatConst(value: Double) extends ConstExpr {
   def eval   = PushFloat(value, typeOf)
 }
 
+/**
+ * The expression corresponding to the value `nil`.
+ */
 object NilConst extends ConstExpr {
   val typeOf = NilType
   def eval   = PushNil
