@@ -13,6 +13,9 @@ import symbol._
 import codeseq._
 import instr._
 
+/**
+ * Provides the grammar and semantics of statements and blocks.
+ */
 trait Statements extends Expressions
                     with SimpleStmts
                     with Declarations

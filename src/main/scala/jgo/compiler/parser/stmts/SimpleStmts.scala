@@ -13,6 +13,18 @@ import instr.TypeConversions._
 import types._
 import symbol._
 
+/**
+ * Provides the grammar and semantics of simple statements.
+ * The following statements are considered simple:
+ * <ul>
+ * <li>Assignment statements (+=, etc. not currently implemented)</li>
+ * <li>Short variable declarations</li>
+ * <li>Increment and decrement statements</li>
+ * <li>Send statements</li>
+ * <li>Expressions statements</li>
+ * <li>The empty statement</li>
+ * </ul>
+ */
 trait SimpleStmts extends Expressions with Symbols with GrowablyScoped with ExprUtils with StmtUtils {
   lazy val simpleStmt: PM[CodeBuilder] =                          "simple statement" $
     ( assignment

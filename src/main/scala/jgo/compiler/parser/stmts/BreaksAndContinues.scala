@@ -11,6 +11,21 @@ import instr._
 
 import scala.collection.mutable.{HashSet, HashMap}
 
+/**
+ * Provides an implementation of the semantics of breaks and continues,
+ * and of constructs that can be broken out of or continued.
+ * 
+ * This implementation uses mutable state, maintaining a stack of breakable
+ * constructs and of continuable constructs (for targetless breaks and continues)
+ * and hashes containing currently valid break- and continue-targets (for
+ * breaks and continues that specify a target label).
+ * 
+ * The public interface of this trait consists of semantic p-combinators for
+ * unlabeled and labeled breakables and loops (constructs that support both
+ * breaks and continues) and accessors which provide M-wrapped intermediate
+ * code for breaking out of or continuing the innermost (valid) enclosing
+ * construct or the the construct labeled with the specified name.
+ */
 trait BreaksAndContinues {
   self: Base =>
   

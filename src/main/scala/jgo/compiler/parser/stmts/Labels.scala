@@ -15,6 +15,11 @@ import scala.collection.mutable.{HashMap, HashSet, ListBuffer}
 import scala.{collection => coll}
 import coll.{immutable => imm}
 
+/**
+ * Provides a mutable-state-based implementation of the semantics of
+ * (user-defined) labels and gotos within the context of a certain
+ * function.
+ */
 trait Labels {
   private val seenDefs   = HashSet[String]()
   private val unseenDefs = HashMap[String, ListBuffer[Pos]]()
