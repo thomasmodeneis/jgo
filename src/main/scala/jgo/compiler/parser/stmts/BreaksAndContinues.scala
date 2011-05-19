@@ -44,7 +44,7 @@ trait BreaksAndContinues {
     val break = new Label("break", g)
     
     Parser { in =>
-      pushBreakable(break)
+      pushBreakable(name, break)
       val parseResult = p(in) map { fM => fM(break) }
       popBreakable()
       for (resultM <- parseResult)
@@ -61,7 +61,7 @@ trait BreaksAndContinues {
     val continue = new Label("continue", g)
     
     Parser { in =>  
-      pushLoop(break, continue)
+      pushLoop(name, break, continue)
       val parseResult = p(in) map { fM => fM(break, continue) }
       popLoop()
       for (resultM <- parseResult)
