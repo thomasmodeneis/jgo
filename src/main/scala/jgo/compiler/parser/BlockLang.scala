@@ -5,14 +5,22 @@ import scala.util.parsing.input.Reader
 
 import lexer._
 import scope._
+import interm._
+import interm.types._
 
 import stmts._
+import funcs._
 
-class BlockLang(in: Reader[Token]) extends Statements {
+class BlockLang(in: Reader[Token], res: List[Type] = Nil, resNamed: Boolean = false) extends FuncCompiler with Statements {
   //def, not val.  See comment in StackScoped
   def initialEnclosing = UniverseScope
   
-  val result = phrase(block)(in)
+  def target = Lambda(FuncType(Nil, res))
+  def hasNamedResults = resNamed
+  
+  def compile = throw new UnsupportedOperationException
+  
+  lazy val result = phrase(block)(in)
 }
 
 object BlockLang {

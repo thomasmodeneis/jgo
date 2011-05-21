@@ -23,7 +23,7 @@ trait Statements extends Expressions
                     with Labels
                     with BreaksAndContinues
                     with StmtUtils {
-  //self: FuncCompiler =>
+  funcContext: FuncCompiler =>
   
   /**
    * Returns `(new LocalVar(name, typeOf), Decl(<that variable>))`.
@@ -163,17 +163,24 @@ trait Statements extends Expressions
     yield (stmts foldLeft CodeBuilder()) { _ |+| _ } |+| undeclCode
   
   private def makeValueReturn(pos: Pos, lsM: M[List[Expr]]): M[CodeBuilder] =
-    for (ls <- lsM)
-    yield {
+    lsM flatMap { ls =>
+      if (ls.length != funcContext.resultTypes.length)
+        return Problem("wrong number of results %d, expected %d", ls.length, funcContext.resultTypes.length)(pos)
+      
       var code = CodeBuilder.empty
-      //TODO:  IMPORTANT:  Add adicity and type checks.
-      for (e <- ls) code = code |+| C.eval(e)
+      for (((e, t), i) <- ls zip resultTypes zipWithIndex) {
+        if (!(t <<= e.t))
+          return Problem("type %s of %s expression not assignable to corresponding result type %s",
+                         e.t, ordinal(i), t)(pos)
+        code = code |+| C.eval(e)
+      }
       code |+| ValueReturn
     }
   
   private def makeReturn(pos: Pos): M[CodeBuilder] = {
-    //TODO:  IMPORTANT:  Verify that return variables have been declared or this func is void;
-    //otherwise exprless return invalid.
+    if (funcContext.resultTypes != Nil && !funcContext.hasNamedResults)
+      return Problem("expressionless return illegal, since function isn't void"
+                     + " and doesn't have named results")(pos)
     Result(Return)
   }
   

@@ -21,4 +21,8 @@ abstract class FuncCompiler extends Base with StackScoped {
   protected def initialEnclosing: Scope
   def target: Func
   def compile: M[FuncInterm]
+  def hasNamedResults: Boolean
+  
+  def targetFuncType = target.t
+  def resultTypes = targetFuncType.results
 }

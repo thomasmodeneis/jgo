@@ -1,9 +1,10 @@
 package jgo.compiler
-package parser.exprs
+package parser
+package exprs
 
-import parser.stmts._
+import parser.types._
 
-trait FunctionLiterals extends Statements {
-  lazy val functionLit: P_ =                               "function literal" $
-    funcType ~ block
+trait FunctionLiterals extends TypeSyntax {
+  //lazy val functionLit: P_ =                               "function literal" $
+    //funcType ~ block
 }
