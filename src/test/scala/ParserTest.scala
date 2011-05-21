@@ -20,20 +20,16 @@ trait ParserTestSuite extends App {
   def test(in: String) {
     try {
       println("testing: " + in)
-      println()
-      
-      val sc = Scanner(in)
-      
-      val bl = new BlockLang(sc) with ExceptionTracing //with TracePrintingParsers
+      val bl = new BlockLang(Scanner(in)) with ExceptionTracing //with TracePrintingParsers
       bl.result match {
         case ns: bl.NoSuccess =>
-          println("syntax error:\n" + ns)
+          println("\nsyntax error:\n" + ns)
         
         case bl.Success(outM, _) =>
           if (outM.isDefined)
-            println(outM.get.listing)
+            println("\n" + outM.get.listing)
           else {
-            println("compilation errors:")
+            println("\ncompilation errors:")
             outM.errors foreach { err => println(err.longString) }
           }
       }
@@ -45,5 +41,6 @@ trait ParserTestSuite extends App {
         e.printStackTrace()
         println("!!!!!\t!!!!!\t!!!!!")
     }
+    println()
   }
 }

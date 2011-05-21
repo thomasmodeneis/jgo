@@ -37,7 +37,11 @@ sealed abstract class Code extends LinearSeq[Instr] with LinearSeqOptimized[Inst
     val sb = new StringBuilder("{ ")
     var cur = this
     while (!cur.tail.isEmpty) {
-      sb append cur.head append "; "
+      sb append cur.head
+      cur.head match {
+        case _: Lbl => sb append ": "
+        case _      => sb append "; "
+      }
       cur = cur.tail
     }
     sb append cur.head append " }"
@@ -47,36 +51,38 @@ sealed abstract class Code extends LinearSeq[Instr] with LinearSeqOptimized[Inst
   def listing: String = {
     if (isEmpty)
       return ""
-    val sb = new StringBuilder("\n")
+    val sb = new StringBuilder
     var first = true
     var prevJump, prevLbl, prevDecl, prevUndecl = false
     for (instr <- this) {
       var sawJump, sawLbl, sawDecl, sawUndecl = false
+      if (prevJump && !instr.isInstanceOf[ControlFlow])
+        sb append "\n"
       instr match {
         case _: ControlFlow =>
-          sb append instr append "\n\n"
+          sb append instr.listingString append "\n"
           sawJump = true
         
         case _: Lbl =>
-          if (!prevJump)
+          if (!prevLbl && !prevJump && !first)
             sb append "\n"
-          sb append instr append "\n"
+          sb append instr.listingString append "\n"
           sawLbl = true
         
         case _: Decl =>
           if (!prevJump && !prevLbl && !prevDecl && !first)
             sb append "\n"
-          sb append instr append "\n"
+          sb append instr.listingString append "\n"
           sawDecl = true
         
         case _: Undecl =>
-          sb append instr append "\n"
+          sb append instr.listingString append "\n"
           sawUndecl = true
         
         case _ =>
           if (prevUndecl)
             sb append "\n"
-          sb append instr append "\n"
+          sb append instr.listingString append "\n"
       }
       first = false
       prevJump   = sawJump

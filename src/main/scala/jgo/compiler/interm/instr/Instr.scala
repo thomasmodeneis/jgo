@@ -8,6 +8,7 @@ import member._
 
 sealed abstract class Instr extends Product {
   override def toString = productIterator.mkString(productPrefix + " ", ", ", "")
+  def listingString = toString
 }
 
 case class Decl(v: LocalVar)   extends Instr
@@ -113,7 +114,7 @@ case object Dupl_Down2 extends Instr
 case object Swap       extends Instr
 
 
-case class Lbl(l: Label) extends Instr { override def toString = "--" + l + "--" }
+case class Lbl(l: Label) extends Instr { override def listingString = "--" + l + "--" }
 
 sealed abstract class ControlFlow(name: String) extends Instr {
   val target: Label
