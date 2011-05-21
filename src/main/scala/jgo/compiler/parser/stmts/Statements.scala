@@ -23,7 +23,7 @@ trait Statements extends Expressions
                     with Labels
                     with BreaksAndContinues
                     with StmtUtils {
-  //self: FuncContext =>
+  //self: FuncCompiler =>
   
   /**
    * Returns `(new LocalVar(name, typeOf), Decl(<that variable>))`.
@@ -41,11 +41,11 @@ trait Statements extends Expressions
     | loop(forStmt)
 //  | breakable(switchStmt)
 //  | breakable(selectStmt) //not yet supported in grammar
-//  | goStmt
-//  | returnStmt
+    | returnStmt
     | breakStmt
     | continueStmt
     | gotoStmt
+//  | goStmt
 //  | deferStmt
     | declaration
     | simpleStmt  //contains the empty statement, so must come last
@@ -55,7 +55,7 @@ trait Statements extends Expressions
   lazy val block: PM[CodeBuilder] =                                                        "block" $
     scoped("{" ~> stmtList <~ "}")  ^^ makeBlock
   
-  /* DOESN'T WORK! */
+  
   lazy val labeledStmt: PM[CodeBuilder] =                                      "labeled statement" $
     label >> { nameAndLabel =>
       ( labeledLoop(forStmt)(nameAndLabel)
@@ -68,10 +68,12 @@ trait Statements extends Expressions
   lazy val label: P[(String, M[UserLabel])]=                                               "label" $
     ident ~ ":"  ^^ defLabel 
   
+  
   lazy val ifStmt: PM[CodeBuilder] =                                                "if statement" $
     "if" ~>! scoped(
       (simpleStmt <~ ";").? ~ withPos(expression) ~ block ~ ("else" ~>! statement).?
     )  ^^ makeIfStmt
+  
   
   lazy val switchStmt: P_ =                                                     "switch statement" $
     "switch" ~>!
@@ -98,6 +100,7 @@ trait Statements extends Expressions
     | "default"          ~ (":" ~> stmtList)
     )
   
+  
   lazy val forStmt: PM[(Label, Label) => CodeBuilder] =                            "for statement" $
     "for" ~>!
       (                               block   ^^ makeInfLoop
@@ -112,15 +115,16 @@ trait Statements extends Expressions
   lazy val rangeClause: P_ =                                     "range clause of a for statement" $
     expression ~ ("," ~> expression).? ~ (("=" | ":=") ~> "range" ~> expression)
   
+  
 //  lazy val selectStmt: PP =
 //    "select" ~> "{" ~> rep(commClause) <~ "}"
 //  lazy val commClause: PP =
   
-  lazy val goStmt: P_ =                                                             "go statement" $
-    "go" ~>! primaryExpr
   
-  lazy val returnStmt: P_ =                                                     "return statement" $
-    "return" ~>! exprList.?
+  lazy val returnStmt: PM[CodeBuilder] =                                        "return statement" $
+    ( "return" ~ exprList  ^^ makeValueReturn
+    | "return"             ^^ makeReturn
+    )
   
   lazy val breakStmt: PM[CodeBuilder] =                                          "break statement" $
     ( "break" ~ ident  ^^ procBreak
@@ -135,8 +139,13 @@ trait Statements extends Expressions
   lazy val gotoStmt: PM[CodeBuilder] =                                            "goto statement" $
     "goto" ~! ident  ^^ procGoto
   
+  
+  lazy val goStmt: P_ =                                                             "go statement" $
+    "go" ~>! primaryExpr
+  
   lazy val deferStmt: P_ =                                                       "defer statement" $
     "defer" ~>! primaryExpr
+  
   
   lazy val stmtList: PM[List[CodeBuilder]] =                                      "statement list" $
     repWithSemi(statement) ^^ { implicitly[List[M[CodeBuilder]] => M[List[CodeBuilder]]] }
@@ -152,6 +161,21 @@ trait Statements extends Expressions
   private def makeBlock(stmtsM: M[List[CodeBuilder]], undeclCode: CodeBuilder) =
     for (stmts <- stmtsM)
     yield (stmts foldLeft CodeBuilder()) { _ |+| _ } |+| undeclCode
+  
+  private def makeValueReturn(pos: Pos, lsM: M[List[Expr]]): M[CodeBuilder] =
+    for (ls <- lsM)
+    yield {
+      var code = CodeBuilder.empty
+      //TODO:  IMPORTANT:  Add adicity and type checks.
+      for (e <- ls) code = code |+| C.eval(e)
+      code |+| ValueReturn
+    }
+  
+  private def makeReturn(pos: Pos): M[CodeBuilder] = {
+    //TODO:  IMPORTANT:  Verify that return variables have been declared or this func is void;
+    //otherwise exprless return invalid.
+    Result(Return)
+  }
   
   private def makeIfStmt(
       initUgly:   Option[M[CodeBuilder]],

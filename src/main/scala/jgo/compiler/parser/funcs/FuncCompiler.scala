@@ -14,7 +14,10 @@ import symbol._
 import scala.collection.mutable.{HashMap, HashSet}
 import scala.{collection => coll}
 
-trait FuncContext extends Base with StackScoped {
+/**
+ * An object that compiles a certain func to its intermediate representation.
+ */
+abstract class FuncCompiler extends Base with StackScoped {
   protected def initialEnclosing: Scope
   def target: Func
   def compile: M[FuncInterm]

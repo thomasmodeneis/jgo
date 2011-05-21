@@ -8,13 +8,13 @@ import types._
 import symbol._
 
 trait TypeSyntax extends Symbols with TypeUtils {
-  lazy val goType: PM[Type] =                                                                "type" $
+  lazy val goType: PM[Type] =                                                               "type" $
     ( typeSymbol ^^ { _ map { symb => symb.theType } }
     | "(" ~> goType <~ ")"   &@ "parenthesized type"
     | arrayType
     | structType
     | pointerType
-    | functionType
+    | funcType
   //| interfaceType //not currently supported in the type system
     | sliceType
     | mapType
@@ -22,51 +22,56 @@ trait TypeSyntax extends Symbols with TypeUtils {
     )
   
   
-  lazy val arrayType: PM[ArrayType] =                                                  "array type" $
+  lazy val arrayType: PM[ArrayType] =                                                 "array type" $
     //("[" ~> expression <~ "]") ~ goType //compile-time constants not yet fully supported
     "[" ~> intLit ~ pos("]") ~ goType  ^^ array
   
   
-  lazy val sliceType: PM[SliceType] =                                                  "slice type" $
+  lazy val sliceType: PM[SliceType] =                                                 "slice type" $
     "[" ~ "]" ~> goType  ^^ { _ map SliceType.apply }
   
   
-  lazy val structType: PM[StructType] =                                               "struct type" $
+  lazy val structType: PM[StructType] =                                              "struct type" $
     "struct" ~>! "{" ~> repWithSemi(structFieldDecl) <~ "}"  ^^ struct
   
-  private lazy val structFieldDecl: PM[List[FieldDesc]] =                       "struct field decl" $
+  private lazy val structFieldDecl: PM[List[FieldDesc]] =                      "struct field decl" $
     ( identList ~ goType ~ stringLit.?  ^^ regularFieldDecl
     | "*" ~> typeSymbol  ~ stringLit.?  ^^ embeddedFieldDecl(true)
     |        typeSymbol  ~ stringLit.?  ^^ embeddedFieldDecl(false)
     )
   
   
-  lazy val pointerType: PM[PointerType] =                                            "pointer type" $
+  lazy val pointerType: PM[PointerType] =                                           "pointer type" $
     "*" ~> goType  ^^ { _ map PointerType.apply }
   
   
-  lazy val functionType: PM[FuncType] =                                             "function type" $
-    "func" ~>! params ~ results.?  ^^ func
+  lazy val funcType: PM[FuncType] =                                                    "func type" $
+    "func" ~>! funcTypeTail
   
-  private lazy val params: PM[(List[Type], Boolean)] =                   "function-type parameters" $
+  
+  lazy val funcTypeTail: PM[FuncType] =                                           "func type tail" $
+    params ~ results.?  ^^ func
+  
+  private lazy val params: PM[(List[Type], Boolean)] =                  "function-type parameters" $
     "(" ~> repsep(paramGroup, ",") <~ ")"  ^^ funcParams
   
   //This needs to be improved, and made more succinct.  Also, account for the fact that
   //"either all of the parameter names are present in a param list, or all are absent"
-  private lazy val paramGroup: PM[(List[Type], Option[Pos])] =      "function-type parameter group" $
+  private lazy val paramGroup: PM[(List[Type], Option[Pos])] =     "function-type parameter group" $
     ( identList ~ pos("...").? ~ goType  ^^ identParamGroup
     | pos("...").? ~ goType              ^^ typeParamGroup
     )
   
-  private lazy val results: PM[List[Type]] =                                 "function-type result" $
+  private lazy val results: PM[List[Type]] =                                "function-type result" $
     ( goType                                  ^^ enlist
     | "(" ~> repsep(resultGroup, ",") <~ ")"  ^^ flatten
     )
   
-  private lazy val resultGroup: PM[List[Type]] =                       "function-type result group" $
+  private lazy val resultGroup: PM[List[Type]] =                      "function-type result group" $
     ( identList ~ goType  ^^ countAndFill
     | goType              ^^ enlist
     )
+  
   
   /*
   lazy val interfaceType: P_ =                        "interface type" $
@@ -78,16 +83,19 @@ trait TypeSyntax extends Symbols with TypeUtils {
     )
   */
   
-  lazy val mapType: PM[MapType] =                                                        "map type" $
+  
+  lazy val mapType: PM[MapType] =                                                       "map type" $
     "map" ~>! ("[" ~> goType <~ "]") ~ goType  ^^ mkMap
   
-  lazy val channelType: PM[ChanType] =                                               "channel type" $
+  
+  lazy val channelType: PM[ChanType] =                                              "channel type" $
     ( "chan" ~> "<-" ~> goType  ^^ chan(recv = false, send = true)
     | "<-" ~> "chan" ~> goType  ^^ chan(recv = true,  send = false)
     | "chan" ~> goType          ^^ chan(recv = true,  send = true)
     )
   
-  lazy val typeList: PM[List[Type]] =                                                   "type list" $
+  
+  lazy val typeList: PM[List[Type]] =                                                  "type list" $
     rep1sep(goType, ",")
   
   
