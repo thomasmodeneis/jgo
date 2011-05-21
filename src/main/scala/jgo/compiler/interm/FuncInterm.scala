@@ -6,7 +6,7 @@ import instr._
 import symbol._
 import types._
 
-sealed abstract class FuncData extends Typed {
+sealed abstract class FuncInterm extends Typed {
   val target: Func
   val params:  List[LocalVar]
   val results: List[LocalVar]
@@ -17,18 +17,18 @@ sealed abstract class FuncData extends Typed {
   def isVariadic: Boolean = typeOf.isVariadic
 }
 
-case class FunctionData(
+case class FunctionInterm(
     target: Function,
     params:  List[LocalVar],
     results: List[LocalVar],
     code: Code)
-extends FuncData
+extends FuncInterm
 
-case class MethodData(
+case class MethodInterm(
     target: Method,
     receiver: LocalVar,
     params:  List[LocalVar],
     results: List[LocalVar],
     code: Code)
-extends FuncData
+extends FuncInterm
 

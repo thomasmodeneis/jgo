@@ -17,5 +17,5 @@ import scala.{collection => coll}
 trait FuncContext extends Base with StackScoped {
   protected def initialEnclosing: Scope
   def target: Func
-  def compile: M[FuncData]
+  def compile: M[FuncInterm]
 }
