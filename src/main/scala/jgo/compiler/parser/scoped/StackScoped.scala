@@ -25,18 +25,18 @@ trait StackScoped extends GrowablyScoped {
   
   def scoped[T](p: Parser[T]): Parser[T ~ CodeBuilder] = Parser {
     in =>
-    push()
+    pushScope()
     val res = for (r <- p(in)) yield new ~(r, undecl())
-    pop()
+    popScope()
     res
   }
   
   
-  private def push() {
+  private def pushScope() {
     curScope = SequentialScope.frame(curScope)
   }
   
-  private def pop() {
+  private def popScope() {
     curScope = curScope.under getOrElse (throw new IllegalStateException)
   }
   

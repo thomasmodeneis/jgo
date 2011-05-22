@@ -19,11 +19,16 @@ import instr._
 trait Statements extends Expressions
                     with SimpleStmts
                     with Declarations
+                    with FuncContext
                     with StackScoped
                     with Labels
                     with BreaksAndContinues
                     with StmtUtils {
-  funcContext: FuncCompiler =>
+  /**
+   * For clarity, we use the name funcContext to refer to this Statements instance
+   * when we use the members inherited from FuncContext.
+   */
+  funcContext: FuncContext =>
   
   /**
    * Returns `(new LocalVar(name, typeOf), Decl(<that variable>))`.

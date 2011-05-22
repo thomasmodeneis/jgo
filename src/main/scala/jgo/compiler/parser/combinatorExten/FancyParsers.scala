@@ -37,6 +37,12 @@ trait FancyParsers extends Parsers with ImplicitConversions {
     /** Produces a parser committed in the second parser which discards the second result. */
     def <~! [U] (q: => Parser[U]): Parser[T] = p <~ commit(q)
     
+    /**
+     * Produces a parser that optionally applies this parser, indicating via result whether
+     * or not it was applied.
+     */
+    def ?? : Parser[Boolean] = p.? ^^ { _.isDefined }
+    
     def &@ (name: String): Parser[T] = nameize(p, name)
   }
   implicit def parser2Fancy[T](p: Parser[T]): FancyParserOps[T] = new FancyParserOps(p)

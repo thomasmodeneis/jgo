@@ -21,6 +21,21 @@ trait TypeSyntax extends Symbols with TypeUtils {
     | channelType
     )
   
+  //TODO:  This shouldn't be necessary.  Or should it?  In which case, document.
+  //Used by FunctionCompiler and its kin.
+  lazy val onlyGoType: PM[Type] =                                                      "only-type" $
+    ( onlyTypeSymbol  ^^ { _.theType } ^^ M
+    | "(" ~> goType <~ ")"   &@ "parenthesized type"
+    | arrayType
+    | structType
+    | pointerType
+    | funcType
+  //| interfaceType //not currently supported in the type system
+    | sliceType
+    | mapType
+    | channelType
+    )
+  
   
   lazy val arrayType: PM[ArrayType] =                                                 "array type" $
     //("[" ~> expression <~ "]") ~ goType //compile-time constants not yet fully supported

@@ -11,14 +11,12 @@ import interm.types._
 import stmts._
 import funcs._
 
-class BlockLang(in: Reader[Token], res: List[Type] = Nil, resNamed: Boolean = false) extends FuncCompiler with Statements {
+class BlockLang(in: Reader[Token], res: List[Type] = Nil, resNamed: Boolean = false) extends FuncContext with Statements {
   //def, not val.  See comment in StackScoped
   def initialEnclosing = UniverseScope
   
-  def target = Lambda(FuncType(Nil, res))
+  def targetFuncType = FuncType(Nil, res)
   def hasNamedResults = resNamed
-  
-  def compile = throw new UnsupportedOperationException
   
   lazy val result = phrase(block)(in)
 }

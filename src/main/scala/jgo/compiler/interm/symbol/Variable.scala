@@ -16,7 +16,9 @@ class GlobalVar(name: String, val typeOf: Type) extends Variable {
   override def toString = "<global " + name + ": " + typeOf + ">"
 }
 
-class LocalVar(val name: String, val typeOf: Type) extends Variable with Freezable {
+sealed abstract class ParamVar extends Variable
+
+class LocalVar(val name: String, val typeOf: Type) extends ParamVar with Freezable {
   private var closedOver: Boolean = false
   
   /**
@@ -40,4 +42,8 @@ class LocalVar(val name: String, val typeOf: Type) extends Variable with Freezab
   def isClosedOver: Boolean = closedOver
   
   override def toString = "<" + name + ": " + typeOf + ">"
+}
+
+class DummyVar(val typeOf: Type) extends ParamVar {
+  override def toString = "<" + typeOf + ">"
 }
