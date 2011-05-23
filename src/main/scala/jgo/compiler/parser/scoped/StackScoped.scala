@@ -20,10 +20,10 @@ trait StackScoped extends GrowablyScoped {
   
   private var curScope: SequentialScope = SequentialScope.base(initialEnclosing)
   
-  def scope = curScope
-  def growable = curScope
+  protected def scope = curScope
+  protected def growable = curScope
   
-  def scoped[T](p: Parser[T]): Parser[T ~ CodeBuilder] = Parser {
+  protected def scoped[T](p: Parser[T]): Parser[T ~ CodeBuilder] = Parser {
     in =>
     pushScope()
     val res = for (r <- p(in)) yield new ~(r, undecl())

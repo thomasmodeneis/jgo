@@ -5,5 +5,5 @@ package scoped
 import scope._
 
 trait Scoped {
-  def scope: Scope
+  protected def scope: Scope
 }

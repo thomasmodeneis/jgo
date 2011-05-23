@@ -1,6 +1,7 @@
 package jgo
 
 import scala.util.parsing.input.{Position, NoPosition}
+import scala.util.parsing.combinator._
 
 package object compiler {
   type M[+T] = messaged.Messaged[T]
@@ -51,6 +52,13 @@ package object compiler {
   
   type Result[+T] = messaged.Result[T]
   type Problem = messaged.Problem
+  
+  def extractFromParseResult[T, PR <: ps.ParseResult[M[T]] forSome { val ps: Parsers }](vMR: PR): M[T] =
+    if (!vMR.isEmpty)
+      vMR.get
+    else {
+      Problem(vMR.asInstanceOf[Parsers#NoSuccess].msg)(vMR.next.pos)
+    }
   
   @deprecated("use mTupled2 instead", "early May, 2011")
   def together2[A, B]   (a: M[A], b: M[B])          = messaged.Messaged.together(a, b)

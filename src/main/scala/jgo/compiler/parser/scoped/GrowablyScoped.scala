@@ -9,9 +9,9 @@ import symbol._
 trait GrowablyScoped extends Scoped {
   self: Base =>
   
-  def growable: GrowableScope
+  protected def growable: GrowableScope
   
-  def bind[S <: Symbol](name: String, target: S)(implicit pos: Pos): M[S] =
+  protected def bind[S <: Symbol](name: String, target: S)(implicit pos: Pos): M[S] =
     if (!growable.alreadyDefined(name)) {
       growable.put(name, target)
       Result(target)

@@ -12,10 +12,14 @@ import codeseq._
 import symbol._
 
 /**
- * An object that compiles a certain func to its intermediate representation.
+ * An object that compiles a certain func to its intermediate representation,
+ * providing a func-context for the enclosed statements.
  */
-abstract class FuncCompiler {
-  def target:  M[Func]
+abstract class FuncCompiler extends FuncContext {
+  def target: Func
+  def hasNamedResults: Boolean
+  
   def compile: M[FuncInterm]
-  def inAfter: Input
+  
+  def targetFuncType = target.typeOf
 }
