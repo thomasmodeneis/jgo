@@ -15,7 +15,7 @@ import codeseq._
 import symbol._
 
 //TODO:  Clean this up.
-final class FunctionCompiler(inAtFunc: Input, encl: Scope) extends FuncCompiler with TypeSyntax {
+final class FunctionCompiler(name: String, sig: Signature, encl: Scope, inAtBrace: Input) extends FuncCompiler {
   def scope = encl
   
   private val (funcName, paramsAndResultsM, inAtBrace) = prefix(inAtFunc: Input) match {
