@@ -1,6 +1,5 @@
 package jgo.compiler
-package parser
-package funcs
+package interm
 
 import interm._
 import interm.types._
@@ -13,44 +12,45 @@ sealed abstract class Signature extends Typed {
   def resultTypes: List[Type]
   def isVariadic:  Boolean
   
-  def params:  List[ParamVar]
-  def results: List[ParamVar]
+  def namedParams:  List[LocalVar]
+  def namedResults: List[LocalVar]
   
   def numParams  = paramTypes.length
   def numResults = resultTypes.length
   
   def hasNamedResults: Boolean
   
-  def isVoid = results.length == 0
+  def isVoid = resultTypes.length == 0
 }
 
 object Signature {
   def results(ps: List[ParamVar], rs: List[ParamVar], isVari: Boolean, hasNmRes: Boolean) =
     new Signature {
-      val params  = ps
-      val results = rs
+      val namedParams  = ps collect { case p: LocalVar => p }
+      val namedResults = rs collect { case r: LocalVar => r }
       val isVariadic = isVari
       val hasNamedResults = hasNmRes
-      lazy val paramTypes  = params  map { _.t }
-      lazy val resultTypes = results map { _.t }
+      lazy val paramTypes  = ps map { _.t }
+      lazy val resultTypes = rs map { _.t }
     }
   
   def singleResult(ps: List[ParamVar], rT: Type, isVari: Boolean) =
     new Signature {
-      val params  = ps
-      val results = List(new DummyVar(rT))
-      lazy val paramTypes = params map { _.t }
+      val namedParams  = ps collect { case p: LocalVar => p }
+      def namedResults = Nil
+      val paramTypes  = ps map { _.t }
       val resultTypes = List(rT)
       val isVariadic = isVari
       def hasNamedResults = false
+      override def isVoid = false
     }
   
   def noResults(ps: List[ParamVar], isVari: Boolean) =
     new Signature {
-      val params = ps
-      lazy val paramTypes = params map { _.t }
-      def results = Nil
-      def resultTypes = Nil
+      val namedParams = ps collect { case p: LocalVar => p }
+      val paramTypes  = ps map { _.t }
+      def namedResults = Nil
+      def resultTypes  = Nil
       val isVariadic = isVari
       def hasNamedResults = false
       override def isVoid = true

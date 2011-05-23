@@ -24,13 +24,10 @@ final class FunctionCompiler(funcName: String, sig: Signature, encl: Scope, inAt
   val target = new Function(funcName, sig.typeOf)
   def hasNamedResults = sig.hasNamedResults
   
-  for (p <- sig.params) p match {
-    case param: LocalVar => growable.put(param.name, param)
-  }
-  
-  for (r <- sig.results) r match {
-    case result: LocalVar => growable.put(result.name, result)
-  }
+  for (param <- sig.namedParams) 
+    growable.put(param.name, param)
+  for (result <- sig.namedResults)
+    growable.put(result.name, result)
   
   /*
   lazy val inAfter: Input = {
@@ -51,12 +48,12 @@ final class FunctionCompiler(funcName: String, sig: Signature, encl: Scope, inAt
   }*/
   
   lazy val compile: M[FunctionInterm] = {
-    val codeBuilderM: M[CodeBuilder] = parse.block(inAtBrace) match {
+    val codeBuilderM = parse.block(inAtBrace) match {
       case Success(codeBuilderM, _) => codeBuilderM
       case NoSuccess(msg, in) => Problem("syntax error in function %s: %s", funcName, msg)(in.pos)
     }
     
     for (codeBuilder <- codeBuilderM) yield
-      FunctionInterm(target, sig.params, sig.results, codeBuilder.result)
+      new FunctionInterm(target, sig, codeBuilder.result)
   }
 }

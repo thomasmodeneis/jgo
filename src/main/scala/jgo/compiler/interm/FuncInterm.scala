@@ -11,12 +11,10 @@ import types._
  */
 sealed abstract class FuncInterm extends Typed {
   val target: Func
-  val params:  List[LocalVar]
-  val results: List[LocalVar]
+  val sig: Signature
   val code: Code
   
   lazy val typeOf: FuncType = target.typeOf
-  lazy val resultCount: Int = results.length
   def isVariadic: Boolean = typeOf.isVariadic
 }
 
@@ -25,8 +23,7 @@ sealed abstract class FuncInterm extends Typed {
  */
 case class FunctionInterm(
     target: Function,
-    params:  List[LocalVar],
-    results: List[LocalVar],
+    sig: Signature,
     code: Code)
 extends FuncInterm
 
@@ -35,9 +32,8 @@ extends FuncInterm
  */
 case class MethodInterm(
     target: Method,
-    receiver: LocalVar,
-    params:  List[LocalVar],
-    results: List[LocalVar],
+    receiver: ParamVar,
+    sig: Signature,
     code: Code)
 extends FuncInterm
 
