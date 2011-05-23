@@ -35,7 +35,7 @@ object Signature {
       lazy val resultTypes = results map { _.t }
     }
   
-  def singleUnnamedResult(ps: List[ParamVar], rT: Type, isVari: Boolean) =
+  def singleResult(ps: List[ParamVar], rT: Type, isVari: Boolean) =
     new Signature {
       val params  = ps
       val results = List(new DummyVar(rT))

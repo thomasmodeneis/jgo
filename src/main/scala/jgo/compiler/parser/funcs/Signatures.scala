@@ -14,8 +14,14 @@ import instr._
 import codeseq._
 import symbol._
 
+import Signature._
+
 trait Signatures extends TypeSyntax {
-  //lazy val signature: PM[Signature]
+  lazy val signature: PM[Signature] =
+    ( params ~ parenResults  ^^ { case psM ~ rsM => for (((ps, vari), (rs, namedRes)) <- (psM, rsM)) yield results(ps, rs, vari, namedRes) }
+    | params ~ goType        ^^ { case psM ~ tM => for (((ps, vari), t) <- (psM, tM)) yield singleResult(ps, t, vari) }
+    | params                 ^^ { psM => for ((ps, vari) <- psM) yield noResults(ps, vari) }
+    )
   
   private lazy val params: PM[(List[ParamVar], Boolean)] =
     ( "(" ~ ")"  ^^^ Result(Nil, false) //shortcut, so to speak
