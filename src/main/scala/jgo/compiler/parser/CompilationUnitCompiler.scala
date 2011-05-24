@@ -28,12 +28,15 @@ class CompilationUnitCompiler(target: Package = Package("main"), in: Input) exte
   }
   
   val initCodeM = extractFromParseResult(parseFile(in)) map {
-    _.foldLeft(CodeBuilder.empty) { _ |+| _ }
+    _.foldLeft(CodeBuilder.empty)(_ |+| _).result 
   }
   
   lazy val compile: M[PkgInterm] = {
-    var errs = Result(())
-    val functionInterms = functionCompilers mapValues { _.compile } toMap //i.e. to immutable map
+    val functions =
+      functionCompilers mapValues { _.compile } collect { case (f, Result(fi)) => (f, fi) } toMap //to imm map
+    
+    for (initCode <- initCodeM) yield //holds all top-level errors, if any
+      PkgInterm(target, globalVars, initCode, functions)
   }
   
   
