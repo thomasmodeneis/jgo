@@ -16,7 +16,9 @@ import symbol._
 
 import Signature._
 
-trait Signatures extends TypeSyntax {
+trait Signatures extends Base {
+  self: Types =>
+  
   lazy val signature: PM[Signature] =
     ( params ~ parenResults  ^^ { case psM ~ rsM => for (((ps, vari), (rs, namedRes)) <- (psM, rsM)) yield results(ps, rs, vari, namedRes) }
     | params ~ goType        ^^ { case psM ~ tM => for (((ps, vari), t) <- (psM, tM)) yield singleResult(ps, t, vari) }

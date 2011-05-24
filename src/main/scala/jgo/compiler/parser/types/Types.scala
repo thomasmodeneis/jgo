@@ -2,15 +2,19 @@ package jgo.compiler
 package parser.types
 
 import parser.scoped._
+import parser.funcs.Signatures
+import parser.exprs.Expressions
 
 import interm._
 import types._
 import symbol._
 
-trait TypeSyntax extends Symbols with TypeUtils {
+trait Types extends Symbols with Signatures with TypeUtils {
+  self: Expressions =>
+  
   lazy val goType: PM[Type] =                                                               "type" $
     ( typeSymbol ^^ { _ map { symb => symb.theType } }
-    | "(" ~> goType <~ ")"   &@ "parenthesized type"
+    | "(" ~> goType <~ ")"
     | arrayType
     | structType
     | pointerType
@@ -25,7 +29,7 @@ trait TypeSyntax extends Symbols with TypeUtils {
   //Used by FunctionCompiler and its kin.
   lazy val onlyGoType: PM[Type] =                                                      "only-type" $
     ( onlyTypeSymbol  ^^ { _.theType } ^^ M
-    | "(" ~> goType <~ ")"   &@ "parenthesized type"
+    | "(" ~> goType <~ ")"
     | arrayType
     | structType
     | pointerType
@@ -39,7 +43,7 @@ trait TypeSyntax extends Symbols with TypeUtils {
   
   lazy val arrayType: PM[ArrayType] =                                                 "array type" $
     //("[" ~> expression <~ "]") ~ goType //compile-time constants not yet fully supported
-    "[" ~> intLit ~ pos("]") ~ goType  ^^ array
+    "[" ~> intLit ~ "]" ~ goType  ^^ array
   
   
   lazy val sliceType: PM[SliceType] =                                                 "slice type" $
@@ -61,31 +65,7 @@ trait TypeSyntax extends Symbols with TypeUtils {
   
   
   lazy val funcType: PM[FuncType] =                                                    "func type" $
-    "func" ~>! funcTypeTail
-  
-  
-  lazy val funcTypeTail: PM[FuncType] =                                           "func type tail" $
-    params ~ results.?  ^^ func
-  
-  private lazy val params: PM[(List[Type], Boolean)] =                  "function-type parameters" $
-    "(" ~> repsep(paramGroup, ",") <~ ")"  ^^ funcParams
-  
-  //This needs to be improved, and made more succinct.  Also, account for the fact that
-  //"either all of the parameter names are present in a param list, or all are absent"
-  private lazy val paramGroup: PM[(List[Type], Option[Pos])] =     "function-type parameter group" $
-    ( identList ~ pos("...").? ~ goType  ^^ identParamGroup
-    | pos("...").? ~ goType              ^^ typeParamGroup
-    )
-  
-  private lazy val results: PM[List[Type]] =                                "function-type result" $
-    ( goType                                  ^^ enlist
-    | "(" ~> repsep(resultGroup, ",") <~ ")"  ^^ flatten
-    )
-  
-  private lazy val resultGroup: PM[List[Type]] =                      "function-type result group" $
-    ( identList ~ goType  ^^ countAndFill
-    | goType              ^^ enlist
-    )
+    "func" ~>! signature  ^^ { _ map { _.typeOf } }
   
   
   /*
@@ -115,23 +95,6 @@ trait TypeSyntax extends Symbols with TypeUtils {
   
   
   
-  private def enlist[T](tM: M[T]) =
-    for (t <- tM)
-    yield t :: Nil
-  
-  private def flatten[T](lsUgly: List[M[List[T]]]) = {
-    val lsM: M[List[List[T]]] = lsUgly
-    for (ls <- lsM)
-    yield ls.flatten
-  }
-  
-  private def countAndFill(is: List[String], tM: M[Type]) =
-    for (t <- tM)
-    yield for (i <- is)
-    yield t
-  
-  
-  
   private def array(i: lexer.IntLit, pos: Pos, tM: M[Type]) = tM flatMap { t =>
     val len = i.value.toInt
     if (len < 0) Problem("cannot have negative array length")(pos)
@@ -145,7 +108,6 @@ trait TypeSyntax extends Symbols with TypeUtils {
   private def chan(recv: Boolean, send: Boolean)(elemTM: M[Type]) = elemTM map { elemT =>
     ChanType(elemT, canRecv = recv, canSend = send)
   }
-  
   
   
   private def struct(declsUgly: List[M[List[FieldDesc]]]) = {
@@ -164,43 +126,4 @@ trait TypeSyntax extends Symbols with TypeUtils {
   private def embeddedFieldDecl(isPtr: Boolean)(tM: M[TypeSymbol], tag: Option[String]) =
     for (tSymb <- tM; t: NamedType = tSymb)
     yield List(EmbeddedFieldDesc(t.name, t, isPtr,  tag))
-  
-  
-  
-  private def func(paramInfoM: M[(List[Type], Boolean)], resultInfoUgly: Option[M[List[Type]]]) = {
-    val resultInfoM: M[Option[List[Type]]] = resultInfoUgly
-    for (((params, isVariadic), resultInfo) <- (paramInfoM, resultInfoM))
-    yield resultInfo match {
-      case Some(results) => FuncType(params, results, isVariadic)
-      case None          => FuncType(params,     Nil, isVariadic)
-    }
-  }
-  
-  private def funcParams(lsUgly: List[M[(List[Type], Option[Pos])]]): M[(List[Type], Boolean)] = {
-    val lsM: M[List[(List[Type], Option[Pos])]] = lsUgly
-    
-    lsM flatMap { ls =>
-      val base: M[(List[Type], Boolean)] = Result(Nil: List[Type], false)
-      (ls foldRight base) {
-        (next, accM) =>
-          val (nextGroup, ellipsisPosOpt) = next
-          accM flatMap {
-            case (Nil, _) => Result(nextGroup, ellipsisPosOpt.isDefined)
-            case (paramsOnRight, isVariadic) =>
-              ellipsisPosOpt match {
-                case Some(pos) => Problem("... permitted only on the final type in a signature")(pos)
-                case None      => Result(nextGroup ::: paramsOnRight, isVariadic)
-              }
-          }
-      }
-    }
-  }
-  
-  private def identParamGroup(is: List[String], posOpt: Option[Pos], tM: M[Type]) =
-    for (t <- tM)
-    yield (List.fill(is.length)(t), posOpt)
-  
-  private def typeParamGroup(posOpt: Option[Pos], tM: M[Type]) =
-    for (t <- tM)
-    yield (t :: Nil, posOpt)
 }

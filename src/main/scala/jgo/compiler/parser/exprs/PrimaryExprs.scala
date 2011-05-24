@@ -10,7 +10,7 @@ import expr.Combinators._
 import types._
 import codeseq._
 
-trait PrimaryExprs extends Operands with TypeSyntax with Scoped with ExprUtils {
+trait PrimaryExprs extends Operands with Types with Scoped with ExprUtils {
   self: Expressions =>
   
   lazy val primaryExpr: PPM[Expr] =                          "primary expression" $

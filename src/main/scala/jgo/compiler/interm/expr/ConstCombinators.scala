@@ -8,6 +8,11 @@ import instr.TypeConversions._
 import codeseq._
 
 trait ConstCombinators extends Combinators with ConstTypeCheckOverrides {
+  def const(e: Expr) (implicit pos: Pos) = e match {
+    case c: ConstExpr => Result(c)
+    case _ => Problem("expression must be constant")
+  }
+  
   /*
   private def untypedToTyped(c: UntypedRealConst, t: RealType) (implicit pos: Pos) =
     if (c.canFitIn(t)) Result(TypedRealConst(c.value, t))

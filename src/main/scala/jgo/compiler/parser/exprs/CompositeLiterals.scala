@@ -6,7 +6,7 @@ import parser.types._
 import interm._
 import interm.types._
 
-trait CompositeLiterals extends TypeSyntax {
+trait CompositeLiterals extends Types {
   self: Expressions =>
   
   lazy val compositeLit: PP_ =                     "composite literal" $
