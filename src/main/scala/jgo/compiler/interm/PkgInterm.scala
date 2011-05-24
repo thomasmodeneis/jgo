@@ -10,8 +10,7 @@ import types._
  * The intermediate representation of a certain package.
  */
 case class PkgInterm(
-    target: Package,
-    globals: List[GlobalVar],
-    initCode: Code,
-    functions: Map[Function, FunctionInterm]
-)
+  target: Package,
+  globals: List[GlobalVar],
+  initCode: Code,
+  functions: Map[Function, FunctionInterm])

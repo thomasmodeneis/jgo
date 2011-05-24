@@ -22,18 +22,18 @@ sealed abstract class FuncInterm extends Typed {
  * The intermediate representation of a certain (top-level) function.
  */
 case class FunctionInterm(
-    target: Function,
-    sig: Signature,
-    code: Code)
+  target: Function,
+  sig: Signature,
+  code: Code)
 extends FuncInterm
 
 /**
  * The intermediate representation of a certain method.
  */
 case class MethodInterm(
-    target: Method,
-    receiver: ParamVar,
-    sig: Signature,
-    code: Code)
+  target: Method,
+  receiver: ParamVar,
+  sig: Signature,
+  code: Code)
 extends FuncInterm
 

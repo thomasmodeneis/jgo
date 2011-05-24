@@ -14,28 +14,42 @@ import codeseq._
 
 import scala.collection.{mutable => mut}
 
-class CompilationUnitCompiler(in: Input) extends Declarations with GrowablyScoped {
+class CompilationUnitCompiler(target: Package = Package("main"), in: Input) extends Declarations with GrowablyScoped {
   def growable = SequentialScope.base(UniverseScope)
   def scope = growable
   
-  private val functionCompilers: mut.Map[String, FunctionCompiler] = mut.Map.empty
+  private[this] val functionCompilers: mut.Map[Function, FunctionCompiler] = mut.Map.empty
+  private[this] var globalVars: List[GlobalVar] = Nil
   
-  protected def mkVariable(name: String, typeOf: Type) =
-    (new GlobalVar(name, typeOf), CodeBuilder.empty)
+  protected def mkVariable(name: String, typeOf: Type) = {
+    val v = new GlobalVar(name, typeOf)
+    globalVars ::= v
+    (v, CodeBuilder.empty)
+  }
+  
+  val initCodeM = extractFromParseResult(parseFile(in)) map {
+    _.foldLeft(CodeBuilder.empty) { _ |+| _ }
+  }
+  
+  lazy val compile: M[PkgInterm] = {
+    var errs = Result(())
+    val functionInterms = functionCompilers mapValues { _.compile } toMap //i.e. to immutable map
+  }
   
   
-  private lazy val file =
+  private lazy val parseFile: PM[List[CodeBuilder]] =
     repWithSemi(topLevelDecl)
   
-  private lazy val topLevelDecl =
+  private lazy val topLevelDecl: PM[CodeBuilder] =
     declaration | function
   
-  private lazy val function =
-    "func" ~>! ident ~ signature ~ inputAt("{") <~ skipBlock  ^^ { case name ~ sigM ~ in =>
-      for (sig <- sigM) {
-        val v = new FunctionCompiler(name, sig, scope, in)
-        growable.put(name, v.target)
-        functionCompilers.put(name, v)
+  private lazy val function: PM[CodeBuilder] = //always empty code builder, req'd for compat.
+    "func" ~! ident ~ signature ~ inputAt("{") <~ skipBlock  ^^ { case pos ~ name ~ sigM ~ in =>
+      sigM flatMap { sig =>
+        val funcCompl = new FunctionCompiler(name, sig, scope, in)
+        functionCompilers.put(funcCompl.target, funcCompl)
+        //add to the scope
+        bind(name, funcCompl.target)(pos) map { _ => CodeBuilder.empty }
       }
     }
   

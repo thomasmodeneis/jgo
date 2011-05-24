@@ -12,11 +12,11 @@ abstract class Func extends Typed {
 }
 
 final class Method(
-    val name: String,
-    val receiver: WrappedType,
-    val params:  List[Type],
-    val results: List[Type],
-    val isVariadic: Boolean)
+  val name: String,
+  val receiver: WrappedType,
+  val params:  List[Type],
+  val results: List[Type],
+  val isVariadic: Boolean)
 extends Func {
   val typeOf = FuncType(receiver :: params, results, isVariadic)
 }
