@@ -10,9 +10,8 @@ import types._
 
 trait Expressions extends PrimaryExprs with ExprUtils {
   lazy val expression: PPM[Expr] =                       "expression" $
-    ( orExpr
-    | failure("not an expression")
-    )
+    catchSyntaxErr(orExpr, "not an expression")
+  
   lazy val orExpr: PPM[Expr] =                "or-expression: prec 1" $
     ( orExpr ~ "||" ~ andExpr   ^^ or
     | andExpr

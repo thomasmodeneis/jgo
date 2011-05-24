@@ -25,6 +25,29 @@ trait Base extends Tokens with PackratParsers with FancyParsers with MessageHand
   
   implicit def string2Fancy(str: String) = new FancyParserOps(str)
   
+  
+  final def catchSyntaxErr[T](p: Parser[M[T]]): Parser[M[T]] =
+    Parser { in => injectSyntaxErr(p(in)) }
+  
+  final def catchSyntaxErr[T](p: Parser[M[T]], msg: String): Parser[M[T]] =
+    Parser { in => injectSyntaxErr(p(in), msg) }
+  
+  final def extractFromParseResult[T](vMR: ParseResult[M[T]]): M[T] = vMR match {
+    case Success(vM, in)    => vM
+    case NoSuccess(msg, in) => Problem(msg)(in.pos)
+  }
+  
+  final def injectSyntaxErr[T](vMR: ParseResult[M[T]]): ParseResult[M[T]] = vMR match {
+    case s: Success[_]      => s
+    case NoSuccess(msg, in) => Success(Problem(msg)(in.pos), in)
+  }
+  
+  final def injectSyntaxErr[T](vMR: ParseResult[M[T]], msg: String): ParseResult[M[T]] = vMR match {
+    case s: Success[_]      => s
+    case NoSuccess(_, in) => Success(Problem(msg)(in.pos), in)
+  }
+  
+  
   //implicit def res2Msgd[T](t: T): M[T] = Messaged.res2Msgd(t)
   implicit def liftList[T](ms:  List[M[T]]):   M[List[T]]   = Messaged.lsM2mLs(ms)
   implicit def liftOpt [T](opt: Option[M[T]]): M[Option[T]] = Messaged.optM2mOpt(opt)
