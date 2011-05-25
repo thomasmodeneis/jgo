@@ -11,4 +11,6 @@ class GoCompilerProject(info: ProjectInfo) extends DefaultProject(info) with Scc
   
   override def compileOptions = super.compileOptions ++ Seq(Unchecked, ExplainTypes) //++
     //compileOptions("-Xlog-implicits") //-Yclosure-elim -Ydead-code -Yinline -optimise
+  
+  override def compileOrder = CompileOrder.ScalaThenJava
 }
