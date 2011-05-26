@@ -12,6 +12,7 @@ import types._
 import symbol._
 import codeseq._
 import instr._
+import instr.TypeConversions._
 
 /**
  * Provides the grammar and semantics of statements and blocks.
@@ -53,9 +54,17 @@ trait Statements extends Expressions
 //  | goStmt
 //  | deferStmt
     | declaration
+    | ident("print") ~ expression  ^^ procPrintStmt
     | simpleStmt  //contains the empty statement, so must come last
     | failure("not a statement")
     )
+  
+  def procPrintStmt(pos: Pos, eM: M[Expr]) =
+    eM flatMap {
+      case s OfType (StringType)  => Result(C.eval(s) |+| PrintString)
+      case n OfType (t: NumericType) => Result(C.eval(n) |+| PrintNumeric(t))
+      case HasType(t) => Problem("not a printable type: %s", t)(pos)
+    }
   
   lazy val block: PM[CodeBuilder] =                                                        "block" $
     scoped("{" ~> stmtList <~ "}")  ^^ makeBlock

@@ -11,6 +11,9 @@ sealed abstract class Instr extends Product {
   def listingString = toString
 }
 
+case object PrintString            extends Instr
+case class  PrintNumeric(t: Arith) extends Instr
+
 case class Decl(v: LocalVar)   extends Instr
 case class Undecl(v: LocalVar) extends Instr
 

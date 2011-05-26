@@ -12,9 +12,10 @@ trait Type extends Membered {
   
   val semantics: Semantics
   
-  val underlying: Type = this //overridden by TypeName
+  val radix: Type = this //overridden by TypeAlias
+  val underlying: Type = this //overridden by WrappedType, TypeAlias
   
-  val nilable: Boolean = false //overridden by Nilable, TypeName
+  val nilable: Boolean = false //overridden by Nilable, WrappedType, TypeAlias
   
   val members: Map[String, Member] = Map()
   
