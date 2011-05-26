@@ -10,7 +10,7 @@ import types._
 import RuntimeInfo._
 
 trait TypeTranslation {
-  def toDesc(t: Type): String = t.radix match {
+  def typeDesc(t: Type): String = t.radix match {
     case BoolType       => "Z"  //boolean
     case Int8  | Uint8  => "B"  //byte
     case Int16          => "S"  //short
@@ -21,13 +21,15 @@ trait TypeTranslation {
     case Float64        => "D"  //double
     
     case StringType     => "Ljava/lang/String;"
-    
+  }
+  
+  def methodDesc(f: Func): String = f.typeOf match {
     case FuncType(params, List(result), false) =>
       val sb = new StringBuilder
       sb append "("
-      for (p <- params) sb append toDesc(p)
+      for (p <- params) sb append typeDesc(p)
       sb append ")"
-      sb append toDesc(result)
+      sb append typeDesc(result)
       sb.result
   }
 }
