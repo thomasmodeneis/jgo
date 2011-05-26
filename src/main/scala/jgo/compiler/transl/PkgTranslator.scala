@@ -10,6 +10,7 @@ import types._
 import RuntimeInfo._
 
 import org.objectweb.asm._
+import org.objectweb.asm.{Label => AsmLabel}
 import commons._
 import Opcodes._
 
@@ -30,5 +31,18 @@ class PkgTranslator(val interm: PkgInterm) extends TypeTranslation {
     val access = if (f.isPublic) ACC_PUBLIC else 0 //0 = package private
     val mv = cw.visitMethod(access, f.name, methodDesc(f), null, null)
     
+    for ((p, i) <- f.paramTypes.zipWithIndex)
+      if (p.radix.isInstanceOf[UnsignedType])
+        mv.visitParameterAnnotation(i, UnsignedAnnot, true)
+    
+    mv.visitCode()
+    val start, end = new AsmLabel
+    
+    val iv = new InstructionAdapter(mv)
+    
+    fInterm.code foreach {
+      
+    }
+    //visit parameters and returns here
   }
 }
