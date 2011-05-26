@@ -21,5 +21,13 @@ trait TypeTranslation {
     case Float64        => "D"  //double
     
     case StringType     => "Ljava/lang/String;"
+    
+    case FuncType(params, List(result), false) =>
+      val sb = new StringBuilder
+      sb append "("
+      for (p <- params) sb append toDesc(p)
+      sb append ")"
+      sb append toDesc(result)
+      sb.result
   }
 }

@@ -19,10 +19,14 @@ class PkgTranslator(val interm: PkgInterm) extends TypeTranslation {
   cw.visit(V1_6, ACC_PUBLIC, interm.target.name, null, "java/lang/Object", null)
   
   interm.globals foreach { global =>
-    val access = if (global.isPublic) ACC_PUBLIC else 0
+    val access = if (global.isPublic) ACC_PUBLIC else 0 //0 = package private
     val fieldVis = cw.visitField(access, global.name, toDesc(global.t), null, null)
     if (global.t.radix.isInstanceOf[UnsignedType])
       fieldVis.visitAnnotation(UnsignedAnnot, true)
     fieldVis.visitEnd()
+  }
+  
+  interm.functions forall { case (f, fInterm) =>
+    
   }
 }
