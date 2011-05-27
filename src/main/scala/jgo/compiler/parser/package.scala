@@ -5,5 +5,5 @@ import lexer._
 import scala.util.parsing.input.Reader
 
 package object parser {
-  type Input = Reader[Token]
+  type Input = Base#Input
 }

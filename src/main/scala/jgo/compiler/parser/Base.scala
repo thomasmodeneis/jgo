@@ -26,6 +26,15 @@ trait Base extends Tokens with PackratParsers with FancyParsers with MessageHand
   implicit def string2Fancy(str: String) = new FancyParserOps(str)
   
   
+  override def memo[T](p: Parser[T]): PackratParser[T] =
+    new PackratParser[T] {
+      def apply(in: Input): ParseResult[T] = in match {
+        case _: PackratReader[_] => Base.super.memo[T](p)(in)
+        case _ => Base.super.memo[T](p)(new PackratReader(in))
+      }
+    }
+  
+  
   final def catchSyntaxErr[T](p: Parser[M[T]]): Parser[M[T]] =
     Parser { in => injectSyntaxErr(p(in)) }
   

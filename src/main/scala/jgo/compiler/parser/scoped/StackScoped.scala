@@ -23,10 +23,11 @@ trait StackScoped extends GrowablyScoped {
   protected def scope = curScope
   protected def growable = curScope
   
-  protected def scoped[T](p: Parser[T]): Parser[T ~ CodeBuilder] = Parser {
-    in =>
+  protected def scoped[T](p: Parser[T]): Parser[T ~ CodeBuilder] = Parser { in =>
     pushScope()
-    val res = for (r <- p(in)) yield new ~(r, undecl())
+    val res = 
+      for (r <- p(in)) yield
+        new ~(r, undecl())
     popScope()
     res
   }
