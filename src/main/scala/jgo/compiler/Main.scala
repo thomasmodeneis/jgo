@@ -15,7 +15,7 @@ object Main extends App {
   //if "~/abc.go", in home dir.
   //implement as many of these as you can, starting from the first.
   //Thanks!  :)
-  val file: File = throw new UnsupportedOperationException
+  val file: File = new File(fileName)
   
   val scanner = Scanner(file)
   val pkg = Package("package") //add processing of pkg name later
