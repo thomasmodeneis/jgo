@@ -8,7 +8,7 @@ import interm.symbol.Package
 import java.io.{File, FileOutputStream}
 
 object Main extends App {
-  val fileName = args(1)
+  val fileName = args(0)
   
   //if fileName == "abc.go", "./abc.go" in current dir.
   //if "/abc.go", in root dir.
