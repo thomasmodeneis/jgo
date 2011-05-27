@@ -4,7 +4,7 @@ package instr
 
 sealed abstract class StackType
 
-case object Obj  extends StackType
+case object Obj extends StackType
 
 sealed abstract class Prim extends StackType
 

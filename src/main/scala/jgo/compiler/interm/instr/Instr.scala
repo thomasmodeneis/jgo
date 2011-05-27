@@ -110,11 +110,13 @@ case class  PushFloat(i: Double, t: Floating) extends Instr
 case class  PushBool (b: Boolean)             extends Instr
 case object PushNil                           extends Instr
 
-case object Pop        extends Instr
-case object Dupl       extends Instr
-case object Dupl_Down1 extends Instr
-case object Dupl_Down2 extends Instr
-case object Swap       extends Instr
+case object Pop       extends Instr
+case object Dup       extends Instr
+case object Dup_Down1 extends Instr
+case object Dup_Down2 extends Instr
+case object Swap      extends Instr
+
+case class Duplicate(n: Int) extends Instr { require(n > 0) }
 
 
 case class Lbl(l: Label) extends Instr { override def listingString = "--" + l + "--" }

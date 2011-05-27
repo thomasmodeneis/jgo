@@ -9,7 +9,27 @@ import types._
 
 import RuntimeInfo._
 
+import org.objectweb.asm.{Label => AsmLabel, Type => AsmType, Opcodes}
+import Opcodes._
+import AsmType._
+
 trait TypeTranslation {
+  implicit def class2asmType(cl: Class[_]) = AsmType.getType(cl)
+  implicit def desc2asmType(desc: String)  = AsmType.getType(desc)
+  
+  def toAsmType(t: StackType): AsmType = t match {
+    case Bool      => BOOLEAN_TYPE
+    case I8  | U8  => BYTE_TYPE
+    case I16       => SHORT_TYPE
+    case U16       => CHAR_TYPE
+    case I32 | U32 => INT_TYPE
+    case I64 | U64 => LONG_TYPE
+    case F32       => FLOAT_TYPE
+    case F64       => DOUBLE_TYPE
+    
+    case Obj => getObjectType("java/lang/Object") //refine? not with StackType
+  }
+  
   def typeDesc(t: Type): String = t.radix match {
     case BoolType       => "Z"  //boolean
     case Int8  | Uint8  => "B"  //byte
@@ -21,6 +41,19 @@ trait TypeTranslation {
     case Float64        => "D"  //double
     
     case StringType     => "Ljava/lang/String;"
+  }
+  
+  def typeDesc(t: StackType): String = t match {
+    case Bool      => "Z"  //boolean
+    case I8  | U8  => "B"  //byte
+    case I16       => "S"  //short
+    case U16       => "C"  //char
+    case I32 | U32 => "I"  //int
+    case I64 | U64 => "J"  //long
+    case F32       => "F"  //float
+    case F64       => "D"  //double
+    
+    case Obj => "Ljava/lang/Object;"
   }
   
   def methodDesc(f: Func): String = f.typeOf match {
