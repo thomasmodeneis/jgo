@@ -13,9 +13,8 @@ object Main extends App {
   //if fileName == "abc.go", "./abc.go" in current dir.
   //if "/abc.go", in root dir.
   //if "~/abc.go", in home dir.
-  //implement as many of these as you can, starting from the first.
-  //Thanks!  :)
-  val file: File = new File(fileName)
+  //this should work
+  val file = new File(fileName)
   
   val scanner = Scanner(file)
   val pkg = Package("package") //add processing of pkg name later
