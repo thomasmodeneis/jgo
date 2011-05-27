@@ -5,8 +5,7 @@ import parser._
 import transl._
 import interm.symbol.Package
 
-import java.io.File
-import java.io.FileOutputStream
+import java.io.{File, FileOutputStream}
 
 object Main extends App {
   val fileName = args(1)
@@ -14,9 +13,7 @@ object Main extends App {
   //if fileName == "abc.go", "./abc.go" in current dir.
   //if "/abc.go", in root dir.
   //if "~/abc.go", in home dir.
-  //implement as many of these as you can, starting from the first.
-  //Thanks!  :)
-  val file: File = new File(fileName)
+  val file = new File(fileName)
   
   val scanner = Scanner(file)
   val pkg = Package("package") //add processing of pkg name later
@@ -26,7 +23,4 @@ object Main extends App {
   
   //he should be closed properly, but we'll just hope the JVM takes care of it
   new FileOutputStream("package.class").write(outputBytes)
-  //write outputBytes, which is a byte[], to "package.class" in the
-  //current directory.
-  //Thank you again.
 }
