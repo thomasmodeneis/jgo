@@ -27,19 +27,26 @@ class CompilationUnitCompiler(target: Package = Package("main"), in: Input) exte
     (v, CodeBuilder.empty)
   }
   
-  assert(in != null)
-  val test = parseFile(in)
-  assert(test != null)
-  
   val initCodeM = extractFromParseResult(parseFile(in)) map {
     _.foldLeft(CodeBuilder.empty)(_ |+| _).result 
   }
   
   lazy val compile: M[PkgInterm] = {
-    val functions =
-      functionCompilers mapValues { _.compile } collect { case (f, Result(fi)) => (f, fi) } toMap //to imm map
-    
-    for (initCode <- initCodeM) yield //holds all top-level errors, if any
+    val functionsM = {
+      val functionMap = mut.Map[Function, FunctionInterm]()
+      var errors: M[Any] = Result(())
+      for ((f, fCompl) <- functionCompilers) {
+        val fIntermM = fCompl.compile
+        errors = errors then fIntermM
+        for (fInterm <- fIntermM)
+          functionMap.put(f, fInterm)
+      }
+      for (_ <- errors) yield
+        functionMap.toMap
+    }
+    //initCodeM holds all of the top-level errors, if any;
+    //functionsM holds all of the function-level ones
+    for ((initCode, functions) <- (initCodeM, functionsM)) yield
       PkgInterm(target, globalVars, initCode, functions)
   }
   
@@ -52,11 +59,7 @@ class CompilationUnitCompiler(target: Package = Package("main"), in: Input) exte
   
   private lazy val function: PM[CodeBuilder] =                "function decl" $
     "func" ~! ident ~ signature ~ inputAt("{") <~ skipBlock  ^^ { case pos ~ name ~ sigM ~ in =>
-      assert(name != null, "function name is null")
-      assert(sigM != null, "function signatureM is null")
-      assert(in != null, "input at open brace is null")
       sigM flatMap { sig =>
-        assert(sig != null, "function signature is null")
         val funcCompl = new FunctionCompiler(name, sig, scope, in)
         functionCompilers.put(funcCompl.target, funcCompl)
         //add to the scope

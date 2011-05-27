@@ -47,13 +47,15 @@ trait Base extends Tokens with PackratParsers with FancyParsers with MessageHand
   }
   
   final def injectSyntaxErr[T](vMR: ParseResult[M[T]]): ParseResult[M[T]] = vMR match {
-    case s: Success[_]      => s
-    case NoSuccess(msg, in) => Success(Problem(msg)(in.pos), in)
+    case s: Success[_]  => s
+    case f: Failure     => f
+    case Error(msg, in) => Success(Problem(msg)(in.pos), in)
   }
   
   final def injectSyntaxErr[T](vMR: ParseResult[M[T]], msg: String): ParseResult[M[T]] = vMR match {
-    case s: Success[_]      => s
-    case NoSuccess(_, in) => Success(Problem(msg)(in.pos), in)
+    case s: Success[_] => s
+    case f: Failure    => f
+    case Error(_, in)  => Success(Problem(msg)(in.pos), in)
   }
   
   

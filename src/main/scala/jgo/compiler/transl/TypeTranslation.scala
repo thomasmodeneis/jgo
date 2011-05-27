@@ -41,6 +41,9 @@ trait TypeTranslation {
     case Float64        => "D"  //double
     
     case StringType     => "Ljava/lang/String;"
+    
+    //note: O(n^2) time, where n is the dimension of the array type
+    case ArrayType(len, t)   => "[" + typeDesc(t)
   }
   
   def typeDesc(t: StackType): String = t match {
@@ -57,12 +60,18 @@ trait TypeTranslation {
   }
   
   def methodDesc(f: Func): String = f.typeOf match {
-    case FuncType(params, List(result), false) =>
+    case FuncType(params, results, false) =>
+      val paramStr = params map typeDesc mkString ("(", "", ")")
+      /*
       val sb = new StringBuilder
       sb append "("
       for (p <- params) sb append typeDesc(p)
       sb append ")"
-      sb append typeDesc(result)
-      sb.result
+      */
+      results match {
+        case Nil          => paramStr + "V"              //sb append "V"
+        case List(result) => paramStr + typeDesc(result) //sb append typeDesc(result)
+      }
+      //sb.result
   }
 }

@@ -20,7 +20,8 @@ final class FunctionCompiler(funcName: String, sig: Signature, encl: Scope, inAt
   
   protected def initialEnclosing = encl
   
-  def target = new Function(funcName, sig.typeOf)
+  val target = new Function(funcName, sig.typeOf)
+  
   def hasNamedResults = sig.hasNamedResults
   
   for (param <- sig.namedParams) 

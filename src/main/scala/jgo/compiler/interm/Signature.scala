@@ -6,7 +6,7 @@ import interm.types._
 import symbol._
 
 sealed abstract class Signature extends Typed {
-  val typeOf = FuncType(paramTypes, resultTypes, isVariadic)
+  lazy val typeOf = FuncType(paramTypes, resultTypes, isVariadic)
   
   def paramTypes:  List[Type]
   def resultTypes: List[Type]
@@ -21,6 +21,10 @@ sealed abstract class Signature extends Typed {
   def hasNamedResults: Boolean
   
   def isVoid = resultTypes.length == 0
+  
+  override def toString =
+    "Signature(paramTypes = " + paramTypes + ", resultTypes = " + resultTypes +
+    (if (isVariadic) ", variadic)" else ")")
 }
 
 object Signature {
@@ -30,17 +34,18 @@ object Signature {
       val namedResults = rs collect { case r: LocalVar => r }
       val isVariadic = isVari
       val hasNamedResults = hasNmRes
-      lazy val paramTypes  = ps map { _.t }
-      lazy val resultTypes = rs map { _.t }
+      val paramTypes  = ps map { _.typeOf }
+      val resultTypes = rs map { _.typeOf }
     }
   
   def singleResult(ps: List[ParamVar], rT: Type, isVari: Boolean) =
     new Signature {
       val namedParams  = ps collect { case p: LocalVar => p }
       def namedResults = Nil
-      val paramTypes  = ps map { _.t }
+      val paramTypes  = ps map { _.typeOf}
       val resultTypes = List(rT)
       val isVariadic = isVari
+      
       def hasNamedResults = false
       override def isVoid = false
     }
@@ -48,10 +53,13 @@ object Signature {
   def noResults(ps: List[ParamVar], isVari: Boolean) =
     new Signature {
       val namedParams = ps collect { case p: LocalVar => p }
-      val paramTypes  = ps map { _.t }
+      val paramTypes  = ps map { _.typeOf }
+      
       def namedResults = Nil
       def resultTypes  = Nil
+      
       val isVariadic = isVari
+      
       def hasNamedResults = false
       override def isVoid = true
     }

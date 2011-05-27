@@ -1,9 +1,3 @@
-import jgo.compiler._
-import parser.BlockLang
-import parser.combinatorExten._
-import lexer.Scanner
-
-import interm.codeseq._
 
 object FlowTest extends ParserTests(
 "{ var a, b, c = 1, 2, 3; top: a++; b++; c++; goto top; }",

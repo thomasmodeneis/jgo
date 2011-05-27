@@ -18,74 +18,33 @@ import asm.Opcodes._
 
 import scala.collection.{mutable => mut}
 
-class PkgTranslator(val interm: PkgInterm) extends TypeTranslation {
+class PkgTranslator(val interm: PkgInterm) extends TypeTranslation with FunctionTranslation {
   val cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES)
   
   cw.visit(V1_6, ACC_PUBLIC, interm.target.name, null, "java/lang/Object", null)
   
   interm.globals foreach { global =>
-    val access = if (global.isPublic) ACC_PUBLIC else 0 //0 = package private
-    val fieldVis = cw.visitField(access, global.name, typeDesc(global.t), null, null)
-    if (global.t.radix.isInstanceOf[UnsignedType])
+    val access =
+      if (global.isPublic)
+        ACC_PUBLIC | ACC_STATIC
+      else
+        ACC_STATIC //0 = package private
+    val fieldVis = cw.visitField(access, global.name, typeDesc(global.typeOf), null, null)
+    if (global.typeOf.radix.isInstanceOf[UnsignedType])
       fieldVis.visitAnnotation(UnsignedAnnot, true)
     fieldVis.visitEnd()
   }
   
+  /*{
+    val mv0 = cw.visitMethod(ACC_PUBLIC | ACC_STATIC, "<clinit>", "()V", null, null)
+    val mv  = new GeneratorAdapter(mv0, ACC_PUBLIC | ACC_STATIC, "<clinit>", "()V")
+    translateCode(interm.initCode, mv)
+  }*/
+  
   interm.functions foreach { case (f, fInterm) =>
-    val access = if (f.isPublic) ACC_PUBLIC else 0 //0 = package private
-    val mv0 = cw.visitMethod(access, f.name, methodDesc(f), null, null)
-    val mv  = new GeneratorAdapter(mv0, access, f.name, methodDesc(f))
-    
-    for ((p, i) <- f.paramTypes.zipWithIndex)
-      if (p.radix.isInstanceOf[UnsignedType])
-        mv.visitParameterAnnotation(i, UnsignedAnnot, true)
-    
-    mv.visitCode()
-    import mv._
-    
-    val start, end = new AsmLabel
-    
-    val lbls: mut.Map[Label, AsmLabel] = mut.Map.empty
-    implicit def getLbl(l: Label) = lbls.getOrElseUpdate(l, new AsmLabel)
-    
-    mark(start)
-    fInterm.code foreach {
-      case PushStr(s)            => push(s)
-      case PushInt(l, I64 | U64) => push(l)
-      case PushInt(l, _)         => push(l.toInt)
-      case PushFloat(d, F64)     => push(d)
-      case PushFloat(d, F32)     => push(d.toFloat)
-      case PushBool(b)           => push(b)
-      case PushNil               => push(null: String) // I think this works
-      
-      case Pop       => pop()
-      case Dup       => dup()
-      case Dup_Down1 => dupX1()
-      case Dup_Down2 => dupX2()
-      case Swap      => swap()
-      
-      case Duplicate(n) =>
-        var i = 0
-        while (i < n) {
-          dup()
-          i += 1
-        }
-      
-      case Lbl(l)  => mark(l)
-      case Goto(l) => goTo(l)
-      
-      case PrintString =>
-        getStatic(classOf[System], "out", classOf[java.io.PrintStream])
-        swap()
-        invokeVirtual(classOf[java.io.PrintStream], new AsmMethod("println", "(Ljava/lang/String;)V"))
-      case PrintNumeric(I32) =>
-        getStatic(classOf[System], "out", classOf[java.io.PrintStream])
-        swap()
-        invokeVirtual(classOf[java.io.PrintStream], new AsmMethod("println", "(I)V"))
-    }
-    mark(end)
-    mv.visitEnd()
+    translateFunction(fInterm, cw)
   }
+  
   cw.visitEnd()
   
   def outputBytes = cw.toByteArray()
