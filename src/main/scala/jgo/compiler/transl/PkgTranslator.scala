@@ -83,8 +83,10 @@ class PkgTranslator(val interm: PkgInterm) extends TypeTranslation {
         swap()
         invokeVirtual(classOf[java.io.PrintStream], new AsmMethod("println", "(I)V"))
     }
-    //visit parameters and returns here
     mark(end)
     mv.visitEnd()
   }
+  cw.visitEnd()
+  
+  def outputBytes = cw.toByteArray()
 }
