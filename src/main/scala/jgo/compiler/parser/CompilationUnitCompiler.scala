@@ -51,13 +51,13 @@ class CompilationUnitCompiler(target: Package = Package("main"), in: Input) exte
   }
   
   
-  private lazy val parseFile: PM[List[CodeBuilder]] =                  "file" $
+  private lazy val parseFile: Rule[List[CodeBuilder]] =                  "file" $
     repWithSemi(topLevelDecl)
   
-  private lazy val topLevelDecl: PM[CodeBuilder] =    "top level declaration" $
+  private lazy val topLevelDecl: Rule[CodeBuilder] =    "top level declaration" $
     (declaration | function)
   
-  private lazy val function: PM[CodeBuilder] =                "function decl" $
+  private lazy val function: Rule[CodeBuilder] =                "function decl" $
     "func" ~! ident ~ signature ~ inputAt("{") <~ skipBlock  ^^ { case pos ~ name ~ sigM ~ in =>
       sigM flatMap { sig =>
         val funcCompl = new FunctionCompiler(name, sig, scope, in)

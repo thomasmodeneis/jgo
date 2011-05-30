@@ -16,7 +16,7 @@ trait Operands extends CompositeLiterals with ExprUtils /*with FunctionLiterals*
                         //herein is the current scope
   
   //in general, "E = E ~ t2 | t1" MUST be used instead of "E = t1 | E ~ t2"
-  lazy val operand: PM[Expr] =    "operand" $
+  lazy val operand: Rule[Expr] =                       "operand" $
     ( "(" ~> expression <~ ")"
 //  | methodAsFunc
     | literal
@@ -24,7 +24,7 @@ trait Operands extends CompositeLiterals with ExprUtils /*with FunctionLiterals*
     | failure("not an operand")
     )
   
-  lazy val literal: PM[Expr] =   "literal value" $
+  lazy val literal: Rule[Expr] =                 "literal value" $
     ( intLit       ^^ { _.value } ^^ IntConstant
     | floatLit     ^^ { _.value } ^^ FloatConstant
 //  | imaginaryLit

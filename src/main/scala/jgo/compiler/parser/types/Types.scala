@@ -9,10 +9,10 @@ import interm._
 import types._
 import symbol._
 
-trait Types extends Symbols with Signatures with TypeUtils {
+trait Types extends Symbols with Signatures {
   self: Expressions =>
   
-  lazy val goType: PM[Type] =                                                               "type" $
+  lazy val goType: Rule[Type] =                                                             "type" $
     ( typeSymbol ^^ { _ map { symb => symb.theType } }
     | "(" ~> goType <~ ")"
     | arrayType
@@ -27,7 +27,7 @@ trait Types extends Symbols with Signatures with TypeUtils {
   
   //TODO:  This shouldn't be necessary.  Or should it?  In which case, document.
   //Used by FunctionCompiler and its kin.
-  lazy val onlyGoType: PM[Type] =                                                      "only-type" $
+  lazy val onlyGoType: Rule[Type] =                                                    "only-type" $
     ( onlyTypeSymbol  ^^ { _.theType } ^^ M
     | "(" ~> goType <~ ")"
     | arrayType
@@ -41,30 +41,30 @@ trait Types extends Symbols with Signatures with TypeUtils {
     )
   
   
-  lazy val arrayType: PM[ArrayType] =                                                 "array type" $
+  lazy val arrayType: Rule[ArrayType] =                                               "array type" $
     //("[" ~> expression <~ "]") ~ goType //compile-time constants not yet fully supported
-    "[" ~> intLit ~ "]" ~ goType  ^^ array
+    "[" ~> intLit ~ "]" ~ goType  ^^ mkArray
   
   
-  lazy val sliceType: PM[SliceType] =                                                 "slice type" $
+  lazy val sliceType: Rule[SliceType] =                                               "slice type" $
     "[" ~ "]" ~> goType  ^^ { _ map SliceType.apply }
   
   
-  lazy val structType: PM[StructType] =                                              "struct type" $
-    "struct" ~>! "{" ~> repWithSemi(structFieldDecl) <~ "}"  ^^ struct
+  lazy val structType: Rule[StructType] =                                            "struct type" $
+    "struct" ~>! "{" ~> repWithSemi(structFieldDecl) <~ "}"  ^^ mkStruct
   
-  private lazy val structFieldDecl: PM[List[FieldDesc]] =                      "struct field decl" $
+  private lazy val structFieldDecl: Rule[List[FieldDesc]] =                    "struct field decl" $
     ( identList ~ goType ~ stringLit.?  ^^ regularFieldDecl
     | "*" ~> typeSymbol  ~ stringLit.?  ^^ embeddedFieldDecl(true)
     |        typeSymbol  ~ stringLit.?  ^^ embeddedFieldDecl(false)
     )
   
   
-  lazy val pointerType: PM[PointerType] =                                           "pointer type" $
+  lazy val pointerType: Rule[PointerType] =                                         "pointer type" $
     "*" ~> goType  ^^ { _ map PointerType.apply }
   
   
-  lazy val funcType: PM[FuncType] =                                                    "func type" $
+  lazy val funcType: Rule[FuncType] =                                                  "func type" $
     "func" ~>! signature  ^^ { _ map { _.typeOf } }
   
   
@@ -79,51 +79,52 @@ trait Types extends Symbols with Signatures with TypeUtils {
   */
   
   
-  lazy val mapType: PM[MapType] =                                                       "map type" $
+  lazy val mapType: Rule[MapType] =                                                     "map type" $
     "map" ~>! ("[" ~> goType <~ "]") ~ goType  ^^ mkMap
   
   
-  lazy val channelType: PM[ChanType] =                                              "channel type" $
-    ( "chan" ~> "<-" ~> goType  ^^ chan(recv = false, send = true)
-    | "<-" ~> "chan" ~> goType  ^^ chan(recv = true,  send = false)
-    | "chan" ~> goType          ^^ chan(recv = true,  send = true)
+  lazy val channelType: Rule[ChanType] =                                            "channel type" $
+    ( "chan" ~> "<-" ~> goType  ^^ mkChan(recv = false, send = true)
+    | "<-" ~> "chan" ~> goType  ^^ mkChan(recv = true,  send = false)
+    | "chan" ~> goType          ^^ mkChan(recv = true,  send = true)
     )
   
   
-  lazy val typeList: PM[List[Type]] =                                                  "type list" $
+  lazy val typeList: Rule[List[Type]] =                                                "type list" $
     rep1sep(goType, ",")
   
   
   
-  private def array(i: lexer.IntLit, pos: Pos, tM: M[Type]) = tM flatMap { t =>
+  private def mkArray(i: lexer.IntLit, pos: Pos, tM: M[Type]) = tM flatMap { t =>
     val len = i.value.toInt
     if (len < 0) Problem("cannot have negative array length")(pos)
     else Result(ArrayType(len, t))
   }
   
   private def mkMap(kM: M[Type], vM: M[Type]) =
-    for ((k, v) <- (kM, vM))
-    yield MapType(k, v)
+    for ((k, v) <- (kM, vM)) yield
+      MapType(k, v)
   
-  private def chan(recv: Boolean, send: Boolean)(elemTM: M[Type]) = elemTM map { elemT =>
+  private def mkChan(recv: Boolean, send: Boolean)(elemTM: M[Type]) = elemTM map { elemT =>
     ChanType(elemT, canRecv = recv, canSend = send)
   }
   
   
-  private def struct(declsUgly: List[M[List[FieldDesc]]]) = {
+  private def mkStruct(declsUgly: List[M[List[FieldDesc]]]) = {
     val declsM: M[List[List[FieldDesc]]] = declsUgly
     for {
       decls <- declsM
       fields = decls.flatten
-    } yield StructType(fields)
+    } yield
+      StructType(fields)
     //add logic for duplicate field names, etc
   }
   
   private def regularFieldDecl(ids: List[String], tM: M[Type], tag: Option[String]) =
-    for (t <- tM)
-    yield ids map { id => RegularFieldDesc(id, t, tag) }
+    for (t <- tM) yield
+      ids map { id => RegularFieldDesc(id, t, tag) }
   
   private def embeddedFieldDecl(isPtr: Boolean)(tM: M[TypeSymbol], tag: Option[String]) =
-    for (tSymb <- tM; t: NamedType = tSymb)
-    yield List(EmbeddedFieldDesc(t.name, t, isPtr,  tag))
+    for (tSymb <- tM; t: NamedType = tSymb) yield
+      List(EmbeddedFieldDesc(t.name, t, isPtr,  tag))
 }

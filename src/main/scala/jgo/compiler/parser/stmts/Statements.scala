@@ -7,7 +7,7 @@ import parser.funcs._
 
 import interm._
 import expr._
-import expr.{Combinators => C}
+import expr.Combinators
 import types._
 import symbol._
 import codeseq._
@@ -23,8 +23,7 @@ trait Statements extends Expressions
                     with FuncContext
                     with StackScoped
                     with Labels
-                    with BreaksAndContinues
-                    with StmtUtils {
+                    with BreaksAndContinues {
   /**
    * For clarity, we use the name funcContext to refer to this Statements instance
    * when we use the members inherited from FuncContext.
@@ -40,7 +39,7 @@ trait Statements extends Expressions
     (res, Decl(res))
   }
   
-  lazy val statement: PM[CodeBuilder] =                                                "statement" $
+  lazy val statement: Rule[CodeBuilder] =                                              "statement" $
     ( block
     | labeledStmt
     | ifStmt
@@ -61,16 +60,16 @@ trait Statements extends Expressions
   
   def procPrintStmt(pos: Pos, eM: M[Expr]) =
     eM flatMap {
-      case s OfType (StringType)  => Result(C.eval(s) |+| PrintString)
-      case n OfType (t: NumericType) => Result(C.eval(n) |+| PrintNumeric(t))
+      case s OfType (StringType)     => Result(Combinators.eval(s) |+| PrintString)
+      case n OfType (t: NumericType) => Result(Combinators.eval(n) |+| PrintNumeric(t))
       case HasType(t) => Problem("not a printable type: %s", t)(pos)
     }
   
-  lazy val block: PM[CodeBuilder] =                                                        "block" $
+  lazy val block: Rule[CodeBuilder] =                                                      "block" $
     scoped("{" ~> stmtList <~ "}")  ^^ makeBlock
   
   
-  lazy val labeledStmt: PM[CodeBuilder] =                                      "labeled statement" $
+  lazy val labeledStmt: Rule[CodeBuilder] =                                    "labeled statement" $
     label >> { nameAndLabel =>
       ( labeledLoop(forStmt)(nameAndLabel)
 //    | labeledBreakable(switchStmt)(nameAndLabel)
@@ -79,11 +78,11 @@ trait Statements extends Expressions
       )
     }
   
-  lazy val label: P[(String, M[UserLabel])]=                                               "label" $
+  lazy val label: Parser[(String, M[UserLabel])]=                                          "label" $
     ident ~ ":"  ^^ defLabel 
   
   
-  lazy val ifStmt: PM[CodeBuilder] =                                                "if statement" $
+  lazy val ifStmt: Rule[CodeBuilder] =                                              "if statement" $
     "if" ~>! scoped(
       (simpleStmt <~ ";").? ~ withPos(expression) ~ block ~ ("else" ~>! statement).?
     )  ^^ makeIfStmt
@@ -115,18 +114,18 @@ trait Statements extends Expressions
     )
   
   
-  lazy val forStmt: PM[(Label, Label) => CodeBuilder] =                            "for statement" $
+  lazy val forStmt: Rule[(Label, Label) => CodeBuilder] =                          "for statement" $
     "for" ~>!
-      (                               block   ^^ makeInfLoop
-      |        withPos(expression)  ~ block   ^^ makeWhile
-      | scoped(forClause            ~ block)  ^^ makeFor
-//    | (rangeClause ~ block  &@ "for with range clause")
+      (                       block   ^^ makeInfLoop
+      | withPos(expression) ~ block   ^^ makeWhile
+      |    scoped(forClause ~ block)  ^^ makeFor
+//    |  scoped(rangeClause ~ block)
       )
   
   lazy val forClause =                                  "for-clause: ordinary, ternary for clause" $
     (simpleStmt.? <~ ";") ~ withPos(expression.? <~ ";") ~ simpleStmt.?
   
-  lazy val rangeClause: P_ =                                     "range clause of a for statement" $
+  lazy val rangeClause =                                         "range clause of a for statement" $
     expression ~ ("," ~> expression).? ~ (("=" | ":=") ~> "range" ~> expression)
   
   
@@ -135,42 +134,36 @@ trait Statements extends Expressions
 //  lazy val commClause: PP =
   
   
-  lazy val returnStmt: PM[CodeBuilder] =                                        "return statement" $
+  lazy val returnStmt: Rule[CodeBuilder] =                                      "return statement" $
     ( "return" ~ exprList  ^^ makeValueReturn
     | "return"             ^^ makeReturn
     )
   
-  lazy val breakStmt: PM[CodeBuilder] =                                          "break statement" $
+  lazy val breakStmt: Rule[CodeBuilder] =                                        "break statement" $
     ( "break" ~ ident  ^^ procBreak
     | "break"          ^^ procBreak
     )
   
-  lazy val continueStmt: PM[CodeBuilder] =                                    "continue statement" $
+  lazy val continueStmt: Rule[CodeBuilder] =                                  "continue statement" $
     ( "continue" ~ ident  ^^ procContinue
     | "continue"          ^^ procContinue
     )
   
-  lazy val gotoStmt: PM[CodeBuilder] =                                            "goto statement" $
+  lazy val gotoStmt: Rule[CodeBuilder] =                                          "goto statement" $
     "goto" ~! ident  ^^ procGoto
   
   
-  lazy val goStmt: P_ =                                                             "go statement" $
+  lazy val goStmt =                                                                 "go statement" $
     "go" ~>! primaryExpr
   
-  lazy val deferStmt: P_ =                                                       "defer statement" $
+  lazy val deferStmt =                                                           "defer statement" $
     "defer" ~>! primaryExpr
   
   
-  lazy val stmtList: PM[List[CodeBuilder]] =                                      "statement list" $
+  lazy val stmtList: Rule[List[CodeBuilder]] =                                    "statement list" $
     repWithSemi(statement) ^^ { implicitly[List[M[CodeBuilder]] => M[List[CodeBuilder]]] }
   
   
-  
-  private def takeCode(tuple: (CodeBuilder, Label)) = tuple._1
-  private def takeCode(tuple: (CodeBuilder, Label, Label)) = tuple._1
-  
-//  private implicit def ls2code(ls: List[CodeBuilder]): CodeBuilder =
-//    ls reduceLeft { _ |+| _ }
   
   private def makeBlock(stmtsM: M[List[CodeBuilder]], undeclCode: CodeBuilder) =
     for (stmts <- stmtsM)
@@ -186,7 +179,7 @@ trait Statements extends Expressions
         if (!(t <<= e.t))
           return Problem("type %s of %s expression not assignable to corresponding result type %s",
                          e.t, ordinal(i), t)(pos)
-        code = code |+| C.eval(e)
+        code = code |+| Combinators.eval(e)
       }
       code |+| ValueReturn
     }
@@ -211,9 +204,8 @@ trait Statements extends Expressions
     
     for {
       (init, cond, body, els) <- (initM, condM, bodyM, elseM)
-      bool <- C.boolean(cond)(condPos)
-    }
-    yield init |+| (els match {
+      bool <- Combinators.boolean(cond)(condPos)
+    } yield init |+| (els match {
       case None           => bool.mkIf(body)
       case Some(elseCode) => bool.mkIfElse(body, elseCode)
     }) |+| undeclCode
@@ -227,9 +219,9 @@ trait Statements extends Expressions
     val (condM, condPos) = condWPos
     for {
       (cond, body) <- (condM, bodyM)
-      bool <- C.boolean(cond)(condPos)
-    }
-    yield bool.mkWhile(body) _
+      bool <- Combinators.boolean(cond)(condPos)
+    } yield
+      bool.mkWhile(body) _
   }
   
   private def makeFor(
@@ -247,9 +239,8 @@ trait Statements extends Expressions
       case Some(condM) =>
         for {
           (init, cond, incr, body) <- (initM, condM, incrM, bodyM)
-          bool <- C.boolean(cond)(condPos)
-        }
-        yield { (brk: Label, cont: Label) =>
+          bool <- Combinators.boolean(cond)(condPos)
+        } yield { (brk: Label, cont: Label) =>
           //an (old) implicit conversion turns incr into a CodeBuilder
           //In the event of None, empty code. Also init.
           init |+| bool.mkFor(body, incr)(brk, cont) |+| undeclCode

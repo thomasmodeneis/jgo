@@ -12,7 +12,7 @@ import symbol._
 import codeseq._
 import instr._
 
-trait Declarations extends Expressions with GrowablyScoped with StmtUtils {
+trait Declarations extends Expressions with GrowablyScoped {
   private var iotaValue = 0
   
   /**
@@ -24,7 +24,7 @@ trait Declarations extends Expressions with GrowablyScoped with StmtUtils {
    */
   protected def mkVariable(name: String, typeOf: Type): (Variable, CodeBuilder)
   
-  lazy val declaration: PM[CodeBuilder] =                       "declaration" $
+  lazy val declaration: Rule[CodeBuilder] =                       "declaration" $
     ( varDecl
     | typeDecl  ^^^ noCode
 //  | constDecl
@@ -41,18 +41,18 @@ trait Declarations extends Expressions with GrowablyScoped with StmtUtils {
     | identPosList                                //don't forget about iota
     )
   
-  lazy val typeDecl: PM[Unit] =                            "type declaration" $
+  lazy val typeDecl: Rule[Unit] =                            "type declaration" $
     "type" ~>! ( typeSpec
                | "(" ~> repWithSemi(typeSpec) <~ ")"  ^^ foldUnitsTogether
                )
-  lazy val typeSpec: PM[Unit] =                              "type decl spec" $
+  lazy val typeSpec: Rule[Unit] =                              "type decl spec" $
     InPos ~ ident ~ goType  ^^ procTypeSpec
   
-  lazy val varDecl: PM[CodeBuilder] =                       "var declaration" $
+  lazy val varDecl: Rule[CodeBuilder] =                       "var declaration" $
     "var" ~>! ( varSpec
               | "(" ~> repWithSemi(varSpec) <~ ")"  ^^ foldCodeTogether
               )
-  lazy val varSpec: PM[CodeBuilder] =                         "var decl spec" $
+  lazy val varSpec: Rule[CodeBuilder] =                         "var decl spec" $
     ( identPosList          ~ pos("=") ~ exprList  ^^ procVarSpecInfer
     | identPosList ~ goType ~ pos("=") ~ exprList  ^^ procVarSpecTypeAndAssign
     | identPosList ~ goType                        ^^ procVarSpecNoAssign
@@ -106,20 +106,22 @@ trait Declarations extends Expressions with GrowablyScoped with StmtUtils {
   
   private def procVarSpecInfer(left: List[(String, Pos)], eqPos: Pos, rightM: M[List[Expr]]): M[CodeBuilder] =
     rightM flatMap { right =>
-      checkArity(left, right) then {
-        var declCode = CodeBuilder()
-        val leftVarsM: M[List[Variable]] =
-          for (((l, pos), r) <- left zip right)
-          yield {
-            val (v, declC) = mkVariable(l, r.t)
-            declCode = declCode |+| declC
-            bind(l, v)(pos)
-          } //implicit conv
-        for {
-          leftVars <- leftVarsM
-          assignCode <- C.assign(leftVars map varLval, right)(eqPos)
-        } yield declCode |+| assignCode
-      }
+      if (left.length != right.length)
+        return Problem("arity (%d) of left side of = unequal to arity (%d) of right side",
+                       left.length, right.length)(eqPos)
+      
+      var declCode = CodeBuilder()
+      val leftVarsM: M[List[Variable]] =
+        for (((l, pos), r) <- left zip right)
+        yield {
+          val (v, declC) = mkVariable(l, r.t)
+          declCode = declCode |+| declC
+          bind(l, v)(pos)
+        } //implicit conv
+      for {
+        leftVars <- leftVarsM
+        assignCode <- C.assign(leftVars map varLval, right)(eqPos)
+      } yield declCode |+| assignCode
     }
   
   //Fix this function next.

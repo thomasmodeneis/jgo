@@ -14,14 +14,14 @@ import input.{Position, NoPosition}
 
 trait Base extends Tokens with PackratParsers with FancyParsers with MessageHandling {
   
-  type P[+T]   = Parser       [T]
-  type PP[+T]  = PackratParser[T]
+  type Rule[+T]   = Parser[M[T]]
+  type LrRule[+T] = PackratParser[M[T]]
   
-  type PM[+T]  = Parser       [M[T]]
-  type PPM[+T] = PackratParser[M[T]]
-  
+  @deprecated("Implement this grammar rule.", "May 29, 2011")
   type P_      = Parser       [Any]
+  @deprecated("Implement this grammar production, being sure to use LrRule.", "May 29, 2011")
   type PP_     = PackratParser[Any]
+  
   
   implicit def string2Fancy(str: String) = new FancyParserOps(str)
   
@@ -83,10 +83,10 @@ trait Base extends Tokens with PackratParsers with FancyParsers with MessageHand
     p ^^ Messaged.optM2mOpt
   
   
-  lazy val identList: P[List[String]] =                    "identifier list" $
+  lazy val identList: Parser[List[String]] =                    "identifier list" $
     rep1sep(ident, ",")
   
-  lazy val identPosList: P[List[(String, Pos)]] =      "ident-with-pos list" $
+  lazy val identPosList: Parser[List[(String, Pos)]] =      "ident-with-pos list" $
     rep1sep(withPos(ident), ",")
   
   def repWithSemi[T](p: Parser[T]): Parser[List[T]] =

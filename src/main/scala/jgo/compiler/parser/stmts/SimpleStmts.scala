@@ -6,7 +6,7 @@ import parser.scoped._
 
 import interm._
 import expr._
-import expr.{Combinators => C}
+import expr.Combinators
 import codeseq._
 import instr._
 import instr.TypeConversions._
@@ -25,27 +25,27 @@ import symbol._
  * <li>The empty statement</li>
  * </ul>
  */
-trait SimpleStmts extends Expressions with Symbols with GrowablyScoped with ExprUtils with StmtUtils {
-  lazy val simpleStmt: PM[CodeBuilder] =                          "simple statement" $
+trait SimpleStmts extends Expressions with Symbols with GrowablyScoped with ExprUtils {
+  lazy val simpleStmt: Rule[CodeBuilder] =                          "simple statement" $
     ( assignment
     | shortVarDecl
     | incOrDecStmt
     | sendStmt
-    | expression  ^^ map(C.eval)
+    | expression  ^^ map(Combinators.eval)
     | success(CodeBuilder.empty) //empty stmt
     )
   
-  lazy val sendStmt: PM[CodeBuilder] =                              "send statement" $
-    expression ~ "<-" ~ expression  ^^ C.chanSend
+  lazy val sendStmt: Rule[CodeBuilder] =                              "send statement" $
+    expression ~ "<-" ~ expression  ^^ Combinators.chanSend
   
-  lazy val incOrDecStmt: PM[CodeBuilder] =        "increment or decrement statement" $
-    ( expression ~ "++"  ^^ convSuffix(C.incr) //Not sure why the conversion isn't being applied implicitly,
-    | expression ~ "--"  ^^ convSuffix(C.decr) //but don't have the time to find out right now.
+  lazy val incOrDecStmt: Rule[CodeBuilder] =        "increment or decrement statement" $
+    ( expression ~ "++"  ^^ convSuffix(Combinators.incr) //Not sure why the conversion isn't being applied implicitly,
+    | expression ~ "--"  ^^ convSuffix(Combinators.decr) //but don't have the time to find out right now.
   //| failure("`++' or `--' expected")         
     )
   
-  lazy val assignment: PM[CodeBuilder] =                      "assignment statement" $
-    ( exprList ~ "=" ~ exprList  ^^ C.assign
+  lazy val assignment: Rule[CodeBuilder] =                      "assignment statement" $
+    ( exprList ~ "=" ~ exprList  ^^ Combinators.assign
   /*| expression ~ "+="  ~ expression
     | expression ~ "-="  ~ expression
     | expression ~ "|="  ~ expression
@@ -59,7 +59,7 @@ trait SimpleStmts extends Expressions with Symbols with GrowablyScoped with Expr
     | expression ~ "&^=" ~ expression*/
     )
   
-  lazy val shortVarDecl: PM[CodeBuilder] =              "short variable declaration" $
+  lazy val shortVarDecl: Rule[CodeBuilder] =              "short variable declaration" $
     identPosList ~ ":=" ~ exprList  ^^ declAssign
   
   
@@ -67,6 +67,10 @@ trait SimpleStmts extends Expressions with Symbols with GrowablyScoped with Expr
     rightM flatMap { right =>
       var declCode = CodeBuilder.empty
       var actuallySawDecl = false
+      
+      if (left.length != right.length)
+        return Problem("arity (%d) of left side of := unequal to arity (%d) of right side",
+                       left.length, right.length)(eqPos)
       
       val leftVarsM: M[List[Variable]] = //implicit conv
         for (((l, pos), r) <- left zip right)
@@ -76,7 +80,7 @@ trait SimpleStmts extends Expressions with Symbols with GrowablyScoped with Expr
             val v = new LocalVar(l, r.t)
             growable.put(l, v)
             declCode = declCode |+| Decl(v)
-            M(v)
+            Result(v)
           }
           else
             getVariable(l, pos)
@@ -84,7 +88,7 @@ trait SimpleStmts extends Expressions with Symbols with GrowablyScoped with Expr
       if (actuallySawDecl)
         for {
           leftVars <- leftVarsM
-          assignCode <- C.assign(leftVars map varLval, right)(eqPos)
+          assignCode <- Combinators.assign(leftVars map varLval, right)(eqPos)
         } yield declCode |+| assignCode
       else
         Problem("no new variables on left side of :=")(eqPos)

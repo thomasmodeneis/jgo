@@ -8,29 +8,29 @@ import interm.types._
 
 trait Symbols extends Base with Scoped {
   
-  lazy val onlyValueSymbol: P[ValueSymbol] = "var or const symbol" $
+  lazy val onlyValueSymbol: Parser[ValueSymbol] = "var or const symbol" $
     ident ^? scope ^? { case v: ValueSymbol => v }
   
-  lazy val onlyVarSymbol:   P[Variable] =             "var symbol" $
+  lazy val onlyVarSymbol:   Parser[Variable] =             "var symbol" $
     ident ^? scope ^? { case v: Variable => v }
   
-  lazy val onlyFuncSymbol:  P[Function] =             "var symbol" $
+  lazy val onlyFuncSymbol:  Parser[Function] =             "var symbol" $
     ident ^? scope ^? { case v: Function => v }
   
-  /*lazy val onlyConstSymbol: P[ConstSymbol] =      "const symbol" $
+  /*lazy val onlyConstSymbol: Parser[ConstSymbol] =      "const symbol" $
     ident ^? scope ^? { case c: ConstSymbol =? c } */
   
-  lazy val onlyPkgSymbol:   P[Package] =          "package symbol" $
+  lazy val onlyPkgSymbol:   Parser[Package] =          "package symbol" $
     ident ^? scope ^? { case p: Package => p }
   
-  lazy val onlyTypeSymbol:  P[TypeSymbol] =          "type symbol" $
+  lazy val onlyTypeSymbol:  Parser[TypeSymbol] =          "type symbol" $
     ident ^? scope ^? { case t: TypeSymbol => t }
   
   
-  lazy val symbol: PM[Symbol] =                           "symbol" $
+  lazy val symbol: Rule[Symbol] =                              "symbol" $
     withPos(ident) ^^ (getSymbol _).tupled //Really, compiler?  Really?
   
-  lazy val valueSymbol: PM[ValueSymbol] =
+  lazy val valueSymbol: Rule[ValueSymbol] =
      withPos(symbol) ^^ { case (sM, p) =>
       sM flatMap {
         case v: ValueSymbol => Result(v)
@@ -38,7 +38,7 @@ trait Symbols extends Base with Scoped {
       }
     }
   
-  lazy val constSymbol: PM[ConstSymbol] =
+  lazy val constSymbol: Rule[ConstSymbol] =
     withPos(symbol) ^^ { case (sM, p) =>
       sM flatMap {
         case c: ConstSymbol => Result(c)
@@ -46,7 +46,7 @@ trait Symbols extends Base with Scoped {
       }
     }
   
-  lazy val varSymbol: PM[Variable] =
+  lazy val varSymbol: Rule[Variable] =
     withPos(symbol) ^^ { case (sM, p) =>
       sM flatMap {
         case v: Variable => Result(v)
@@ -54,7 +54,7 @@ trait Symbols extends Base with Scoped {
       }
     }
   
-  lazy val funcSymbol: PM[Function] =
+  lazy val funcSymbol: Rule[Function] =
     withPos(symbol) ^^ { case (sM, p) =>
       sM flatMap {
         case f: Function => Result(f)
@@ -62,7 +62,7 @@ trait Symbols extends Base with Scoped {
       }
     }
   
-  lazy val pkgSymbol: PM[Package] =
+  lazy val pkgSymbol: Rule[Package] =
     withPos(symbol) ^^ { case (sM, p) =>
       sM flatMap {
         case pkg: Package => Result(pkg)
@@ -70,7 +70,7 @@ trait Symbols extends Base with Scoped {
       }
     }
   
-  lazy val typeSymbol: PM[TypeSymbol] =
+  lazy val typeSymbol: Rule[TypeSymbol] =
     withPos(symbol) ^^ { case (sM, p) =>
       sM flatMap {
         case t: TypeSymbol => Result(t)

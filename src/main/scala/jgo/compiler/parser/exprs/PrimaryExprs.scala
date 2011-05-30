@@ -10,10 +10,10 @@ import expr.Combinators._
 import types._
 import codeseq._
 
-trait PrimaryExprs extends Operands with Types with Scoped with ExprUtils {
+trait PrimaryExprs extends Operands with Types {
   self: Expressions =>
   
-  lazy val primaryExpr: PPM[Expr] =                          "primary expression" $
+  lazy val primaryExpr: LrRule[Expr] =                          "primary expression" $
     ( primaryExpr ~ "[" ~ expression <~ "]"                            ^^ index
     | primaryExpr ~ "[" ~ (expression.? <~ ":") ~ expression.? <~ "]"  ^^ slice
 //  | primaryExpr ~ "." ~ ident

@@ -19,23 +19,24 @@ import Signature._
 trait Signatures extends Base {
   self: Types =>
   
-  lazy val signature: PM[Signature] =
+  lazy val signature: Rule[Signature] =
     ( params ~ parenResults  ^^ { case psM ~ rsM => for (((ps, vari), (rs, namedRes)) <- (psM, rsM)) yield results(ps, rs, vari, namedRes) }
-    | params ~ goType        ^^ { case psM ~ tM => for (((ps, vari), t) <- (psM, tM)) yield singleResult(ps, t, vari) }
+    | params ~ goType        ^^ { case psM ~ tM  => for (((ps, vari), t) <- (psM, tM)) yield singleResult(ps, t, vari) }
     | params                 ^^ { psM => for ((ps, vari) <- psM) yield noResults(ps, vari) }
     )
   
-  private lazy val params: PM[(List[ParamVar], Boolean)] =
+  private lazy val params: Rule[(List[ParamVar], Boolean)] =
     ( "(" ~ ")"  ^^^ Result(Nil, false) //shortcut, so to speak
     | parenParams
     )
   
-  private lazy val namedParams: PM[(List[LocalVar], Boolean)] =
+  private lazy val namedParams: Rule[(List[LocalVar], Boolean)] =
     "(" ~ repsep(namedParamGroup, ",") <~! ")"  ^^ { case pos ~ ugly =>
       (ugly: M[List[(List[LocalVar], Boolean)]]) flatMap { ls =>
         var variadic, badVariadic = false
         val pss =
-          for ((paramGrp, vari) <- ls) yield {
+          for ((paramGrp, vari) <- ls)
+          yield {
             badVariadic ||= variadic
             variadic = vari
             paramGrp
@@ -48,12 +49,13 @@ trait Signatures extends Base {
       }
     }
   
-  private lazy val parenParams: PM[(List[ParamVar], Boolean)] =
+  private lazy val parenParams: Rule[(List[ParamVar], Boolean)] =
     "(" ~ repsep(namedParamGroup | unnamedParamGroup, ",") <~! ")"  ^^ { case pos ~ ugly =>
       (ugly: M[List[(List[ParamVar], Boolean)]]) flatMap { groups =>
         var variadic, badVariadic, sawNamed, sawUnnamed = false
         val pss =
-          for ((paramGrp, vari) <- groups) yield {
+          for ((paramGrp, vari) <- groups)
+          yield {
             if (paramGrp(0).isInstanceOf[LocalVar])
               sawNamed = true
             else
@@ -75,18 +77,20 @@ trait Signatures extends Base {
       }
     }
   
-  private lazy val namedParamGroup: PM[(List[LocalVar], Boolean)] =
+  private lazy val namedParamGroup: Rule[(List[LocalVar], Boolean)] =
     identList ~ "...".?? ~ goType  ^^ { case ids ~ vari ~ tM =>
-      for (t <- tM) yield
+      for (t <- tM)
+      yield
         if (vari)
           (ids.init.map { id => new LocalVar(id, t) } :+ new LocalVar(ids.last, SliceType(t)), true)
         else
           (ids map { id => new LocalVar(id, t) }, false)
     }
   
-  private lazy val unnamedParamGroup: PM[(List[DummyVar], Boolean)] =
+  private lazy val unnamedParamGroup: Rule[(List[DummyVar], Boolean)] =
     "...".?? ~ goType  ^^ { case vari ~ tM =>
-      for (t <- tM) yield {
+      for (t <- tM)
+      yield {
         val dummy =
           if (vari) new DummyVar(SliceType(t))
           else new DummyVar(t)
@@ -94,11 +98,12 @@ trait Signatures extends Base {
       }
     }
   
-  private lazy val parenResults: PM[(List[ParamVar], Boolean)] =
+  private lazy val parenResults: Rule[(List[ParamVar], Boolean)] =
     "(" ~ repsep(namedResultGroup | unnamedResultGroup, ",") <~! ")"  ^^ { case pos ~ ugly =>
       (ugly: M[List[List[ParamVar]]]) flatMap { rss =>
         var sawNamed, sawUnnamed = false
-          for (rs <- rss) yield
+          for (rs <- rss)
+          yield
             if (rs(0).isInstanceOf[LocalVar])
               sawNamed = true
               sawUnnamed = true
@@ -109,16 +114,16 @@ trait Signatures extends Base {
       }
     }
   
-  private lazy val namedResultGroup: PM[List[LocalVar]] =
+  private lazy val namedResultGroup: Rule[List[LocalVar]] =
     identList ~ goType  ^^ { case ids ~ tM =>
-      for (t <- tM) yield
-        for (id <- ids) yield
-          new LocalVar(id, t)
+      for (t <- tM)
+      yield for (id <- ids)
+      yield new LocalVar(id, t)
     }
   
-  private lazy val unnamedResultGroup: PM[List[DummyVar]] =
+  private lazy val unnamedResultGroup: Rule[List[DummyVar]] =
     goType ^^ { tM =>
-      for (t <- tM) yield
-        List(new DummyVar(t))
+      for (t <- tM)
+      yield List(new DummyVar(t))
     }
 }

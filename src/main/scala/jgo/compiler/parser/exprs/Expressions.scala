@@ -9,20 +9,20 @@ import expr.Combinators._
 import types._
 
 trait Expressions extends PrimaryExprs with ExprUtils {
-  lazy val expression: PPM[Expr] =                       "expression" $
+  lazy val expression: LrRule[Expr] =                       "expression" $
     catchSyntaxErr(orExpr, "not an expression")
   
-  lazy val orExpr: PPM[Expr] =                "or-expression: prec 1" $
+  lazy val orExpr: LrRule[Expr] =                "or-expression: prec 1" $
     ( orExpr ~ "||" ~ andExpr   ^^ or
     | andExpr
     )
   
-  lazy val andExpr: PPM[Expr] =              "and-expression: prec 2" $
+  lazy val andExpr: LrRule[Expr] =              "and-expression: prec 2" $
     ( andExpr ~ "&&" ~ relExpr  ^^ and
     | relExpr
     )
   
-  lazy val relExpr: PPM[Expr] =       "relational expression: prec 3" $
+  lazy val relExpr: LrRule[Expr] =       "relational expression: prec 3" $
     ( relExpr ~ "==" ~ addExpr  ^^ compEq
     | relExpr ~ "!=" ~ addExpr  ^^ compNe
     | relExpr ~ "<"  ~ addExpr  ^^ compLt
@@ -32,7 +32,7 @@ trait Expressions extends PrimaryExprs with ExprUtils {
     | addExpr
     )
   
-  lazy val addExpr: PPM[Expr] =         "additive expression: prec 4" $
+  lazy val addExpr: LrRule[Expr] =         "additive expression: prec 4" $
     ( addExpr ~ "+" ~ multExpr  ^^ plus
     | addExpr ~ "-" ~ multExpr  ^^ minus
     | addExpr ~ "|" ~ multExpr  ^^ bitOr
@@ -40,7 +40,7 @@ trait Expressions extends PrimaryExprs with ExprUtils {
     | multExpr
     )
   
-  lazy val multExpr: PPM[Expr] =  "multiplicative expression: prec 5" $
+  lazy val multExpr: LrRule[Expr] =  "multiplicative expression: prec 5" $
     ( multExpr ~ "*"  ~ unaryExpr  ^^ times
     | multExpr ~ "/"  ~ unaryExpr  ^^ div
     | multExpr ~ "%"  ~ unaryExpr  ^^ mod
@@ -51,7 +51,7 @@ trait Expressions extends PrimaryExprs with ExprUtils {
     | unaryExpr
     )
   
-  lazy val unaryExpr: PPM[Expr] =          "unary expression: prec 6" $
+  lazy val unaryExpr: LrRule[Expr] =          "unary expression: prec 6" $
     ( "+"  ~ unaryExpr  ^^ positive
     | "-"  ~ unaryExpr  ^^ negative
     | "^"  ~ unaryExpr  ^^ bitCompl
@@ -62,6 +62,6 @@ trait Expressions extends PrimaryExprs with ExprUtils {
     | primaryExpr
     )
     
-  lazy val exprList: PM[List[Expr]] =               "expression list" $
+  lazy val exprList: Rule[List[Expr]] =                "expression list" $
     rep1sep(expression, ",")
 }
