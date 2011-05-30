@@ -23,6 +23,6 @@ private object Utils {
         Result(results.headOption getOrElse UnitType)
       }
     
-    case _ => Problem("callee has type %s; function type required", callee.t)
+    case _ => Problem("callee has type %s; function type required", callee.typeOf)
   }
 }

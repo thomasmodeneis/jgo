@@ -17,7 +17,7 @@ private class BasicExpr(evalCode: => CodeBuilder, val typeOf: Type) extends Expr
 private object BasicExpr {
   def apply(eval: => CodeBuilder, t: Type) = new BasicExpr(eval, t)
   def unapply(e: Expr): Option[(CodeBuilder, Type)] = e match {
-    case se: BasicExpr => Some(se.eval, se.t)
+    case se: BasicExpr => Some(se.eval, se.typeOf)
     case _ => None
   }
 }
