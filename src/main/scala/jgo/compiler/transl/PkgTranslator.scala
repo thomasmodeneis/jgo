@@ -18,7 +18,7 @@ import asm.Opcodes._
 
 import scala.collection.{mutable => mut}
 
-class PkgTranslator(val interm: PkgInterm) extends TypeTranslation with FunctionTranslation {
+class PkgTranslator(val interm: PkgInterm) extends TypeResolution with FunctionTranslation {
   val cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES)
   
   cw.visit(V1_6, ACC_PUBLIC, interm.target.name, null, "java/lang/Object", null)

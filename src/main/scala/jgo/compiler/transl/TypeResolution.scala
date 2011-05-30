@@ -13,7 +13,7 @@ import org.objectweb.asm.{Label => AsmLabel, Type => AsmType, Opcodes}
 import Opcodes._
 import AsmType._
 
-trait TypeTranslation {
+trait TypeResolution {
   implicit def class2asmType(cl: Class[_]) = AsmType.getType(cl)
   implicit def desc2asmType(desc: String)  = AsmType.getType(desc)
   

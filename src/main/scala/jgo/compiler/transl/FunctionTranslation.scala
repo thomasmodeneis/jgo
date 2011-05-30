@@ -18,7 +18,7 @@ import asm.Opcodes._
 
 import scala.collection.{mutable => mut}
 
-trait FunctionTranslation extends TypeTranslation {
+trait FunctionTranslation extends TypeResolution {
   def translateFunction(fInterm: FunctionInterm, cw: ClassVisitor) {
     val f = fInterm.target
     println("dealing with function " + f.name + ": " + f.typeOf)
@@ -36,7 +36,10 @@ trait FunctionTranslation extends TypeTranslation {
       if (p.radix.isInstanceOf[UnsignedType])
         mv.visitParameterAnnotation(i, UnsignedAnnot, true)
     
+    mv.visitCode()
     translateCode(fInterm.code, mv)
+    mv.visitMaxs(-1, -1) //apparently, we still have to call this, even though the maxes will be computed for us
+    mv.visitEnd()
   }
   
   def translateCode(code: Code, mv: GeneratorAdapter) {
@@ -45,7 +48,6 @@ trait FunctionTranslation extends TypeTranslation {
     
     import mv._
     
-    visitCode()
     val start, end = new AsmLabel
     mark(start)
     code foreach {
@@ -84,8 +86,6 @@ trait FunctionTranslation extends TypeTranslation {
     }
     returnValue() //Be sure to refine this to the correct behavior.
     mark(end)
-    visitMaxs(-1, -1) //apparently, we still have to call this, even though the maxes will be computed for us
-    visitEnd()
   }
 }
 
