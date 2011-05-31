@@ -6,7 +6,7 @@ import parser.scoped._
 
 import interm._
 import expr._
-import expr.{Combinators => C}
+import expr.Combinators
 import types._
 import symbol._
 import codeseq._
@@ -114,13 +114,13 @@ trait Declarations extends Expressions with GrowablyScoped {
       val leftVarsM: M[List[Variable]] =
         for (((l, pos), r) <- left zip right)
         yield {
-          val (v, declC) = mkVariable(l, r.t)
+          val (v, declC) = mkVariable(l, r.typeOf)
           declCode = declCode |+| declC
           bind(l, v)(pos)
         } //implicit conv
       for {
         leftVars <- leftVarsM
-        assignCode <- C.assign(leftVars map varLval, right)(eqPos)
+        assignCode <- Combinators.assign(leftVars map varLval, right)(eqPos)
       } yield declCode |+| assignCode
     }
   
@@ -137,7 +137,7 @@ trait Declarations extends Expressions with GrowablyScoped {
         }
       for {
         newVars <- newVarsM
-        assignCode <- C.assign(newVars map varLval, right)(eqPos)
+        assignCode <- Combinators.assign(newVars map varLval, right)(eqPos)
       } yield declCode |+| assignCode
     }
 }

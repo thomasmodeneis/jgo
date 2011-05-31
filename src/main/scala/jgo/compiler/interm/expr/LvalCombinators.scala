@@ -27,7 +27,7 @@ trait LvalCombinators extends Combinators with TypeChecks {
     res <- e match {
       case HasType(PointerType(elemT)) => Result(PtrDerefLval(e, elemT))
       case _ =>
-        Problem("operand of pointer indirection/dereference has type %s; pointer type required", e.t) 
+        Problem("operand of pointer indirection/dereference has type %s; pointer type required", e.typeOf) 
     }
   } yield res
   
@@ -35,23 +35,24 @@ trait LvalCombinators extends Combinators with TypeChecks {
   
   
   private def mkIndex(arr: Expr, indx: Expr) (implicit pos: Pos) = {
-    @inline def isIntegral = indx.t.underlying.isInstanceOf[IntegralType]
+    @inline
+    def isIntegral = indx.typeOf.underlying.isInstanceOf[IntegralType]
     
     arr match {
       case HasType(ArrayType(_, elemT)) =>
         if (isIntegral) Result(ArrayIndexLval(arr, indx, elemT))
-        else Problem("index type %s is inappropriate for an array; integral type required", indx.t)
+        else Problem("index type %s is inappropriate for an array; integral type required", indx.typeOf)
       case HasType(SliceType(elemT)) =>
         if (isIntegral) Result(SliceIndexLval(arr, indx, elemT))
-        else Problem("index type %s is inappropriate for a slice; integral type required", indx.t)
+        else Problem("index type %s is inappropriate for a slice; integral type required", indx.typeOf)
       case HasType(StringType) =>
         if (isIntegral) Result(BasicExpr(arr.eval |+| indx.eval |+| StrIndex, Uint8))
-        else Problem("index type %s is inappropriate for a string; integral type required", indx.t)
+        else Problem("index type %s is inappropriate for a string; integral type required", indx.typeOf)
       case HasType(MapType(keyT, valT)) =>
-        if (keyT <<= indx.t) Result(MapIndexLval(arr, indx, valT))
+        if (keyT <<= indx.typeOf) Result(MapIndexLval(arr, indx, valT))
         else Problem(
           "index type %s is inappropriate for a map of type %s; must be assignable to key type %s",
-          indx.t, arr.t, keyT
+          indx.typeOf, arr.typeOf, keyT
         )
     }
   }
@@ -75,7 +76,7 @@ trait LvalCombinators extends Combinators with TypeChecks {
         case HasType(ArrayType(_, t)) => Result(BasicExpr(stackingCode |+| SliceArray(t, boundsInfo), t))
         case HasType(SliceType(t))    => Result(BasicExpr(stackingCode |+| SliceSlice(t, boundsInfo), t))
         case HasType(StringType)      => Result(BasicExpr(stackingCode |+| Substring(boundsInfo), StringType))
-        case _ => Problem("cannot slice a value of type %s; array, slice, or string type required", arr.t)
+        case _ => Problem("cannot slice a value of type %s; array, slice, or string type required", arr.typeOf)
       }
     } yield result
   
@@ -113,11 +114,11 @@ trait LvalCombinators extends Combinators with TypeChecks {
     while (!curA.isEmpty || !curB.isEmpty) {
       if (curA isEmpty) {
         lenB += curB.length
-        return Problem("Arity (%d) of left side of assignment unequal to arity (%d) of right side", lenA, lenB)
+        return Problem("arity (%d) of left side of assignment unequal to arity (%d) of right side", lenA, lenB)
       }
       if (curB isEmpty) {
         lenA += curA.length
-        return Problem("Arity (%d) of left side of assignment unequal to arity (%d) of right side", lenA, lenB)
+        return Problem("arity (%d) of left side of assignment unequal to arity (%d) of right side", lenA, lenB)
       }
       val pair = (curA.head, curB.head)
       curA = curA.tail
@@ -128,10 +129,10 @@ trait LvalCombinators extends Combinators with TypeChecks {
   }
   private def checkAssignability(pairs: List[(LvalExpr, Expr)]) (implicit pos: Pos): M[Unit] = {
     for (((l, r), i) <- pairs zipWithIndex)
-      if (!(l.t <<= r.t))
+      if (!(l.typeOf <<= r.typeOf))
         return Problem(
           "%s value on right side of assignment has type %s not assignable to corresponding " +
-          "target type %s", ordinal(i), r.t, l.t
+          "target type %s", ordinal(i), r.typeOf, l.typeOf
         )
     Result(())
   }

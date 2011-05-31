@@ -77,7 +77,7 @@ trait SimpleStmts extends Expressions with Symbols with GrowablyScoped with Expr
         yield
           if (!growable.alreadyDefined(l)) { //not already defined in innermost scope
             actuallySawDecl = true
-            val v = new LocalVar(l, r.t)
+            val v = new LocalVar(l, r.typeOf)
             growable.put(l, v)
             declCode = declCode |+| Decl(v)
             Result(v)

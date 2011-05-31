@@ -30,7 +30,7 @@ class PkgTranslator(val interm: PkgInterm) extends TypeResolution with FunctionT
       else
         ACC_STATIC //0 = package private
     val fieldVis = cw.visitField(access, global.name, typeDesc(global.typeOf), null, null)
-    if (global.typeOf.radix.isInstanceOf[UnsignedType])
+    if (global.typeOf.effective.isInstanceOf[UnsignedType])
       fieldVis.visitAnnotation(UnsignedAnnot, true)
     fieldVis.visitEnd()
   }

@@ -12,7 +12,7 @@ sealed trait NamedType extends Type {
 class TypeAlias(val name: String, override val underlying: Type) extends NamedType {
   val semantics        = underlying.semantics
   override val nilable = underlying.nilable
-  override val radix = underlying
+  override val effective = underlying
 }
 
 

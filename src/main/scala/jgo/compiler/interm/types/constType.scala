@@ -4,7 +4,7 @@ package types
 
 
 /**
- * A marker trait that indicates that this type can be the type
+ * A marker trait that indicates that a type can be the type
  * of a compile-time constant.
  */
 trait ConstableType extends Type
@@ -33,6 +33,10 @@ trait UntypedConstType extends ConstableType { //how oxymoronic!
 /**
  * The type of string literals.  Don't ask; I have no idea why
  * the spec has chosen to make string literals untyped.
+ * May 30, 2011:  It makes sense.  Without this rule, users
+ * would not be able to assign variables of user-defined
+ * wrapped string types to string literals, which would be a
+ * nuisance.
  */
 object UntypedStringType extends UntypedConstType {
   def canFitIn(t: BuiltinType) =

@@ -176,9 +176,9 @@ trait Statements extends Expressions
       
       var code = CodeBuilder.empty
       for (((e, t), i) <- ls zip resultTypes zipWithIndex) {
-        if (!(t <<= e.t))
+        if (!(t <<= e.typeOf))
           return Problem("type %s of %s expression not assignable to corresponding result type %s",
-                         e.t, ordinal(i), t)(pos)
+                         e.typeOf, ordinal(i), t)(pos)
         code = code |+| Combinators.eval(e)
       }
       code |+| ValueReturn

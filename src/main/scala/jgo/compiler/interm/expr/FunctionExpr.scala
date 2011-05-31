@@ -21,7 +21,6 @@ import codeseq._
  */
 private case class FunctionExpr(f: Function) extends Expr {
   val typeOf: FuncType = f.typeOf
-  override def callable = true
   
   def eval = Func2Lambda(f)
   

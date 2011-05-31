@@ -12,7 +12,7 @@ trait Type extends Membered {
   
   val semantics: Semantics
   
-  val radix: Type = this //overridden by TypeAlias
+  val effective: Type = this //overridden by TypeAlias
   val underlying: Type = this //overridden by WrappedType, TypeAlias
   
   val nilable: Boolean = false //overridden by Nilable, WrappedType, TypeAlias

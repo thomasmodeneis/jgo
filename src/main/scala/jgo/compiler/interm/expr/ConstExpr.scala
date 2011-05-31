@@ -12,7 +12,15 @@ import PartialFunction._
 /**
  * An expression whose value is determined at compile-time.
  */
-sealed abstract class ConstExpr extends Expr
+sealed trait ConstExpr extends Expr
+
+sealed trait UntypedConst extends ConstExpr {
+  val typeOf = new UntypedConstType { def canFitIn(t: BuiltinType) = UntypedConst.this.canFitIn(t) }
+  def eval = throw new UnsupportedOperationException(
+    "Internal impl error: attempting to call eval on untyped const " + this)
+  
+  protected def canFitIn(t: BuiltinType): Boolean
+}
 
 case class StringConst(value: String) extends ConstExpr {
   val typeOf = StringType
@@ -42,50 +50,85 @@ object NilConst extends ConstExpr {
   def eval   = PushNil
 }
 
-/*
-private sealed abstract class RealConst extends ConstExpr {
-  val value: BigDecimal
-}
 
-private case class UntypedRealConst(value: BigDecimal) extends RealConst {
-  def eval =
-    throw new UnsupportedOperationException("Impl error: attempting to call eval on an UntypedConst")
+private object UntypedUtils {
+  def isBounded(lower: BigDecimal, v: BigDecimal, upper: BigDecimal) =
+    lower <= v  && v <= upper
   
-  private def isBounded(low: BigDecimal, high: BigDecimal) =
-    (low <= value) && (value <= high)
-    
-  def isInt =
-    value % 1 == 0
+  def isFloat(v: BigDecimal): Boolean =
+    isBounded(Float.MinValue, v, Float.MaxValue)
   
-  def canFitIn(t: BuiltinType) = cond(t) {
-    case Int8  => value.isValidByte
-    case Int16 => value.isValidShort
-    case Int32 => value.isValidInt
-    case Int64 => isInt && isBounded(Long.MinValue, Long.MaxValue)
-    
-    case Uint8  => isInt && isBounded(0, 255)
-    case Uint16 => isInt && isBounded(0, (1 << 16) - 1)
-    case Uint32 => isInt && isBounded(0, (1 << 32) - 1)
-    case Uint64 => isInt && isBounded(0, (1 << 64) - 1)
-    
-    case Float32 => value.floatValue.isInfinite //Float.MinValue <= value && value <=  Float.MaxValue
-    case Float64 => value.doubleValue.isInfinite //Double.MinValue <= value && value <= Double.MaxValue
-    
-    case Complex64  => false //value.floatValue.isInfinite
-    case Complex128 => false //value.doubleValue.isInfinite
-  }
+  def isDouble(v: BigDecimal): Boolean =
+    isBounded(Double.MinValue, v, Double.MaxValue)
   
-  val typeOf = new UntypedNumericConstType {
-    override def toString = "<const " + value + ">"
-    def canFitIn(t: BuiltinType) = UntypedRealConst.this.canFitIn(t)
-    val semantics = Primitive
+  def isBounded(lower: BigInt, v: BigInt, upper: BigInt) =
+    lower <= v  && v <= upper
+}
+import UntypedUtils._
+
+sealed trait UntypedComplexConst extends UntypedConst {
+  def real: BigDecimal
+  def imag: BigDecimal
+  
+  protected def canFitIn(t: BuiltinType) = cond(t) {
+    case Complex64  => isFloat(real)  && isFloat(imag)
+    case Complex128 => isDouble(real) && isDouble(imag)
   }
 }
 
-private case class TypedRealConst(value: BigDecimal, typeOf: RealType) extends RealConst {
-  def eval = typeOf match {
-    case ft: FloatingType => PushFloat(value.doubleValue, ft)
-    case it: IntegralType => PushInt(value.longValue, it)
+sealed trait UntypedRealConst extends UntypedComplexConst {
+  def real: BigDecimal
+  val imag = BigDecimal(0) //for some reason, compiler refuses to apply implicit conversion
+  
+  protected override def canFitIn(t: BuiltinType) = super.canFitIn(t) || cond(t) {
+    case Float32 => isFloat(real)
+    case Float64 => isDouble(real)
   }
 }
-*/
+
+sealed trait IntegralConst extends ConstExpr {
+  def int: BigInt
+}
+
+case class UntypedIntegralConst(int: BigInt) extends IntegralConst with UntypedRealConst {
+  def real = BigDecimal(int)
+  
+  protected override def canFitIn(t: BuiltinType) = super.canFitIn(t) || cond(t) {
+    case Int8   => isBounded( Byte.MinValue, int,  Byte.MaxValue)
+    case Int16  => isBounded(Short.MinValue, int, Short.MaxValue)
+    case Int32  => isBounded(  Int.MinValue, int,   Int.MaxValue)
+    case Int64  => isBounded( Long.MinValue, int,  Long.MaxValue)
+    
+    case Uint8  => isBounded(0, int,                   255)
+    case Uint16 => isBounded(0, int,         Char.MaxValue)
+    case Uint32 => isBounded(0, int,         (1 << 32) - 1)
+    case Uint64 => isBounded(0, int, (BigInt(1) << 64) - 1)
+  }
+}
+
+object UntypedComplexConst extends ((BigDecimal, BigDecimal) => UntypedComplexConst) {
+  def apply(r: BigDecimal, i: BigDecimal) =
+    new UntypedComplexConst {
+      val real = r
+      val imag = i
+    }
+  def unapply(e: Expr): Option[(BigDecimal, BigDecimal)] = e match {
+    case c: UntypedComplexConst => Some(c.real, c.imag)
+    case _ => None
+  }
+}
+
+object UntypedRealConst extends (BigDecimal => UntypedRealConst) {
+  def apply(r: BigDecimal) = new UntypedRealConst { val real = r }
+  def unapply(e: Expr): Option[BigDecimal] = e match {
+    case c: UntypedRealConst => Some(c.real)
+    case _ => None
+  }
+}
+
+object IntegralConst {
+  def unapply(e: Expr): Option[BigInt] = e match {
+    case c: IntegralConst => Some(c.int)
+    case _ => None
+  }
+}

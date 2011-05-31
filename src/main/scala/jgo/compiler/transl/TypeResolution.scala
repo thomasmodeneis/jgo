@@ -30,7 +30,7 @@ trait TypeResolution {
     case Obj => getObjectType("java/lang/Object") //refine? not with StackType
   }
   
-  def typeDesc(t: Type): String = t.radix match {
+  def typeDesc(t: Type): String = t.effective match {
     case BoolType       => "Z"  //boolean
     case Int8  | Uint8  => "B"  //byte
     case Int16          => "S"  //short

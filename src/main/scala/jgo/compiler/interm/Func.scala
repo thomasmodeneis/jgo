@@ -8,7 +8,6 @@ import types._
 
 abstract class Func extends Typed {
   val typeOf: FuncType
-  override val callable = true
   
   def paramTypes  = typeOf.params
   def resultTypes = typeOf.results

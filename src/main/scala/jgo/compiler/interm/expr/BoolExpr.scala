@@ -42,8 +42,7 @@ import BoolExpr._
  * function.
  */
 sealed abstract class BoolExpr extends Expr {
-  val typeOf            = BoolType
-  override def callable = false
+  val typeOf = BoolType
   
   /**
    * Produces code that branches to one of two targets based on the truth value
@@ -85,7 +84,6 @@ sealed abstract class BoolExpr extends Expr {
     val t   = new Label("if branch", g)
     branch(Fall, end) |+| Lbl(t) |+| ifBranch |+| Lbl(end)
   }
-  
   
   /**
    * Generates code that executes the contents of the first parameter if

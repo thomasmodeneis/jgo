@@ -39,7 +39,7 @@ trait BasicCombinators extends Combinators with TypeChecks {
   
   def negative(e: Expr) (implicit pos: Pos): M[Expr] =
     for ((en, nt) <- numeric(e, "operand of unary -"))
-    yield BasicExpr(en.eval |+| Neg(nt), e.t)
+    yield BasicExpr(en.eval |+| Neg(nt), e.typeOf)
   
   
   def bitAnd(e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr] =
@@ -79,9 +79,9 @@ trait BasicCombinators extends Combinators with TypeChecks {
   
   def chanSend(ch: Expr, e: Expr) (implicit pos: Pos): M[CodeBuilder] = for {
     (chan, elemT) <- sendChanT(ch, "left operand of channel send")
-    _ <- if (elemT <<= e.t) Result(())
+    _ <- if (elemT <<= e.typeOf) Result(())
          else Problem("type %s of right operand of channel send not assignable to element type %s of left operand",
-                      e.t, elemT)
+                      e.typeOf, elemT)
   } yield chan.eval |+| e.eval |+| ChanSend
   
   
@@ -100,7 +100,7 @@ trait BasicCombinators extends Combinators with TypeChecks {
         Result(results.headOption getOrElse UnitType)
       }
     
-    case _ => Problem("callee has type %s; function type required", callee.t)
+    case _ => Problem("callee has type %s; function type required", callee.typeOf)
   }
   def invoke(callee: Expr, args: List[Expr]) (implicit pos: Pos): M[Expr] = for {
     resultT <- checkCall(callee, args)

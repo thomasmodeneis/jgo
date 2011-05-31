@@ -37,60 +37,52 @@ private case class VarLval(v: Variable) extends LvalExpr {
   def storeSuffix                  =        StoreVar(v)
   
   override def addressable = true
-  override def mkPtr = BasicExpr(MkPtrVar(v), PointerType(t))
+  override def mkPtr = BasicExpr(MkPtrVar(v), PointerType(typeOf))
 }
 
 private case class PtrDerefLval(ptr: Expr, typeOf: Type) extends LvalExpr {
-  //val typeOf = ptr.t.underlying.asInstanceOf[PointerType].elemType
-  
-  def load                        = ptr.eval       |+| PtrGet(t)
-  def store(v: CodeBuilder)       = ptr.eval |+| v |+| PtrPut(t)
+  def load                        = ptr.eval       |+| PtrGet(typeOf)
+  def store(v: CodeBuilder)       = ptr.eval |+| v |+| PtrPut(typeOf)
   def storePrefix(v: CodeBuilder) = ptr.eval |+| v
-  def storeSuffix                 =                    PtrPut(t)
+  def storeSuffix                 =                    PtrPut(typeOf)
   
   override def addressable = true
-  override def mkPtr = BasicExpr(ptr.eval |+| MkPtrPtr(t), PointerType(t))
+  override def mkPtr = BasicExpr(ptr.eval |+| MkPtrPtr(typeOf), PointerType(typeOf))
 }
 
 private case class FieldLval(obj: Expr, f: Field) extends LvalExpr {
-  val typeOf = f.t
+  val typeOf = f.typeOf
   
-  def load                        = obj.eval       |+| GetField(f, this.typeOf)
-  def store(v: CodeBuilder)       = obj.eval |+| v |+| PutField(f, this.typeOf)
+  def load                        = obj.eval       |+| GetField(f, typeOf)
+  def store(v: CodeBuilder)       = obj.eval |+| v |+| PutField(f, typeOf)
   def storePrefix(v: CodeBuilder) = obj.eval |+| v
-  def storeSuffix                 =                    PutField(f, this.typeOf)
+  def storeSuffix                 =                    PutField(f, typeOf)
   
   override def addressable = obj.addressable
-  override def mkPtr = BasicExpr(obj.eval |+| MkPtrField(f), PointerType(t))
+  override def mkPtr = BasicExpr(obj.eval |+| MkPtrField(f), PointerType(typeOf))
 }
 
 private case class ArrayIndexLval(array: Expr, index: Expr, typeOf: Type) extends LvalExpr {
-  //val typeOf = array.t.underlying.asInstanceOf[ArrayType].elemType
-  
-  def load                        = array.eval |+| index.eval       |+| ArrayGet(this.typeOf)
-  def store(v: CodeBuilder)       = array.eval |+| index.eval |+| v |+| ArrayPut(this.typeOf)
+  def load                        = array.eval |+| index.eval       |+| ArrayGet(typeOf)
+  def store(v: CodeBuilder)       = array.eval |+| index.eval |+| v |+| ArrayPut(typeOf)
   def storePrefix(v: CodeBuilder) = array.eval |+| index.eval |+| v
-  def storeSuffix                 =                                     ArrayPut(this.typeOf)
+  def storeSuffix                 =                                     ArrayPut(typeOf)
   
   override def addressable = array.addressable
-  override def mkPtr = BasicExpr(array.eval |+| index.eval |+| MkPtrArray(t), PointerType(t))
+  override def mkPtr = BasicExpr(array.eval |+| index.eval |+| MkPtrArray(typeOf), PointerType(typeOf))
 }
 
 private case class SliceIndexLval(slice: Expr, index: Expr, typeOf: Type) extends LvalExpr {
-  //val typeOf = slice.t.underlying.asInstanceOf[SliceType].elemType
-  
-  def load                        = slice.eval |+| index.eval       |+| SliceGet(this.typeOf)
-  def store(v: CodeBuilder)       = slice.eval |+| index.eval |+| v |+| SlicePut(this.typeOf)
+  def load                        = slice.eval |+| index.eval       |+| SliceGet(typeOf)
+  def store(v: CodeBuilder)       = slice.eval |+| index.eval |+| v |+| SlicePut(typeOf)
   def storePrefix(v: CodeBuilder) = slice.eval |+| index.eval |+| v
-  def storeSuffix                 = SlicePut(this.typeOf)
+  def storeSuffix                 =                                     SlicePut(typeOf)
   
   override def addressable = true
-  override def mkPtr = BasicExpr(slice.eval |+| index.eval |+| MkPtrSlice(t), PointerType(t))
+  override def mkPtr = BasicExpr(slice.eval |+| index.eval |+| MkPtrSlice(typeOf), PointerType(typeOf))
 }
 
 private case class MapIndexLval(map: Expr, index: Expr, typeOf: Type) extends LvalExpr {
-  //val typeOf = map.t.underlying.asInstanceOf[MapType].keyType
-  
   //the ", ok" pattern is not currently supported
   def load                        = map.eval |+| index.eval       |+| MapGet
   def store(v: CodeBuilder)       = map.eval |+| index.eval |+| v |+| MapPut

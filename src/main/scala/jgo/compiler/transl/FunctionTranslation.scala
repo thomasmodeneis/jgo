@@ -33,7 +33,7 @@ trait FunctionTranslation extends TypeResolution {
     val mv  = new GeneratorAdapter(mv0, access, f.name, methodDesc(f))
     
     for ((p, i) <- f.paramTypes.zipWithIndex)
-      if (p.radix.isInstanceOf[UnsignedType])
+      if (p.effective.isInstanceOf[UnsignedType])
         mv.visitParameterAnnotation(i, UnsignedAnnot, true)
     
     mv.visitCode()
