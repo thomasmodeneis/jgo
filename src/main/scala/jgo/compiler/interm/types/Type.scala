@@ -8,14 +8,14 @@ trait Type extends Membered {
   /**
    * Indicates whether this type is an interface type or pointer thereto.
    */
-  val isInterface: Boolean = false //default to false
+  def isInterface: Boolean = false //default to false
   
-  val semantics: Semantics
+  def semantics: Semantics
   
-  val effective: Type = this //overridden by TypeAlias
-  val underlying: Type = this //overridden by WrappedType, TypeAlias
+  def effective: Type = this //overridden by TypeAlias
+  def underlying: Type = this //overridden by WrappedType, TypeAlias
   
-  val nilable: Boolean = false //overridden by Nilable, WrappedType, TypeAlias
+  def nilable: Boolean = false //overridden by Nilable, WrappedType, TypeAlias
   
   val members: Map[String, Member] = Map()
   

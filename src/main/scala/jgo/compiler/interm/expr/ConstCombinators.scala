@@ -42,7 +42,7 @@ trait ConstCombinators extends Combinators with ConstTypeCheckOverrides {
     
     case (UntypedIntegralConst(i1),    UntypedIntegralConst(i2))    => BoolConst(i1 == i2)
     case (UntypedRealConst(r1),        UntypedRealConst(r2))        => BoolConst(r1 == r2)
-    case (UntypedComplexConst(r1, i1), UntypedComplexConst(r2, i2)) => BoolConst(r1 == r2 && i1 == i2)
+    case (UntypedNumericConst(r1, i1), UntypedNumericConst(r2, i2)) => BoolConst(r1 == r2 && i1 == i2)
     
     case _ => super.compEq(e1, e2)
   }
@@ -55,7 +55,7 @@ trait ConstCombinators extends Combinators with ConstTypeCheckOverrides {
     
     case (UntypedIntegralConst(i1),    UntypedIntegralConst(i2))    => BoolConst(i1 != i2)
     case (UntypedRealConst(r1),        UntypedRealConst(r2))        => BoolConst(r1 != r2)
-    case (UntypedComplexConst(r1, i1), UntypedComplexConst(r2, i2)) => BoolConst(r1 != r2 || i1 != i2)
+    case (UntypedNumericConst(r1, i1), UntypedNumericConst(r2, i2)) => BoolConst(r1 != r2 || i1 != i2)
     
     case _ => super.compNe(e1, e2)
   }
@@ -108,8 +108,8 @@ trait ConstCombinators extends Combinators with ConstTypeCheckOverrides {
     case (FloatConst(f1), FloatConst(f2)) => FloatConst(f1 + f2)
     
     case (UntypedIntegralConst(i1),    UntypedIntegralConst(i2))    => UntypedIntegralConst(i1 + i2)
-    case (UntypedRealConst(r1),        UntypedRealConst(r2))        => UntypedRealConst(r1 + r2)
-    case (UntypedComplexConst(r1, i1), UntypedComplexConst(r2, i2)) => UntypedComplexConst(r1 + r2, i1 + i2)
+    case (UntypedRealConst(r1),        UntypedRealConst(r2))        => UntypedFloatingConst(r1 + r2)
+    case (UntypedNumericConst(r1, i1), UntypedNumericConst(r2, i2)) => UntypedComplexConst(r1 + r2, i1 + i2)
     
     case _ => super.plus(e1, e2)
   }
@@ -119,8 +119,8 @@ trait ConstCombinators extends Combinators with ConstTypeCheckOverrides {
     case (FloatConst(f1), FloatConst(f2)) => FloatConst(f1 - f2)
     
     case (UntypedIntegralConst(i1),    UntypedIntegralConst(i2))    => UntypedIntegralConst(i1 - i2)
-    case (UntypedRealConst(r1),        UntypedRealConst(r2))        => UntypedRealConst(r1 - r2)
-    case (UntypedComplexConst(r1, i1), UntypedComplexConst(r2, i2)) => UntypedComplexConst(r1 - r2, i1 - i2)
+    case (UntypedRealConst(r1),        UntypedRealConst(r2))        => UntypedFloatingConst(r1 - r2)
+    case (UntypedNumericConst(r1, i1), UntypedNumericConst(r2, i2)) => UntypedComplexConst(r1 - r2, i1 - i2)
     
     case _ => super.minus(e1, e2)
   }
@@ -130,9 +130,9 @@ trait ConstCombinators extends Combinators with ConstTypeCheckOverrides {
     case (FloatConst(f1), FloatConst(f2)) => Result(FloatConst(f1 * f2))
     
     case (UntypedIntegralConst(i1),    UntypedIntegralConst(i2))    => UntypedIntegralConst(i1 * i2)
-    case (UntypedRealConst(r1),        UntypedRealConst(r2))        => UntypedRealConst(r1 * r2)
-    case (UntypedComplexConst(r1, i1), UntypedComplexConst(r2, i2)) => UntypedComplexConst(r1*r2 - i1*i2,
-                                                                                           r1*i2 + r2*i1) //verify
+    case (UntypedRealConst(r1),        UntypedRealConst(r2))        => UntypedFloatingConst(r1 * r2)
+    case (UntypedNumericConst(r1, i1), UntypedNumericConst(r2, i2)) => UntypedComplexConst(r1*r2 - i1*i2,
+                                                                                           r1*i2 + r2*i1)
     
     case _ => super.times(e1, e2)
   }
@@ -142,8 +142,8 @@ trait ConstCombinators extends Combinators with ConstTypeCheckOverrides {
     case (FloatConst(f1), FloatConst(f2)) => FloatConst(f1 / f2)
     
     case (UntypedIntegralConst(i1),    UntypedIntegralConst(i2))    => UntypedIntegralConst(i1 / i2)
-    case (UntypedRealConst(r1),        UntypedRealConst(r2))        => UntypedRealConst(r1 / r2)
-    case (UntypedComplexConst(r1, i1), UntypedComplexConst(r2, i2)) =>
+    case (UntypedRealConst(r1),        UntypedRealConst(r2))        => UntypedFloatingConst(r1 / r2)
+    case (UntypedNumericConst(r1, i1), UntypedNumericConst(r2, i2)) =>
       val normSq2 = r2*r2 + i2*i2
       val r = (r1*r2 + i1*i2) / normSq2
       var i = (i2*r1 - r2*i1) / normSq2
@@ -163,7 +163,7 @@ trait ConstCombinators extends Combinators with ConstTypeCheckOverrides {
     case f: FloatConst => f
     
     case i: UntypedIntegralConst => i
-    case r: UntypedRealConst     => r
+    case f: UntypedFloatingConst => f
     case c: UntypedComplexConst  => c
     
     case _ => super.positive(e)
@@ -174,7 +174,7 @@ trait ConstCombinators extends Combinators with ConstTypeCheckOverrides {
     case FloatConst(f) => FloatConst(-f)
     
     case UntypedIntegralConst(i)   => UntypedIntegralConst(-i)
-    case UntypedRealConst(r)       => UntypedRealConst(-r)
+    case UntypedFloatingConst(r)   => UntypedFloatingConst(-r)
     case UntypedComplexConst(r, i) => UntypedComplexConst(-r, -i)
     
     case _ => super.negative(e)
@@ -210,7 +210,7 @@ trait ConstCombinators extends Combinators with ConstTypeCheckOverrides {
   
   abstract override def bitCompl(e: Expr) (implicit pos: Pos) = e match {
     case IntConst(i) => IntConst(~i)
-    case UntypedIntegralConst(i) => UntypedIntegralConst(i~) //BigInt defines ~ instead of unary_~.  Presumably a mistake.
-    case _ => super.bitCompl(e)
+    case UntypedIntegralConst(i) => UntypedIntegralConst(i~) //BigInt defines ~ instead of unary_~. Filed a bug report.
+    case _ => super.bitCompl(e)                              //https://issues.scala-lang.org/browse/SI-4659
   }
 }

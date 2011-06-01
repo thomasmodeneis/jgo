@@ -10,10 +10,12 @@ sealed abstract class Prim extends StackType
 
 case object Bool extends Prim
 
-sealed abstract class Arith    extends Prim
-sealed abstract class Floating extends Arith
-sealed abstract class Integral extends Arith
-sealed abstract class Unsigned extends Integral
+sealed trait Arith    extends Prim
+sealed trait Complex  extends Arith
+sealed trait Real     extends Arith
+sealed trait Floating extends Real
+sealed trait Integral extends Real
+sealed trait Unsigned extends Integral
 
 case object I8  extends Integral
 case object I16 extends Integral
@@ -28,5 +30,5 @@ case object U64 extends Unsigned
 case object F32 extends Floating
 case object F64 extends Floating
 
-case object C64  extends Arith
-case object C128 extends Arith
+case object C64  extends Complex
+case object C128 extends Complex

@@ -7,13 +7,13 @@ import instr._
 import instr.TypeConversions._
 import codeseq._
 
+/**
+ * An "ordinary" expression which requires no special processing.
+ */
 private class BasicExpr(evalCode: => CodeBuilder, val typeOf: Type) extends Expr {
   def eval = evalCode
 }
 
-/**
- * An "ordinary" expression, which requires no special processing.
- */
 private object BasicExpr {
   def apply(eval: => CodeBuilder, t: Type) = new BasicExpr(eval, t)
   def unapply(e: Expr): Option[(CodeBuilder, Type)] = e match {

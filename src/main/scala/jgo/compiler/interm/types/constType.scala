@@ -21,6 +21,12 @@ trait UntypedConstType extends ConstableType { //how oxymoronic!
   def canFitIn(t: BuiltinType): Boolean
   
   /**
+   * The type that should be inferred for variables initialized to
+   * a value of this type
+   */
+  def default: Type
+  
+  /**
    * States whether or not this type is identical to the specified type.
    * For our purposes, a type ''T'' is identical to an untyped-constant's
    * type if ''T'' itself is any untyped-constant-type.
@@ -41,9 +47,13 @@ trait UntypedConstType extends ConstableType { //how oxymoronic!
 object UntypedStringType extends UntypedConstType {
   def canFitIn(t: BuiltinType) =
     t.underlying == StringType
+  
+  def default = scope.UniverseScope.string
 }
 
 object UntypedBoolType extends UntypedConstType {
   def canFitIn(t: BuiltinType) =
     t.underlying == BoolType
+  
+  def default = scope.UniverseScope.string
 }

@@ -36,7 +36,8 @@ case class Func2Lambda(function: Function) extends Instr
 case object Return      extends Instr
 case object ValueReturn extends Instr
 
-case class Unbox(t: Type) extends Instr
+case class Wrap  (desiredType: WrappedType) extends Instr
+case class Unwrap(currentType: WrappedType) extends Instr
 
 case class Cast(oldType: Type, newType: Type) extends Instr
 case class TypeAssert(t: Type)                extends Instr
@@ -104,11 +105,15 @@ case class BitwiseCompl(t: Integral)    extends Instr
 case class Incr(v: Variable, n: Int, t: Integral)  extends Instr
 case class Decr(v: Variable, n: Int, t: Integral)  extends Instr
 
-case class  PushStr  (s: String)              extends Instr { override def toString = "PushStr \"" + s + "\"" }
-case class  PushInt  (i: Long,   t: Integral) extends Instr
-case class  PushFloat(i: Double, t: Floating) extends Instr
-case class  PushBool (b: Boolean)             extends Instr
-case object PushNil                           extends Instr
+
+case class  PushStr (s: String)  extends Instr { override def toString = "PushStr \"" + s + "\"" }
+case class  PushBool(b: Boolean) extends Instr
+case object PushNil              extends Instr
+
+case class PushInt    (i: BigInt,                    t: Integral) extends Instr
+case class PushFloat  (f: BigDecimal,                t: Floating) extends Instr
+case class PushComplex(r: BigDecimal, i: BigDecimal, t: Complex)  extends Instr
+
 
 case object Pop       extends Instr
 case object Dup       extends Instr

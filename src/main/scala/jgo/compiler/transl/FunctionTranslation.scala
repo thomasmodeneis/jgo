@@ -52,9 +52,9 @@ trait FunctionTranslation extends TypeResolution {
     mark(start)
     code foreach {
       case PushStr(s)            => push(s)
-      case PushInt(l, I64 | U64) => push(l)
-      case PushInt(l, _)         => push(l.toInt)
-      case PushFloat(d, F64)     => push(d)
+      case PushInt(i, I64 | U64) => push(i.toLong)
+      case PushInt(i, _)         => push(i.toInt)
+      case PushFloat(d, F64)     => push(d.toDouble)
       case PushFloat(d, F32)     => push(d.toFloat)
       case PushBool(b)           => push(b)
       case PushNil               => push(null: String) // I think this works

@@ -53,29 +53,24 @@ trait TypeChecks {
       Problem("left and right operands have differing types %s and %s", e1.typeOf, e2.typeOf)
   
   
-  protected def sameAddable(e1: Expr, e2: Expr) (implicit pos: Pos): M[(Expr, Expr, AddableType)] = for {
-    ((e1_, ut1), (e2_, ut2)) <- (addable(e1, "left operand"), addable(e2, "right operand"))
-    result <- if (e1_.typeOf == e2_.typeOf) Result(e1_, e2_, ut1)
-              else Problem("left and right operands have differing types %s and %s", e1.typeOf, e2.typeOf)
-  } yield result
+  protected def same[T <: Type](e1: Expr, e2: Expr)(f: (Expr, String) => M[(Expr, T)])(implicit pos: Pos) =
+    for {
+      ((e1_, t1), (e2_, t2)) <- (f(e1, "left operand"), f(e2, "right operand"))
+      result <- if (e1_.typeOf == e2_.typeOf) Result((e1_, e2_, t1))
+                else Problem("left and right operands have differing types %s and %s", e1.typeOf, e2.typeOf)
+    } yield result
   
-  protected def sameNumeric(e1: Expr, e2: Expr) (implicit pos: Pos): M[(Expr, Expr, NumericType)] = for {
-    ((e1_, ut1), (e2_, ut2)) <- (numeric(e1, "left operand"), numeric(e2, "right operand"))
-    result <- if (e1_.typeOf == e2_.typeOf) Result(e1_, e2_, ut1)
-              else Problem("left and right operands have differing types %s and %s", e1.typeOf, e2.typeOf)
-  } yield result
+  protected def sameAddable(e1: Expr, e2: Expr) (implicit pos: Pos): M[(Expr, Expr, AddableType)] =
+    same(e1, e2)(addable)
   
-  protected def sameIntegral(e1: Expr, e2: Expr) (implicit pos: Pos): M[(Expr, Expr, IntegralType)] = for {
-    ((e1_, ut1), (e2_, ut2)) <- (integral(e1, "left operand"), integral(e2, "right operand"))
-    result <- if (e1_.typeOf == e2_.typeOf) Result(e1_, e2_, ut1)
-              else Problem("left and right operands have differing types %s and %s", e1.typeOf, e2.typeOf)
-  } yield result
+  protected def sameNumeric(e1: Expr, e2: Expr) (implicit pos: Pos): M[(Expr, Expr, NumericType)] =
+    same(e1, e2)(numeric)
   
-  protected def sameUnsigned(e1: Expr, e2: Expr) (implicit pos: Pos): M[(Expr, Expr, UnsignedType)] = for {
-    ((e1_, ut1), (e2_, ut2)) <- (unsigned(e1, "left operand"), unsigned(e2, "right operand"))
-    result <- if (e1_.typeOf == e2_.typeOf) Result(e1_, e2_, ut1)
-              else Problem("left and right operands have differing types %s and %s", e1.typeOf, e2.typeOf)
-  } yield result
+  protected def sameIntegral(e1: Expr, e2: Expr) (implicit pos: Pos): M[(Expr, Expr, IntegralType)] =
+    same(e1, e2)(integral)
+  
+  protected def sameUnsigned(e1: Expr, e2: Expr) (implicit pos: Pos): M[(Expr, Expr, UnsignedType)] =
+    same(e1, e2)(unsigned)
   
   protected def sameString(e1: Expr, e2: Expr) (implicit pos: Pos): M[(Expr, Expr)] = for {
     (e1_, e2_) <- (string(e1, "left operand"), string(e2, "right operand"))

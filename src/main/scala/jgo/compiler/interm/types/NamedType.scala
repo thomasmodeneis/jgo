@@ -9,14 +9,17 @@ sealed trait NamedType extends Type {
   override def toString = name
 }
 
-class TypeAlias(val name: String, override val underlying: Type) extends NamedType {
-  val semantics        = underlying.semantics
-  override val nilable = underlying.nilable
-  override val effective = underlying
+class TypeAlias(val name: String, override val effective: Type) extends NamedType {
+  override def underlying = effective.underlying
+  override def nilable    = underlying.nilable
+  
+  val semantics = underlying.semantics
 }
 
 
-class WrappedType(val name: String, override val underlying: Type) extends NamedType {
-  val semantics        = Reference  //!!!
-  override val nilable = underlying.nilable
+class WrappedType(val name: String, val unwrapped: Type) extends NamedType {
+  override def underlying = unwrapped.underlying
+  override def nilable    = underlying.nilable
+  
+  val semantics = Reference  //!!!
 }

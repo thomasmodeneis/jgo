@@ -6,7 +6,7 @@ import interm._
 import types._
 import symbol._
 import expr._
-import expr.{Combinators => C}
+import expr.Combinators
 
 trait Operands extends CompositeLiterals with ExprUtils /*with FunctionLiterals*/ {
   self: Expressions =>
@@ -25,8 +25,8 @@ trait Operands extends CompositeLiterals with ExprUtils /*with FunctionLiterals*
     )
   
   lazy val literal: Rule[Expr] =                 "literal value" $
-    ( intLit       ^^ { _.value } ^^ IntConstant
-    | floatLit     ^^ { _.value } ^^ FloatConstant
+    ( intLit       ^^ { i => Result(UntypedIntegralConst(i.value)) }
+    | floatLit     ^^ { f => Result(UntypedFloatingConst(f.value)) }
 //  | imaginaryLit
 //  | charLit
     | stringLit    ^^ StringConst.apply
