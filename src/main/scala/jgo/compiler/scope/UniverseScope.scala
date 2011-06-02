@@ -14,7 +14,7 @@ object UniverseScope extends MapScope {
   
   val string = new TypeAlias("string", StringType)
   val bool   = new TypeAlias("bool",   BoolType)
-  val byte   = new TypeAlias("byte",   Uint8)
+  val byte   = uint8
   val int    = new TypeAlias("int",    Int32)
   val uint   = new TypeAlias("uint",   Uint32)
   
@@ -33,8 +33,8 @@ object UniverseScope extends MapScope {
   val complex64  = new TypeAlias("complex64",  Complex64)
   val complex128 = new TypeAlias("complex128", Complex128)
   
-  val True  = new ConstSymbol(BoolConst(true))
-  val False = new ConstSymbol(BoolConst(false))
+  val True  = new ConstSymbol(UntypedBoolConst(true))
+  val False = new ConstSymbol(UntypedBoolConst(false))
   
   val iota = IotaSymbol
   val nil  = new ConstSymbol(NilConst)

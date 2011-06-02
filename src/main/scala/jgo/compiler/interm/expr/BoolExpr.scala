@@ -42,7 +42,8 @@ import BoolExpr._
  * function.
  */
 sealed abstract class BoolExpr extends Expr {
-  val typeOf = BoolType
+  //ALERT: typeOf would still be null at the time this statement would execute.
+  //require(typeOf.underlying == BoolType, "BoolExpr must have underlying BoolType")
   
   /**
    * Produces code that branches to one of two targets based on the truth value
@@ -51,15 +52,35 @@ sealed abstract class BoolExpr extends Expr {
   private[expr] def branch(trueBr: Target, falseBr: Target): CodeBuilder
   
   /**
-   * Produces code that evaluates this boolean expression and pushes the result onto
-   * the operand stack.
+   * Produces code that evaluates this boolean expression and pushes the result
+   * onto the operand stack.
    */
-  def eval = {
+  private[expr] def evalUnder = {
     val g   = new LabelGroup
     val tr  = new Label("push true", g)
     val end = new Label("end of push bool", g)
     
     branch(tr, Fall) |+| PushBool(false) |+| Goto(end) |+| Lbl(tr) |+| PushBool(true) |+| Lbl(end)
+  }
+  
+  /**
+   * Computes the evaluation code of this boolean expression from the
+   * eval-underlying code.  We cannot inherit from `EvalFromUnderlyingExpr`
+   * because that would permit that trait to "escape its defining scope".
+   * 
+   * The Scala compiler prohibits public types from extending private ones,
+   * a restriction I find non-cohesive.  I will check if this restriction
+   * is mandated by the JVM and, if it is not, will file a bug/enhancement
+   * report.
+   * Update: It appears that this is not a JVM restriction.
+   */
+  private[expr] def eval = {
+    def evalWrappedIn(t: Type): CodeBuilder = t match {
+      case wt: WrappedType => evalWrappedIn(wt.unwrapped) |+| Wrap(wt)
+      case ta: TypeAlias   => evalWrappedIn(ta.effective)
+      case _               => evalUnder
+    }
+    evalWrappedIn(typeOf)
   }
   
   /**
@@ -163,16 +184,16 @@ sealed abstract class BoolExpr extends Expr {
 
 /**
  * A boolean expression that branches based on the boolean value pushed onto the operand
- * stack by the given evaluation code.  This class is used for boolean variables, among
+ * stack by the given eval-underlying code.  This class is used for boolean variables, among
  * other things.
  */
-private class BoolValueExpr(evalCode: => CodeBuilder) extends BoolExpr {
-  override def eval = evalCode
+private class BoolValueExpr(evalUnderCode: => CodeBuilder, val typeOf: Type) extends BoolExpr {
+  override def evalUnder = evalUnderCode
   
   def branch(t: Target, f: Target) = (t, f) match {
-    case (Jump(tLbl), Jump(fLbl)) => evalCode |+| Branch(IsTrue, tLbl) |+| Goto(fLbl)
-    case (Jump(tLbl), Fall)       => evalCode |+| Branch(IsTrue, tLbl)
-    case (Fall,       Jump(fLbl)) => evalCode |+| BranchNot(IsTrue, fLbl)
+    case (Jump(tLbl), Jump(fLbl)) => evalUnderCode |+| Branch(IsTrue, tLbl) |+| Goto(fLbl)
+    case (Jump(tLbl), Fall)       => evalUnderCode |+| Branch(IsTrue, tLbl)
+    case (Fall,       Jump(fLbl)) => evalUnderCode |+| BranchNot(IsTrue, fLbl)
     
     case (Fall, Fall) => throw new AssertionError("impl error: no reason why both branches should be Fall")
   }
@@ -182,7 +203,7 @@ private class BoolValueExpr(evalCode: => CodeBuilder) extends BoolExpr {
  * A boolean expression corresponding to the logical negation of the
  * specified boolean expression.
  */
-private class Not(b: BoolExpr) extends BoolExpr {
+private class Not(b: BoolExpr, val typeOf: Type) extends BoolExpr {
   def branch(trueBr: Target, falseBr: Target): CodeBuilder =
     b.branch(falseBr, trueBr)
 }
@@ -191,7 +212,7 @@ private class Not(b: BoolExpr) extends BoolExpr {
  * A boolean expression corresponding to the logical conjunction of the
  * given boolean expressions.
  */
-private class And(b1: BoolExpr, b2: BoolExpr) extends BoolExpr {
+private class And(b1: BoolExpr, b2: BoolExpr, val typeOf: Type) extends BoolExpr {
   def branch(trueBr: Target, falseBr: Target): CodeBuilder = {
     val g    = new LabelGroup
     val btwn = new Label("between and", g)
@@ -205,7 +226,7 @@ private class And(b1: BoolExpr, b2: BoolExpr) extends BoolExpr {
  * A boolean expression corresponding to the logical disjunction of the
  * given boolean expressions.
  */
-private class Or(b1: BoolExpr, b2: BoolExpr) extends BoolExpr {
+private class Or(b1: BoolExpr, b2: BoolExpr, val typeOf: Type) extends BoolExpr {
   def branch(trueBr: Target, falseBr: Target): CodeBuilder = {
     val g    = new LabelGroup
     val btwn = new Label("between or", g)
@@ -220,9 +241,10 @@ private class Or(b1: BoolExpr, b2: BoolExpr) extends BoolExpr {
  * for equality or ordering.
  */
 private sealed abstract class CompExpr(comp: Comparison) extends BoolExpr {
+  val typeOf = scope.UniverseScope.bool
   protected val e1, e2: Expr
   
-  private val stackingCode = e1.eval |+| e2.eval
+  protected def stackingCode = e1.eval |+| e2.eval
   
   private[expr] def branch(trueBr: Target, falseBr: Target): CodeBuilder = (trueBr, falseBr) match {
     case (Jump(tLbl), Jump(fLbl)) => e1.eval |+| e2.eval |+| Branch(comp, tLbl) |+| Goto(fLbl)

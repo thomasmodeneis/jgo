@@ -77,7 +77,7 @@ trait SimpleStmts extends Expressions with Symbols with GrowablyScoped with Expr
         yield
           if (!growable.alreadyDefined(l)) { //not already defined in innermost scope
             actuallySawDecl = true
-            val v = new LocalVar(l, r.typeOf)
+            val v = new LocalVar(l, r.inferenceType)
             growable.put(l, v)
             declCode = declCode |+| Decl(v)
             Result(v)
@@ -88,7 +88,7 @@ trait SimpleStmts extends Expressions with Symbols with GrowablyScoped with Expr
       if (actuallySawDecl)
         for {
           leftVars <- leftVarsM
-          assignCode <- Combinators.assign(leftVars map varLval, right)(eqPos)
+          assignCode <- Combinators.assign(leftVars map Combinators.fromVariable, right)(eqPos)
         } yield declCode |+| assignCode
       else
         Problem("no new variables on left side of :=")(eqPos)

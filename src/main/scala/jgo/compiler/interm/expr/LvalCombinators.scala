@@ -46,7 +46,7 @@ trait LvalCombinators extends Combinators with TypeChecks {
         if (isIntegral) Result(SliceIndexLval(arr, indx, elemT))
         else Problem("index type %s is inappropriate for a slice; integral type required", indx.typeOf)
       case HasType(StringType) =>
-        if (isIntegral) Result(BasicExpr(arr.eval |+| indx.eval |+| StrIndex, Uint8))
+        if (isIntegral) Result(EvalExpr(arr.eval |+| indx.evalUnder |+| StrIndex, scope.UniverseScope.byte))
         else Problem("index type %s is inappropriate for a string; integral type required", indx.typeOf)
       case HasType(MapType(keyT, valT)) =>
         if (keyT <<= indx.typeOf) Result(MapIndexLval(arr, indx, valT))
@@ -66,34 +66,39 @@ trait LvalCombinators extends Combinators with TypeChecks {
         for (l <- low)  yield integral(l, "lower bound of slice"), //these Option[M[Expr]]'s are implicitly
         for (h <- high) yield integral(h, "upper bound of slice")  //converted to M[Option[Expr]]'s
       )
-      (stackingCode, boundsInfo) = (low, high) match {
-        case (Some(e1), Some(e2)) => (e1.eval |+| e2.eval, BothBounds)
-        case (Some(e1), None)     => (e1.eval            , LowBound)
-        case (None,     Some(e2)) => (            e2.eval, HighBound)
-        case (None,     None)     => (CodeBuilder(),       NoBounds)
+      (boundsStackingCode, boundsInfo) = (low, high) match {
+        case (Some(e1), Some(e2)) => (e1.evalUnder |+| e2.evalUnder, BothBounds)
+        case (Some(e1), None)     => (e1.evalUnder,                  LowBound)
+        case (None,     Some(e2)) => (                 e2.evalUnder, HighBound)
+        case (None,     None)     => (CodeBuilder(),                 NoBounds)
       }
+      stackingCode = arr.evalUnder |+| boundsStackingCode
       result: Expr <- arr match {
-        case HasType(ArrayType(_, t)) => Result(BasicExpr(stackingCode |+| SliceArray(t, boundsInfo), t))
-        case HasType(SliceType(t))    => Result(BasicExpr(stackingCode |+| SliceSlice(t, boundsInfo), t))
-        case HasType(StringType)      => Result(BasicExpr(stackingCode |+| Substring(boundsInfo), StringType))
+        case HasType(ArrayType(_, t)) => Result(EvalExpr(stackingCode |+| SliceArray(t, boundsInfo), SliceType(t)))
+        case HasType(SliceType(t))    => Result(EvalExpr(stackingCode |+| SliceSlice(t, boundsInfo), SliceType(t)))
+        case HasType(StringType)      => Result(EvalExpr(stackingCode |+| Substring(boundsInfo),     StringType))
         case _ => Problem("cannot slice a value of type %s; array, slice, or string type required", arr.typeOf)
       }
     } yield result
   
   def incr(e: Expr) (implicit pos: Pos): M[CodeBuilder] = for {
     l <- lval(e, "operand of ++")
-    (_, intT) <- integral(l, "operand of ++") //NOTE:  Need to fix this; an "intLval" check needed
+    intT <- integral(l, "operand of ++") //NOTE:  Need to fix this; an "intLval" check needed
   } yield l match {
-    case VarLval(vr) => Incr(vr, 1, intT)
-    case _ => l.store(l.load |+| PushInt(1, intT) |+| Add(intT))
+    case VarLval(vr) if vr.typeOf.effective == vr.typeOf.underlying => Incr(vr, 1, intT)
+    case _ =>
+      val storeEval = UnderlyingExpr(l.loadUnder |+| PushInt(1, intT) |+| Add(intT), l.typeOf).eval
+      l.store(storeEval)
   }
   
   def decr(e: Expr) (implicit pos: Pos): M[CodeBuilder] = for {
     l <- lval(e, "operand of --")
-    (_, intT) <- integral(l, "operand of --")
+    intT <- integral(l, "operand of --")
   } yield l match {
-    case VarLval(vr) => Decr(vr, 1, intT)
-    case _ => l.store(l.load |+| PushInt(1, intT) |+| Sub(intT))
+    case VarLval(vr) if vr.typeOf.effective == vr.typeOf.underlying => Decr(vr, 1, intT)
+    case _ =>
+      val storeEval = UnderlyingExpr(l.loadUnder |+| PushInt(1, intT) |+| Sub(intT), l.typeOf).eval
+      l.store(storeEval)
   }
   
   
@@ -103,9 +108,7 @@ trait LvalCombinators extends Combinators with TypeChecks {
       (e, i) <- es.zipWithIndex
     } yield for {
       l <- lval(e, "%s term of %s".format(ordinal(i + 1), desc))
-    } yield l
-    
-    //the implicit conversion Messaged.lsM2mLs lifts that List[M[LvalExpr]] to M[List[..]]
+    } yield l //the implicit conversion Messaged.lsM2mLs lifts that List[M[LvalExpr]] to M[List[..]]
     
   private def zipAndCheckArity[A](as: List[A], bs: List[Expr]) (implicit pos: Pos): M[List[(A, Expr)]] = {
     var res: List[(A, Expr)] = Nil
@@ -136,14 +139,16 @@ trait LvalCombinators extends Combinators with TypeChecks {
         )
     Result(())
   }
-  def assign(left0: List[Expr], right: List[Expr]) (implicit pos: Pos): M[CodeBuilder] = for {
-    left <- lvalues(left0, "left side of assignment")
-    pairs <- zipAndCheckArity(left, right)
-    _ <- checkAssignability(pairs)
-  } yield {
-    val (leftCode, rightCode) = (pairs foldLeft (CodeBuilder.empty, CodeBuilder.empty)) {
-      case ((leftAcc, rightAcc), (l, r)) => (leftAcc |+| l.storePrefix(r.eval), l.storeSuffix |+| rightAcc)
+  def assign(left0: List[Expr], right: List[Expr]) (implicit pos: Pos): M[CodeBuilder] =
+    for {
+      left <- lvalues(left0, "left side of assignment")
+      pairs <- zipAndCheckArity(left, right)
+      _ <- checkAssignability(pairs)
+    } yield {
+      val (leftCode, rightCode) = (pairs foldLeft (CodeBuilder.empty, CodeBuilder.empty)) {
+        //TODO: Add code that converts r.eval to the appropriate type
+        case ((leftAcc, rightAcc), (l, r)) => (leftAcc |+| l.storePrefix(r.eval), l.storeSuffix |+| rightAcc)
+      }
+      leftCode |+| rightCode
     }
-    leftCode |+| rightCode
-  }
 }

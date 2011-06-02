@@ -5,6 +5,7 @@ package expr
 import types._
 import instr._
 import instr.TypeConversions._
+import symbol._
 import codeseq._
 
 trait Combinators {
@@ -61,6 +62,9 @@ trait Combinators {
   
   def boolean(e: Expr) (implicit pos: Pos): M[BoolExpr]
   
+  def fromVariable(v: Variable): Expr = VarLval(v)
+  def fromFunction(f: Function): Expr = FunctionExpr(f)
+  
   def eval(e: Expr) =
     e.eval
 }
@@ -116,6 +120,9 @@ object Combinators {
   def assign(left: List[Expr], right: List[Expr])(pos: Pos): M[CodeBuilder] = c.assign(left, right)(pos)
   
   def boolean(e: Expr)(pos: Pos): M[BoolExpr] = c.boolean(e)(pos)
+  
+  def fromVariable(v: Variable): Expr = c.fromVariable(v)
+  def fromFunction(f: Function): Expr = c.fromFunction(f)
   
   def eval(e: Expr) = c.eval(e)
 }

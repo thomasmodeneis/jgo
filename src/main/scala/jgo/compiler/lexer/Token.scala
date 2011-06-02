@@ -161,47 +161,51 @@ object Token {
     if (str.length == 0)
       None
     else if (str(0) != '\\')
-      if (str.length != 1)
+      if (str.length != 1) //length is the number of _code points_, not chars, in str.
         None
       else
         Some(str.codePointAt(0))
-    else try { (str(1): @switch) match {
-      case 'x' | 'X' =>
-        if (str.length != 4) //as in: \xFF
-          None
-        else
-          Some(parseLong(str.substring(2, 4), 16).asInstanceOf[Int]) //2 is the index of the char after x
-      
-      case 'u' =>
-        if (str.length != 6) //as in: \uABCD
-          None
-        else
-          Some(parseLong(str.substring(2, 6), 16).asInstanceOf[Int]) //2 is the index of the char after u
-      
-      case 'U' =>
-        if (str.length != 10) //as in: \uAABBCCDD
-          None
-        else
-          Some(parseLong(str.substring(2, 10), 16).asInstanceOf[Int]) //2 is the index of the char after U
-      
-      case 'a'  => if (str.length == 2) Some('\u0007') else None
-      case 'b'  => if (str.length == 2) Some('\b')     else None
-      case 'f'  => if (str.length == 2) Some('\f')     else None
-      case 'n'  => if (str.length == 2) Some('\n')     else None
-      case 'r'  => if (str.length == 2) Some('\r')     else None
-      case 't'  => if (str.length == 2) Some('\t')     else None
-      case 'v'  => if (str.length == 2) Some('\u000b') else None
-      case '\\' => if (str.length == 2) Some('\\')     else None
-      case '\'' => if (str.length == 2) Some('\'')     else None
-      case '"'  => if (str.length == 2) Some('"')      else None //why not support '\"' if it makes my life easier?
-            
-      case ch =>
-        if (ch.isDigit && str.length == 4) //as in: \377
-          Some(java.lang.Long.parseLong(str.substring(1, 4), 8).asInstanceOf[Int]) //1 is the index of the char after \
-        else
-          None
-    } }
-    catch {
+    else try {
+      val result: Option[Int] = (str(1): @switch) match {
+        case 'x' | 'X' =>
+          if (str.length != 4) //as in: \xFF
+            None
+          else
+            Some(parseLong(str.substring(2, 4), 16).toInt) //2 is the index of the char after x
+        
+        case 'u' =>
+          if (str.length != 6) //as in: \uABCD
+            None
+          else
+            Some(parseLong(str.substring(2, 6), 16).toInt) //2 is the index of the char after u
+        
+        case 'U' =>
+          if (str.length != 10) //as in: \uAABBCCDD
+            None
+          else
+            Some(parseLong(str.substring(2, 10), 16).toInt) //2 is the index of the char after U
+        
+        case 'a'  => if (str.length == 2) Some('\u0007') else None
+        case 'b'  => if (str.length == 2) Some('\b')     else None
+        case 'f'  => if (str.length == 2) Some('\f')     else None
+        case 'n'  => if (str.length == 2) Some('\n')     else None
+        case 'r'  => if (str.length == 2) Some('\r')     else None
+        case 't'  => if (str.length == 2) Some('\t')     else None
+        case 'v'  => if (str.length == 2) Some('\u000b') else None
+        case '\\' => if (str.length == 2) Some('\\')     else None
+        case '\'' => if (str.length == 2) Some('\'')     else None
+        case '"'  => if (str.length == 2) Some('"')      else None //why not support '\"' if it makes my life easier?
+              
+        case ch =>
+          if (ch.isDigit && str.length == 4) //as in: \377
+            Some(parseLong(str.substring(1, 4), 8).toInt) //1 is the index of the char after \
+          else
+            None
+      }
+      result.filter(c => Character.isValidCodePoint(c) &&
+                         !Character.isHighSurrogate(c.toChar) &&
+                         !Character.isLowSurrogate(c.toChar))
+    } catch {
       case e: NumberFormatException =>
         //println("Uh-oh.  A NumberFormatException for characterize('" + str + "')")
         None

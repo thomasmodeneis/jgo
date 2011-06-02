@@ -15,15 +15,15 @@ trait BoolCombinators extends Combinators with TypeChecks {
   
   def and(e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr] = for {
     (b1, b2) <- sameBoolExpr(e1, e2)
-  } yield new And(b1, b2)
+  } yield new And(b1, b2, b1.typeOf)
   
   def or(e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr] = for {
     (b1, b2) <- sameBoolExpr(e1, e2)
-  } yield new Or(b1, b2)
+  } yield new Or(b1, b2, b1.typeOf)
   
   def not(e: Expr) (implicit pos: Pos): M[Expr] = for {
     b <- boolExpr(e, "operand")
-  } yield new Not(b)
+  } yield new Not(b, b.typeOf)
   
   
   def compEq(e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr] = for {

@@ -7,6 +7,7 @@ import parser.exprs.Expressions
 
 import interm._
 import types._
+import expr._
 import symbol._
 
 trait Types extends Symbols with Signatures {
@@ -42,8 +43,7 @@ trait Types extends Symbols with Signatures {
   
   
   lazy val arrayType: Rule[ArrayType] =                                               "array type" $
-    //("[" ~> expression <~ "]") ~ goType //compile-time constants not yet fully supported
-    "[" ~> intLit ~ "]" ~ goType  ^^ mkArray
+    "[" ~> expression ~ "]" ~ goType  ^^ mkArray
   
   
   lazy val sliceType: Rule[SliceType] =                                               "slice type" $
@@ -95,11 +95,16 @@ trait Types extends Symbols with Signatures {
   
   
   
-  private def mkArray(i: lexer.IntLit, pos: Pos, tM: M[Type]) = tM flatMap { t =>
-    val len = i.value.toInt
-    if (len < 0) Problem("cannot have negative array length")(pos)
-    else Result(ArrayType(len, t))
-  }
+  private def mkArray(eM: M[Expr], pos: Pos, tM: M[Type]) =
+    (eM, tM) flatMap { case (e, t) =>
+      e match {
+        case IntegralConst(len) =>
+          if (!len.isValidInt) Problem("array length must be representable as an int")(pos)
+          else if (len < 0) Problem("array length must be non-negative")(pos)
+          else Result(ArrayType(len.toInt, t))
+        case _ => Problem("array length must be an integral constant")(pos)
+      }
+    }
   
   private def mkMap(kM: M[Type], vM: M[Type]) =
     for ((k, v) <- (kM, vM)) yield
@@ -115,8 +120,7 @@ trait Types extends Symbols with Signatures {
     for {
       decls <- declsM
       fields = decls.flatten
-    } yield
-      StructType(fields)
+    } yield StructType(fields)
     //add logic for duplicate field names, etc
   }
   

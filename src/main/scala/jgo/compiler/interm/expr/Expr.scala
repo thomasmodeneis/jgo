@@ -17,9 +17,24 @@ trait Expr extends Typed {
    * Provides the code necessary for computing the value
    * of this expression and placing the result on the top
    * of the operand stack. This code is called the
-   * <i>evaluation code</i> of this expression.
+   * ''evaluation code'' of this expression.
    */
   private[expr] def eval: CodeBuilder
+  
+  /**
+   * Provides the code necessary for computing and stacking
+   * the value of this expression as an instance of its
+   * underlying type.  This code is called the ''eval-underlying
+   * code'' of this expression.  We avoid the term "underlying
+   * evaluation code" because it implies that this code
+   * is a subsequence of the evaluation code, which is not always
+   * the case.
+   * 
+   * The private trait `UnderlyingFromEvalExpr` provides an
+   * implementation of this method that computes the
+   * eval-underlying code from the evaluation code.
+   */
+  private[expr] def evalUnder: CodeBuilder
   
   /**
    * States whether this expression may be used as the operand
@@ -35,5 +50,5 @@ trait Expr extends Typed {
   
   //Bad abstraction.  Improve.
   private[expr] def mkCall(args: List[Expr], resultT: Type): Expr =
-    BasicExpr((args foldLeft eval) { _ |+| _.eval } |+| InvokeLambda(Lambda(funcType.get)), resultT)
+    EvalExpr((args foldLeft evalUnder) { _ |+| _.eval } |+| InvokeLambda(Lambda(funcType.get)), resultT)
 }

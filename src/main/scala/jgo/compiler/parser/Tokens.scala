@@ -42,16 +42,16 @@ trait Tokens extends Parsers {
       { case Identifier(id) if id == name => id }))
   
   /** A parser which matches an integral literal */
-  def intLit: Parser[IntLit] =
-    accept("int literal", { case t: IntLit => t })
+  def intLit: Parser[BigInt] =
+    accept("int literal", { case t: IntLit => t.value })
   
   /** A parser which matches a floating-point literal */
-  def floatLit: Parser[FloatLit] =
-    accept("float literal", { case t: FloatLit => t })
+  def floatLit: Parser[BigDecimal] =
+    accept("float literal", { case t: FloatLit => t.value })
   
   /** A parser which matches a character literal */
-  def charLit: Parser[CharLit] =
-    accept("char literal", { case t: CharLit => t })
+  def charLit: Parser[Int] =
+    accept("char literal", { case t: CharLit => t.value })
   
   /** A parser which matches a string literal */
   def stringLit: Parser[String] =

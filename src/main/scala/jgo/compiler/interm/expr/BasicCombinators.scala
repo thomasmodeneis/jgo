@@ -13,76 +13,76 @@ trait BasicCombinators extends Combinators with TypeChecks {
   def plus(e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr] =
     for ((e1a, e2a, at) <- sameAddable(e1, e2))
     yield at match {
-      case StringType     => BasicExpr(e1a.eval |+| e2a.eval |+| StrAdd, e1.typeOf)
-      case t: NumericType => BasicExpr(e1a.eval |+| e2a.eval |+| Add(t), e1.typeOf)
+      case StringType     => UnderlyingExpr(e1a.evalUnder |+| e2a.evalUnder |+| StrAdd, e1.typeOf)
+      case t: NumericType => UnderlyingExpr(e1a.evalUnder |+| e2a.evalUnder |+| Add(t), e1.typeOf)
     }
     
   def minus(e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr] =
     for ((e1n, e2n, nt) <- sameNumeric(e1, e2))
-    yield BasicExpr(e1n.eval |+| e2n.eval |+| Sub(nt), e1n.typeOf)
+    yield UnderlyingExpr(e1n.evalUnder |+| e2n.evalUnder |+| Sub(nt), e1n.typeOf)
   
   def times(e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr] = 
     for ((e1n, e2n, nt) <- sameNumeric(e1, e2))
-    yield BasicExpr(e1n.eval |+| e2n.eval |+| Mul(nt), e1.typeOf)
+    yield UnderlyingExpr(e1n.evalUnder |+| e2n.evalUnder |+| Mul(nt), e1.typeOf)
   
   def div(e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr] = 
     for ((e1n, e2n, nt) <- sameNumeric(e1, e2))
-    yield BasicExpr(e1n.eval |+| e2n.eval |+| Div(nt), e1.typeOf)
+    yield UnderlyingExpr(e1n.evalUnder |+| e2n.evalUnder |+| Div(nt), e1.typeOf)
   
   def mod(e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr] = 
     for ((e1i, e2i, it) <- sameIntegral(e1, e2))
-    yield BasicExpr(e1i.eval |+| e2i.eval |+| Mod(it), e1.typeOf)
+    yield UnderlyingExpr(e1i.evalUnder |+| e2i.evalUnder |+| Mod(it), e1.typeOf)
   
   def positive(e: Expr) (implicit pos: Pos): M[Expr] =
-    for ((en, _) <- numeric(e, "operand of unary +"))
-    yield en
+    for (_ <- numeric(e, "operand of unary +"))
+    yield e
   
   def negative(e: Expr) (implicit pos: Pos): M[Expr] =
-    for ((en, nt) <- numeric(e, "operand of unary -"))
-    yield BasicExpr(en.eval |+| Neg(nt), e.typeOf)
+    for (nt <- numeric(e, "operand of unary -"))
+    yield UnderlyingExpr(e.evalUnder |+| Neg(nt), e.typeOf)
   
   
   def bitAnd(e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr] =
     for ((e1i, e2i, it) <- sameIntegral(e1, e2))
-    yield BasicExpr(e1i.eval |+| e2i.eval |+| BitwiseAnd(it), e1.typeOf)
+    yield UnderlyingExpr(e1i.evalUnder |+| e2i.evalUnder |+| BitwiseAnd(it), e1.typeOf)
   
   def bitAndNot(e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr] =
     for ((e1i, e2i, it) <- sameIntegral(e1, e2))
-    yield BasicExpr(e1i.eval |+| e2i.eval |+| BitwiseAndNot(it), e1.typeOf)
+    yield UnderlyingExpr(e1i.evalUnder |+| e2i.evalUnder |+| BitwiseAndNot(it), e1.typeOf)
   
   def bitOr(e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr] =
     for ((e1i, e2i, it) <- sameIntegral(e1, e2))
-    yield BasicExpr(e1i.eval |+| e2i.eval |+| BitwiseOr(it), e1.typeOf)
+    yield UnderlyingExpr(e1i.evalUnder |+| e2i.evalUnder |+| BitwiseOr(it), e1.typeOf)
   
   def bitXor(e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr] =
     for ((e1i, e2i, it) <- sameIntegral(e1, e2))
-    yield BasicExpr(e1i.eval |+| e2i.eval |+| BitwiseXor(it), e1.typeOf)
+    yield UnderlyingExpr(e1i.evalUnder |+| e2i.evalUnder |+| BitwiseXor(it), e1.typeOf)
   
   def shiftL(e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr] = for {
-    ((e1i, it1), (e2u, ut2)) <- (integral(e1, "left operand of shift"),
-                                 unsigned(e2, "right operand of shift"))
-  } yield BasicExpr(e1i.eval |+| e2u.eval |+| ShiftL(it1, ut2), e1.typeOf)
+    (it1, ut2) <- (integral(e1, "left operand of shift"),
+                   unsigned(e2, "right operand of shift"))
+  } yield UnderlyingExpr(e1.evalUnder |+| e2.evalUnder |+| ShiftL(it1, ut2), e1.typeOf)
   
   def shiftR(e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr] = for {
-    ((e1i, it1), (e2u, ut2)) <- (integral(e1, "left operand of shift"),
-                                 unsigned(e2, "right operand of shift"))
-  } yield BasicExpr(e1i.eval |+| e2u.eval |+| ShiftR(it1, ut2), e1.typeOf)
+    (it1, ut2) <- (integral(e1, "left operand of shift"),
+                   unsigned(e2, "right operand of shift"))
+  } yield UnderlyingExpr(e1.evalUnder |+| e2.evalUnder |+| ShiftR(it1, ut2), e1.typeOf)
   
   def bitCompl(e: Expr) (implicit pos: Pos): M[Expr] =
-    for ((ei, it) <- integral(e, "operand of bitwise complement"))
-    yield BasicExpr(ei.eval |+| BitwiseCompl(it), e.typeOf)
+    for (it <- integral(e, "operand of bitwise complement"))
+    yield UnderlyingExpr(e.evalUnder |+| BitwiseCompl(it), e.typeOf)
   
   
   def chanRecv(ch: Expr) (implicit pos: Pos): M[Expr] =
-    for ((chan, elemT) <- recvChanT(ch, "operand of channel receive"))
-    yield BasicExpr(chan.eval |+| ChanRecv, elemT)
+    for (elemT <- recvChanT(ch, "operand of channel receive"))
+    yield EvalExpr(ch.evalUnder |+| ChanRecv, elemT)
   
   def chanSend(ch: Expr, e: Expr) (implicit pos: Pos): M[CodeBuilder] = for {
-    (chan, elemT) <- sendChanT(ch, "left operand of channel send")
+    elemT <- sendChanT(ch, "left operand of channel send")
     _ <- if (elemT <<= e.typeOf) Result(())
          else Problem("type %s of right operand of channel send not assignable to element type %s of left operand",
                       e.typeOf, elemT)
-  } yield chan.eval |+| e.eval |+| ChanSend
+  } yield ch.evalUnder |+| e.eval |+| ChanSend //TODO: Add code that converts e to the appropriate type
   
   
   private def checkCall(callee: Expr, args: List[Expr]) (implicit pos: Pos): M[Type] = callee match {
@@ -108,5 +108,5 @@ trait BasicCombinators extends Combinators with TypeChecks {
   
   
   def typeAssert(e: Expr, t: Type) (implicit pos: Pos): M[Expr] =
-    BasicExpr(e.eval |+| TypeAssert(t), t)
+    Result(EvalExpr(e.eval |+| TypeAssert(t), t))
 }

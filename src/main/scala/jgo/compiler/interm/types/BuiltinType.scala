@@ -2,7 +2,7 @@ package jgo.compiler
 package interm
 package types
 
-sealed trait BuiltinType extends Type with ConstableType
+sealed trait BuiltinType extends UnderType with ConstableType
 
 //case object IntType  extends TypeName("int",  Int32)  with BuiltinType
 //case object UintType extends TypeName("uint", Uint32) with BuiltinType
@@ -37,7 +37,7 @@ case object Float64 extends FloatingType { val name = "float64" }
 case object Complex64  extends ComplexType { val name = "complex64" } //or BuiltinType?
 case object Complex128 extends ComplexType { val name = "complex128" }
 
-sealed trait BuiltinRefType extends Type with ConstableType {
+sealed trait BuiltinRefType extends UnderType with ConstableType {
   val semantics = Reference
 }
 

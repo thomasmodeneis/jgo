@@ -22,8 +22,9 @@ import codeseq._
 private case class FunctionExpr(f: Function) extends Expr {
   val typeOf: FuncType = f.typeOf
   
-  def eval = Func2Lambda(f)
+  def eval = Function2Lambda(f)
+  def evalUnder = eval
   
   override def mkCall(args: List[Expr], resultT: Type): Expr =
-    BasicExpr((args foldLeft CodeBuilder()) { _ |+| _.eval } |+| InvokeFunction(f), resultT)
+    EvalExpr((args foldLeft CodeBuilder()) { _ |+| _.eval } |+| InvokeFunction(f), resultT)
 }

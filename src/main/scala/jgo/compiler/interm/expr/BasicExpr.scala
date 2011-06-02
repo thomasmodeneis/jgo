@@ -10,14 +10,18 @@ import codeseq._
 /**
  * An "ordinary" expression which requires no special processing.
  */
-private class BasicExpr(evalCode: => CodeBuilder, val typeOf: Type) extends Expr {
+private sealed abstract class BasicExpr extends Expr
+
+private class EvalExpr(evalCode: => CodeBuilder, val typeOf: Type) extends BasicExpr with UnderlyingFromEvalExpr {
   def eval = evalCode
 }
+private class UnderlyingExpr(evalUnderCode: => CodeBuilder, val typeOf: Type) extends BasicExpr with EvalFromUnderlyingExpr {
+  def evalUnder = evalUnderCode
+}
 
-private object BasicExpr {
-  def apply(eval: => CodeBuilder, t: Type) = new BasicExpr(eval, t)
-  def unapply(e: Expr): Option[(CodeBuilder, Type)] = e match {
-    case se: BasicExpr => Some(se.eval, se.typeOf)
-    case _ => None
-  }
+private object EvalExpr {
+  def apply(eval: => CodeBuilder, t: Type) = new EvalExpr(eval, t)
+}
+private object UnderlyingExpr {
+  def apply(eval: => CodeBuilder, t: Type) = new UnderlyingExpr(eval, t)
 }

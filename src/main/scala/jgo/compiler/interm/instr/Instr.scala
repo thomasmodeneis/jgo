@@ -31,7 +31,7 @@ case class InvokeLambda   (func:   Lambda) extends InvokeInstr
 case class Go   (call: InvokeInstr) extends Instr
 case class Defer(call: InvokeInstr) extends Instr
 
-case class Func2Lambda(function: Function) extends Instr
+case class Function2Lambda(function: Function) extends Instr
 
 case object Return      extends Instr
 case object ValueReturn extends Instr

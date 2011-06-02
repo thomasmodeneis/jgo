@@ -114,13 +114,13 @@ trait Declarations extends Expressions with GrowablyScoped {
       val leftVarsM: M[List[Variable]] =
         for (((l, pos), r) <- left zip right)
         yield {
-          val (v, declC) = mkVariable(l, r.typeOf)
+          val (v, declC) = mkVariable(l, r.inferenceType)
           declCode = declCode |+| declC
           bind(l, v)(pos)
         } //implicit conv
       for {
         leftVars <- leftVarsM
-        assignCode <- Combinators.assign(leftVars map varLval, right)(eqPos)
+        assignCode <- Combinators.assign(leftVars map Combinators.fromVariable, right)(eqPos)
       } yield declCode |+| assignCode
     }
   
@@ -137,7 +137,7 @@ trait Declarations extends Expressions with GrowablyScoped {
         }
       for {
         newVars <- newVarsM
-        assignCode <- Combinators.assign(newVars map varLval, right)(eqPos)
+        assignCode <- Combinators.assign(newVars map Combinators.fromVariable, right)(eqPos)
       } yield declCode |+| assignCode
     }
 }

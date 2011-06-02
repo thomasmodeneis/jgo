@@ -11,88 +11,13 @@ import PartialFunction._ //cond is really useful. read the api.
 
 /**
  * An expression whose value is determined at compile-time.
+ * The public interface of the expr package permits the
+ * direct creation of untyped constants, but not of typed
+ * constants.  All typed constants are derived from
+ * untyped constants at some point.
  */
 sealed trait ConstExpr extends Expr {
   def valueString: String
-}
-
-sealed trait TypedConst extends ConstExpr
-
-/**
- * A constant whose type is not constrained.
- * It is intuitive to think of an untyped constant as belonging to a type
- * of its own -- a type specific to its value.  For example, the literal
- * `5` may be considered to have the type "integer with value 5", which is
- * distinct from the type "integer with value 6" of the literal `6`.
- */
-sealed trait UntypedConst extends ConstExpr {
-  val typeOf = new UntypedConstType {
-    def canFitIn(t: BuiltinType) = UntypedConst.this.canFitIn(t)
-    def default = defaultType
-  }
-  
-  /**
-   * Gives rise to an UnsupportedOperationException, since the evaluation code
-   * of a value with no type is not well-defined.
-   */
-  private[expr] def eval = throw new UnsupportedOperationException(
-    "Internal impl error: attempting to call eval on untyped const " + this)
-  
-  /**
-   * States whether this untyped constant may be considered a value of the
-   * specified type.
-   */
-  def canFitIn(t: BuiltinType): Boolean
-  
-  /**
-   * The type that should be inferred for variables initialized to this
-   * untyped constant.  For example, consider the declaration `x := 42`.
-   * The variable `x` must be given a type, and it would be unreasonable
-   * for that type to be "integer with value 42", since we would then be
-   * forbidden from assigning it to anything other than `42`.  The Go spec
-   * provides rules that specify a "default inference type" (my term) for
-   * untyped constants.  In our example above, the variable `x` would be
-   * endowed with type `int`.
-   */
-  def defaultType: Type
-  
-  protected def withTypeUnchecked(t: Type): Option[ConstExpr]
-  
-  private[expr] final def withType(t: Type): Option[ConstExpr] = {
-    val fits = cond(t.underlying) {
-      case bt: BuiltinType => canFitIn(bt)
-    }
-    if (fits) withTypeUnchecked(t)
-    else None
-  }
-}
-
-case class StringConst(value: String) extends ConstExpr {
-  val typeOf = StringType
-  def eval   = PushStr(value)
-  
-  def valueString = "\"" + value + "\""
-}
-
-case class BoolConst(value: Boolean) extends ConstExpr {
-  val typeOf = BoolType
-  def eval   = PushBool(value)
-  
-  def valueString = value.toString
-}
-
-private case class IntConst(value: Int) extends ConstExpr {
-  val typeOf = Int32
-  def eval   = PushInt(value, typeOf)
-  
-  def valueString = value.toString
-}
-
-private case class FloatConst(value: Double) extends ConstExpr {
-  val typeOf = Float64
-  def eval   = PushFloat(value, typeOf)
-  
-  def valueString = value.toString
 }
 
 /**
@@ -100,27 +25,30 @@ private case class FloatConst(value: Double) extends ConstExpr {
  */
 object NilConst extends ConstExpr {
   val typeOf = NilType
-  def eval   = PushNil
+  
+  def eval      = PushNil
+  def evalUnder = PushNil
   
   def valueString = "nil"
 }
 
-
-private object UntypedUtils {
-  def isBounded(lower: BigDecimal, v: BigDecimal, upper: BigDecimal) =
-    lower <= v  && v <= upper
-  
-  def isFloat(v: BigDecimal): Boolean =
-    isBounded(Float.MinValue, v, Float.MaxValue)
-  
-  def isDouble(v: BigDecimal): Boolean =
-    isBounded(Double.MinValue, v, Double.MaxValue)
-  
-  def isBounded(lower: BigInt, v: BigInt, upper: BigInt) =
-    lower <= v  && v <= upper
+/**
+ * A string constant.
+ */
+sealed trait StringConst extends ConstExpr {
+  def value: String
+  def valueString = "\"" + value + "\""
 }
-import UntypedUtils._
 
+/**
+ * A boolean constant.  Important: this trait does not extend,
+ * and has nothing to do with, `BoolExpr`.  I plan to rename
+ * `BoolExpr` to `ConditionalExpr`, to make this clearer.
+ */
+sealed trait BoolConst extends ConstExpr {
+  def value: Boolean
+  def valueString = value.toString
+}
 
 /**
  * A constant that is either complex, floating-point, or integral.
@@ -155,78 +83,187 @@ sealed trait IntegralConst extends RealConst {
 }
 
 
+object StringConst {
+  def unapply(e: Expr): Option[String] =
+    condOpt(e) { case s: StringConst => s.value }
+}
+object BoolConst {
+  def unapply(e: Expr): Option[Boolean] =
+    condOpt(e) { case b: BoolConst => b.value }
+}
+object NumericConst {
+  def unapply(e: Expr): Option[(BigDecimal, BigDecimal)] =
+    condOpt(e) { case n: NumericConst => (n.real, n.imag) }
+}
+object RealConst {
+  def unapply(e: Expr): Option[BigDecimal] =
+    condOpt(e) { case r: RealConst => r.real }
+}
+object IntegralConst {
+  def unapply(e: Expr): Option[BigInt] =
+    condOpt(e) { case i: IntegralConst => i.int }
+}
+
+
+/**
+ * A constant whose type is fixed.
+ */
+private sealed trait TypedConst extends ConstExpr with EvalFromUnderlyingExpr {
+  protected def requireOfUnderlying(pred: Type => Boolean) =
+    require(pred(typeOf.underlying),
+            "Impl error: %s has illegal underlying type %s".format(this, typeOf.underlying))
+}
+
+/**
+ * A string constant whose type is that specified.
+ */
+private case class TypedStringConst(value: String, typeOf: Type) extends StringConst with TypedConst {
+  requireOfUnderlying(_ == StringType)
+  def evalUnder = PushStr(value)
+}
+
+/**
+ * A boolean constant whose type is that specified.
+ */
+private case class TypedBoolConst(value: Boolean, typeOf: Type) extends BoolConst with TypedConst {
+  requireOfUnderlying(_ == BoolType)
+  def evalUnder = PushBool(value)
+}
+
 /**
  * A complex constant whose type is that specified.
  */
 private case class TypedComplexConst(real: BigDecimal, imag: BigDecimal, typeOf: Type) extends NumericConst with TypedConst {
-  evalAs(typeOf) //trigger IllegalArgumentException upfront
-  private def evalAs(t: Type): CodeBuilder = t match {
-    case ct: ComplexType => PushComplex(real, imag, ct) //TODO: Add bounds check
-    case wt: WrappedType => Wrap(wt) |+| evalAs(wt.unwrapped)
-    case ta: TypeAlias   => evalAs(ta.effective)
-    case _ => throw new IllegalArgumentException(
-      "Impl error: illegal underlying type %s in %s" format (t, this))
+  requireOfUnderlying(_.isInstanceOf[ComplexType])
+  def evalUnder = typeOf.underlying match {
+    case ct: ComplexType => PushComplex(real, imag, ct)
   }
-  def eval = evalAs(typeOf)
 }
 
 /**
  * A floating-point constant whose type is that specified.
  */
 private case class TypedFloatingConst(real: BigDecimal, typeOf: Type) extends RealConst with TypedConst {
-  evalAs(typeOf) //trigger IllegalArgumentException upfront
-  private def evalAs(t: Type): CodeBuilder = t match {
-    case ft: FloatingType => PushFloat(real, ft) //TODO: Add bounds check
-    case wt: WrappedType  => Wrap(wt) |+| evalAs(wt.unwrapped)
-    case ta: TypeAlias    => evalAs(ta.effective)
-    case _ => throw new IllegalArgumentException(
-      "Impl error: illegal underlying type %s in %s" format (t, this))
+  requireOfUnderlying(_.isInstanceOf[FloatingType])
+  def evalUnder = typeOf.underlying match {
+    case ft: FloatingType => PushFloat(real, ft)
   }
-  def eval = evalAs(typeOf)
 }
 
 /**
  * An integral constant whose type is that specified.
  */
 private case class TypedIntegralConst(int: BigInt, typeOf: Type) extends IntegralConst with TypedConst {
-  evalAs(typeOf) //trigger IllegalArgumentException upfront
-  private def evalAs(t: Type): CodeBuilder = t match {
-    case it: IntegralType => PushInt(int, it) //TODO: Add bounds check
-    case wt: WrappedType  => Wrap(wt) |+| evalAs(wt.unwrapped)
-    case ta: TypeAlias    => evalAs(ta.effective)
-    case _ => throw new IllegalArgumentException(
-      "Impl error: illegal underlying type %s in %s" format (t, this))
+  requireOfUnderlying(_.isInstanceOf[IntegralType])
+  def evalUnder = typeOf.underlying match {
+    case it: IntegralType => PushInt(int, it)
   }
-  def eval = evalAs(typeOf)
 }
 
+
+/**
+ * A constant whose type is not constrained.
+ */
+sealed trait UntypedConst extends ConstExpr {
+  val typeOf: Type = new TypeOf
+  
+  private class TypeOf extends UntypedConstType {
+    def canFitIn(t: UnderType) = UntypedConst.this.canFitIn(t)
+    def default = defaultType
+  }
+  
+  /**
+   * Gives rise to an UnsupportedOperationException, since the evaluation code
+   * of a value with no type is not well-defined.
+   */
+  private[expr] def eval = throw new UnsupportedOperationException(
+    "Internal impl error: attempting to call eval on untyped const " + this)
+  
+  /**
+   * Gives rise to an UnsupportedOperationException, since the eval-underlying
+   * code of a value with no type is not well-defined.
+   */
+  private[expr] def evalUnder = throw new UnsupportedOperationException(
+    "Internal impl error: attempting to call evalUnderlying on untyped const " + this)
+  
+  /**
+   * States whether this untyped constant may be considered a value of the
+   * specified type.
+   */
+  def canFitIn(t: UnderType): Boolean
+  
+  /**
+   * The type that should be inferred for variables initialized to this
+   * untyped constant.
+   */
+  def defaultType: Type
+  
+  protected def withTypeUnchecked(t: Type): ConstExpr
+  
+  /**
+   * Optionally produces a constant of the specified type whose value is
+   * that of this constant, returning `None` if this constant's value
+   * cannot fit in the underlying type of the specified type.
+   */
+  private[expr] final def withType(t: Type): Option[ConstExpr] = {
+    val fits = cond(t.underlying) { case bt: BuiltinType => canFitIn(bt) }
+    if (fits)
+      Some(withTypeUnchecked(t))
+    else
+      None
+  }
+}
+
+case class UntypedStringConst(value: String) extends StringConst with UntypedConst {
+  def canFitIn(t: UnderType) = t == StringType
+  def defaultType = scope.UniverseScope.string
+  protected def withTypeUnchecked(t: Type): ConstExpr = TypedStringConst(value, t)
+}
+
+case class UntypedBoolConst(value: Boolean) extends BoolConst with UntypedConst {
+  def canFitIn(t: UnderType) = t == BoolType
+  def defaultType = scope.UniverseScope.bool
+  protected def withTypeUnchecked(t: Type): ConstExpr = TypedBoolConst(value, t)
+}
+
+private object UntypedNumericUtils {
+  def isBounded(lower: BigDecimal, v: BigDecimal, upper: BigDecimal) =
+    lower <= v  && v <= upper
+  
+  def isFloat(v: BigDecimal): Boolean =
+    isBounded(Float.MinValue, v, Float.MaxValue)
+  
+  def isDouble(v: BigDecimal): Boolean =
+    isBounded(Double.MinValue, v, Double.MaxValue)
+  
+  def isBounded(lower: BigInt, v: BigInt, upper: BigInt) =
+    lower <= v  && v <= upper
+}
+import UntypedNumericUtils._
 
 /**
  * An untyped constant that is either complex, floating-point, or integral.
  */
 sealed trait UntypedNumericConst extends NumericConst with UntypedConst {
-  def canFitIn(t: BuiltinType) = cond(t) {
+  def canFitIn(t: UnderType) = cond(t) {
     case Complex64  => isFloat(real)  && isFloat(imag)
     case Complex128 => isDouble(real) && isDouble(imag)
   }
-  protected def withTypeUnchecked(t: Type) =
-    if (t.underlying.isInstanceOf[ComplexType]) Some(TypedComplexConst(real, imag, t))
-    else None
+  protected def withTypeUnchecked(t: Type): ConstExpr = TypedComplexConst(real, imag, t)
 }
 
 /**
  * An untyped numeric constant that is either floating-point or integral.
  */
 sealed trait UntypedRealConst extends RealConst with UntypedNumericConst {
-  override def canFitIn(t: BuiltinType) = super.canFitIn(t) || cond(t) {
+  override def canFitIn(t: UnderType) = super.canFitIn(t) || cond(t) {
     case Float32 => isFloat(real)
     case Float64 => isDouble(real)
   }
-  protected override def withTypeUnchecked(t: Type) =
-    super.withTypeUnchecked(t) orElse {
-      if (t.underlying.isInstanceOf[FloatingType]) Some(TypedFloatingConst(real, t))
-      else None
-    }
+  protected override def withTypeUnchecked(t: Type): ConstExpr = t.underlying match {
+    case _: RealType => TypedFloatingConst(real, t)
+    case _ => super.withTypeUnchecked(t)
+  }
 }
 
 /**
@@ -247,7 +284,7 @@ case class UntypedFloatingConst(real: BigDecimal) extends UntypedRealConst {
  * An untyped integral constant.
  */
 case class UntypedIntegralConst(int: BigInt) extends IntegralConst with UntypedRealConst {
-  override def canFitIn(t: BuiltinType) = super.canFitIn(t) || cond(t) {
+  override def canFitIn(t: UnderType) = super.canFitIn(t) || cond(t) {
     case Int8  => isBounded( Byte.MinValue, int,  Byte.MaxValue)
     case Int16 => isBounded(Short.MinValue, int, Short.MaxValue)
     case Int32 => isBounded(  Int.MinValue, int,   Int.MaxValue)
@@ -259,46 +296,23 @@ case class UntypedIntegralConst(int: BigInt) extends IntegralConst with UntypedR
   }
   def defaultType = scope.UniverseScope.int
   
-  protected override def withTypeUnchecked(t: Type) =
-    super.withTypeUnchecked(t) orElse {
-      if (t.underlying.isInstanceOf[IntegralType]) Some(TypedIntegralConst(int, t))
-      else None
-    }
-}
-
-
-object NumericConst {
-  def unapply(e: Expr): Option[(BigDecimal, BigDecimal)] = e match {
-    case n: NumericConst => Some(n.real, n.imag)
-    case _ => None
-  }
-}
-
-object RealConst {
-  def unapply(e: Expr): Option[BigDecimal] = e match {
-    case r: RealConst => Some(r.real)
-    case _ => None
-  }
-}
-
-object IntegralConst {
-  def unapply(e: Expr): Option[BigInt] = e match {
-    case i: IntegralConst => Some(i.int)
-    case _ => None
+  protected override def withTypeUnchecked(t: Type): ConstExpr = t.underlying match {
+    case _: IntegralType => TypedIntegralConst(int, t)
+    case _ => super.withTypeUnchecked(t)
   }
 }
 
 
 object UntypedNumericConst {
   def unapply(e: Expr): Option[(BigDecimal, BigDecimal)] = e match {
-    case c: UntypedNumericConst => Some(c.real, c.imag)
+    case n: UntypedNumericConst => Some(n.real, n.imag)
     case _ => None
   }
 }
 
 object UntypedRealConst {
   def unapply(e: Expr): Option[BigDecimal] = e match {
-    case c: UntypedRealConst => Some(c.real)
+    case r: UntypedRealConst => Some(r.real)
     case _ => None
   }
 }

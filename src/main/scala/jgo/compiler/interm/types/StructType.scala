@@ -4,7 +4,7 @@ package types
 
 import member._
 
-case class StructType(fields: List[FieldDesc]) extends Type {
+case class StructType(fields: List[FieldDesc]) extends UnderType {
   val semantics = Value
   
   override val members = {

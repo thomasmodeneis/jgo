@@ -11,10 +11,6 @@ import expr.Combinators
 trait Operands extends CompositeLiterals with ExprUtils /*with FunctionLiterals*/ {
   self: Expressions =>
   
-//def symbols: Scope
-//def lexical = symbols //the lexical scope of any lambda expression
-                        //herein is the current scope
-  
   //in general, "E = E ~ t2 | t1" MUST be used instead of "E = t1 | E ~ t2"
   lazy val operand: Rule[Expr] =                       "operand" $
     ( "(" ~> expression <~ ")"
@@ -25,11 +21,11 @@ trait Operands extends CompositeLiterals with ExprUtils /*with FunctionLiterals*
     )
   
   lazy val literal: Rule[Expr] =                 "literal value" $
-    ( intLit       ^^ { i => Result(UntypedIntegralConst(i.value)) }
-    | floatLit     ^^ { f => Result(UntypedFloatingConst(f.value)) }
+    ( intLit       ^^ { i => Result(UntypedIntegralConst(i)) }
+    | floatLit     ^^ { f => Result(UntypedFloatingConst(f)) }
 //  | imaginaryLit
-//  | charLit
-    | stringLit    ^^ StringConst.apply
+    | charLit      ^^ { c => Result(UntypedIntegralConst(c)) }
+    | stringLit    ^^ { s => Result(UntypedStringConst(s)) }
 //  | compositeLit //nonterminal
 //  | functionLit  //nonterminal
     )
@@ -37,8 +33,8 @@ trait Operands extends CompositeLiterals with ExprUtils /*with FunctionLiterals*
   protected def procSymbOperand(pos: Pos, symbM: M[Symbol]): M[Expr] =
     symbM flatMap {
       case ConstSymbol(c) => Result(c)
-      case v: Variable    => Result(varLval(v))
-      case f: Function    => Result(functionExpr(f))
+      case v: Variable    => Result(Combinators.fromVariable(v))
+      case f: Function    => Result(Combinators.fromFunction(f))
       case s => Problem("invalid operand: not a variable, constant, or function: %s", s)(pos)
     }
 }
