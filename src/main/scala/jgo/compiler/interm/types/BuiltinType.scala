@@ -4,9 +4,6 @@ package types
 
 sealed trait BuiltinType extends UnderType with ConstableType
 
-//case object IntType  extends TypeName("int",  Int32)  with BuiltinType
-//case object UintType extends TypeName("uint", Uint32) with BuiltinType
-
 sealed trait PrimitiveType extends BuiltinType {
   val semantics = Primitive
 }
@@ -15,9 +12,9 @@ sealed trait AddableType  extends BuiltinType
 sealed trait NumericType  extends PrimitiveType with AddableType
 sealed trait ComplexType  extends NumericType
 sealed trait RealType     extends NumericType
+sealed trait FloatingType extends RealType
 sealed trait IntegralType extends RealType
 sealed trait UnsignedType extends IntegralType
-sealed trait FloatingType extends RealType
 
 case object BoolType extends PrimitiveType  { val name = "bool" }
 
@@ -43,10 +40,7 @@ sealed trait BuiltinRefType extends UnderType with ConstableType {
 
 case object StringType extends BuiltinRefType //or Primitive...?
                           with AddableType
-                          with NilableType {
-  val name = "string"
-  override def toString = "string"
-}
+                          with NilableType  //Spec says not nilable...
 
 case object TopType     extends BuiltinRefType
 case object NilType     extends BuiltinRefType

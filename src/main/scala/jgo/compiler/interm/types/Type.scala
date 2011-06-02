@@ -74,6 +74,7 @@ trait Type extends Membered {
  * Fundamental operations on types.
  */
 object Type {
+  import PartialFunction._
   /**
    * Indicates whether the two given types are identical to each other.
    * Through the miracle of case classes, we get this property for free.
@@ -85,54 +86,32 @@ object Type {
    * Indicates whether a variable of the first type ''can hold''
    * a value of the second type; that is, whether the second type
    * is assignable to the first.
+   * 
+   * @todo verify conformity with the spec
    */
-  def canHold(t1: Type, t2: Type): Boolean =
+  def canHold(t1: Type, t2: Type): Boolean = {
     identical(t1, t2) ||
     (
-      !t1.isInstanceOf[NamedType] &&
-      !t2.isInstanceOf[NamedType] && {
-      (t1, t2) match {
-        case (TopType, _)                => true
-        case (n, NilType) if n.isNilable => true
-        case (_, BottomType)             => true
-        
-        case (t, u: UntypedConstType)
-          if u.canFitIn(t.underlying)    => println("saw untyped"); true
-        
-        //interface logic goes here
-        
-        /* 
-          ALERT: These upcoming variance rules are not in the spec!
-          The spec makes these things invariant.  I want to see if they
-          work with the, IMHO, more cohesive and traditional variances below.
-        */
-        
-        //receiving channels are covariant in their element types
-        case (ChanType(elem1, true, false), ChanType(elem2, true, _))
-          if canHold(elem1, elem2)       => true
-        
-        //sending channels are contravariant in their element types
-        case (ChanType(elem1, false, true), ChanType(elem2, _, true))
-          if canHold(elem2, elem1)       => true
-        
-        //function types are covariant in results and contravariant in parameters
-        case (FuncType(ps1, rs1, vadic1), FuncType(ps2, rs2, vadic2)) if (
-          vadic1 == vadic2 &&
-          ps1.zipAll(ps2, TopType, BottomType).forall {
-            case (param1, param2) =>    param1 =>> param2
-          } &&
-          rs1.zipAll(rs2, BottomType, TopType).forall {
-            case (reslt1, reslt2) =>    reslt1 <<= reslt2
-          }
-        )                                => true
-        
-        case _                           => false
-      } }
+      !( //not both named types
+        t1.isInstanceOf[NamedType] &&
+        t2.isInstanceOf[NamedType]
+      ) && (
+        identical(t1.underlying, t2.underlying) ||
+        cond((t1.underlying, t2.underlying)) {
+          case (ChanType(elemT1, _, _), BidirChanType(elemT2)) => identical(elemT1, elemT2)
+        }
+      )
     ) ||
-    identical(t1.underlying, t2.underlying) && !( //not both
-      t1.isInstanceOf[NamedType] &&
-      t2.isInstanceOf[NamedType]
-    )
+    cond((t1, t2)) {
+      case (TopType, _)                => true
+      case (n, NilType) if n.isNilable => true
+      case (_, BottomType)             => true
+      
+      case (t, u: UntypedConstType)    => u.canFitIn(t.underlying)
+      
+      //interface logic goes here
+    }
+  }
 }
 
 sealed abstract class Semantics

@@ -165,10 +165,16 @@ private case class TypedIntegralConst(int: BigInt, typeOf: Type) extends Integra
  * A constant whose type is not constrained.
  */
 sealed trait UntypedConst extends ConstExpr {
-  val typeOf: Type = new TypeOf
-  
-  private class TypeOf extends UntypedConstType {
-    def canFitIn(t: UnderType) = UntypedConst.this.canFitIn(t)
+  /**
+   * The "type" of this untyped constant, which is defined by
+   * `canFitIn` and `defaultType` methods.
+   * We use a `lazy val` to avoid initialization problems;
+   * if a subclass implemented `canFitIn` by performing some
+   * checks on a field, that field would not be initialized
+   * if we used a `val` here.
+   */
+  lazy val typeOf: Type = new UntypedConstType {
+    def canFitIn(t: UnderType) = { println("can fit in"); UntypedConst.this.canFitIn(t) }
     def default = defaultType
   }
   

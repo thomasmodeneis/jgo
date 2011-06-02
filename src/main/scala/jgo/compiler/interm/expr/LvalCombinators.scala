@@ -135,7 +135,7 @@ trait LvalCombinators extends Combinators with TypeChecks {
       if (!(l.typeOf <<= r.typeOf))
         return Problem(
           "%s value on right side of assignment has type %s not assignable to corresponding " +
-          "target type %s", ordinal(i), r.typeOf, l.typeOf
+          "target type %s", ordinal(i + 1), r.typeOf, l.typeOf
         )
     Result(())
   }

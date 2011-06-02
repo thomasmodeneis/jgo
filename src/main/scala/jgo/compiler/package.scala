@@ -47,11 +47,11 @@ package object compiler {
   implicit def M[T](t: T): M[T] = messaged.Result(t)
   
   //val M = messaged.Messaged
-  val Result = messaged.Result
+  val Result  = messaged.Result
   val Problem = messaged.Problem
   
   type Result[+T] = messaged.Result[T]
-  type Problem = messaged.Problem
+  type Problem    = messaged.Problem
   
   @deprecated("use mTupled2 instead", "early May, 2011")
   def together2[A, B]   (a: M[A], b: M[B])          = messaged.Messaged.together(a, b)

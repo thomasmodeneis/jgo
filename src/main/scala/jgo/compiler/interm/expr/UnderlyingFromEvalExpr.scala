@@ -18,9 +18,9 @@ private trait UnderlyingFromEvalExpr extends Expr {
     while (true) t match {
       case wt: WrappedType =>
         code = code |+| Unwrap(wt)
-        t = wt.unwrapped
+        t = wt.referent
       case ta: TypeAlias =>
-        t = ta.effective
+        t = ta.effective //or ta.referent
       case _ =>
         return code
     }

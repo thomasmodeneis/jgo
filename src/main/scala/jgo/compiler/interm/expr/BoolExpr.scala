@@ -76,8 +76,8 @@ sealed abstract class BoolExpr extends Expr {
    */
   private[expr] def eval = {
     def evalWrappedIn(t: Type): CodeBuilder = t match {
-      case wt: WrappedType => evalWrappedIn(wt.unwrapped) |+| Wrap(wt)
-      case ta: TypeAlias   => evalWrappedIn(ta.effective)
+      case wt: WrappedType => evalWrappedIn(wt.referent) |+| Wrap(wt)
+      case ta: TypeAlias   => evalWrappedIn(ta.effective) //or ta.referent
       case _               => evalUnder
     }
     evalWrappedIn(typeOf)

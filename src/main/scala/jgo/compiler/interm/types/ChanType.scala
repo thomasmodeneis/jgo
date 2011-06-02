@@ -4,14 +4,21 @@ package types
 
 object RecvChanType {
   def unapply(t: Type): Option[Type] = t match {
-    case ChanType(et, true, _) => Some(et)
+    case ChanType(elemT, true, _) => Some(elemT)
     case _ => None
   }
 }
 
 object SendChanType {
   def unapply(t: Type): Option[Type] = t match {
-    case ChanType(et, _, true) => Some(et)
+    case ChanType(elemT, _, true) => Some(elemT)
+    case _ => None
+  }
+}
+
+object BidirChanType {
+  def unapply(t: Type): Option[Type] = t match {
+    case ChanType(elemT, true, true) => Some(elemT)
     case _ => None
   }
 }
