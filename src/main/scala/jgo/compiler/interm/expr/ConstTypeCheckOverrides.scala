@@ -8,15 +8,15 @@ import instr.TypeConversions._
 import codeseq._
 
 trait ConstTypeCheckOverrides extends TypeChecks {
-  override def boolExpr(e: Expr, desc: String) (implicit pos: Pos) = e match {
-    case TypedBoolConst(b, t) => Result(new BoolValueExpr(PushBool(b), t))
-    case UntypedBoolConst(b)  => Result(new BoolValueExpr(PushBool(b), scope.UniverseScope.bool))
-    case _ => super.boolExpr(e, desc)
+  protected override def condExpr(e: Expr, desc: String) (implicit pos: Pos) = e match {
+    case TypedBoolConst(b, t) => Result(new CondValueExpr(PushBool(b), t))
+    case UntypedBoolConst(b)  => Result(new CondValueExpr(PushBool(b), scope.UniverseScope.bool))
+    case _ => super.condExpr(e, desc)
   }
   
-  protected override def same[T <: Type](e1: Expr, e2: Expr)
-                                        (f: (Expr, String) => M[T])
-                                        (implicit pos: Pos) =
+  protected override def same[T <: UnderType](e1: Expr, e2: Expr)
+                                             (f: (Expr, String) => M[T])
+                                             (implicit pos: Pos) =
     (e1, e2) match {
       case (e, u: UntypedConst) =>
         val eRightM = u.withType(e.typeOf) match {

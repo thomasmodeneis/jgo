@@ -60,7 +60,7 @@ trait Combinators {
     if (targetType <<= e.typeOf) Result(e)
     else Problem("expression not assignable to target type %s", targetType)
   
-  def boolean(e: Expr) (implicit pos: Pos): M[BoolExpr]
+  def conditional(e: Expr) (implicit pos: Pos): M[ConditionalExpr]
   
   def fromVariable(v: Variable): Expr = VarLval(v)
   def fromFunction(f: Function): Expr = FunctionExpr(f)
@@ -70,7 +70,7 @@ trait Combinators {
 }
 
 object Combinators {
-  private val c = new BasicCombinators with BoolCombinators with LvalCombinators with ConstCombinators
+  private val c = new BasicCombinators with ConditionalCombinators with LvalCombinators with ConstCombinators
   
   def const(e: Expr)(pos: Pos): M[Expr] = c.const(e)(pos)
   
@@ -119,7 +119,7 @@ object Combinators {
   
   def assign(left: List[Expr], right: List[Expr])(pos: Pos): M[CodeBuilder] = c.assign(left, right)(pos)
   
-  def boolean(e: Expr)(pos: Pos): M[BoolExpr] = c.boolean(e)(pos)
+  def conditional(e: Expr)(pos: Pos): M[ConditionalExpr] = c.conditional(e)(pos)
   
   def fromVariable(v: Variable): Expr = c.fromVariable(v)
   def fromFunction(f: Function): Expr = c.fromFunction(f)

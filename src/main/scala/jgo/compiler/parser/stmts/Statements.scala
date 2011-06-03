@@ -193,21 +193,21 @@ trait Statements extends Expressions
   
   private def makeIfStmt(
       initUgly:   Option[M[CodeBuilder]],
-      condWPos:   (M[Expr], Pos),
+      testWPos:   (M[Expr], Pos),
       bodyM:      M[CodeBuilder],
       elseUgly:   Option[M[CodeBuilder]],
       undeclCode: CodeBuilder
   ): M[CodeBuilder] = {
     val initM: M[Option[CodeBuilder]] = initUgly
     val elseM: M[Option[CodeBuilder]] = elseUgly
-    val (condM, condPos) = condWPos
+    val (testM, testPos) = testWPos
     
     for {
-      (init, cond, body, els) <- (initM, condM, bodyM, elseM)
-      bool <- Combinators.boolean(cond)(condPos)
+      (init, test, body, els) <- (initM, testM, bodyM, elseM)
+      cond <- Combinators.conditional(test)(testPos)
     } yield init |+| (els match {
-      case None           => bool.mkIf(body)
-      case Some(elseCode) => bool.mkIfElse(body, elseCode)
+      case None           => cond.mkIf(body)
+      case Some(elseCode) => cond.mkIfElse(body, elseCode)
     }) |+| undeclCode
   }
   
@@ -215,35 +215,34 @@ trait Statements extends Expressions
     for (body <- bodyM)
     yield (brk: Label, cont: Label) => Lbl(cont) |+| body |+| Goto(cont) |+| Lbl(brk)
   
-  private def makeWhile(condWPos: (M[Expr], Pos), bodyM: M[CodeBuilder]) = {
-    val (condM, condPos) = condWPos
+  private def makeWhile(testWPos: (M[Expr], Pos), bodyM: M[CodeBuilder]) = {
+    val (testM, testPos) = testWPos
     for {
-      (cond, body) <- (condM, bodyM)
-      bool <- Combinators.boolean(cond)(condPos)
-    } yield
-      bool.mkWhile(body) _
+      (test, body) <- (testM, bodyM)
+      cond <- Combinators.conditional(test)(testPos)
+    } yield cond.mkWhile(body) _
   }
   
   private def makeFor(
       initUgly:   Option[M[CodeBuilder]],
-      condWPos:   (Option[M[Expr]], Pos),
+      testWPos:   (Option[M[Expr]], Pos),
       incrUgly:   Option[M[CodeBuilder]],
       bodyM:      M[CodeBuilder],
       undeclCode: CodeBuilder
   ) = {
     val initM: M[Option[CodeBuilder]] = initUgly
     val incrM: M[Option[CodeBuilder]] = incrUgly
-    val (condUgly, condPos) = condWPos
+    val (testUgly, testPos) = testWPos
     
-    condUgly match {
-      case Some(condM) =>
+    testUgly match {
+      case Some(testM) =>
         for {
-          (init, cond, incr, body) <- (initM, condM, incrM, bodyM)
-          bool <- Combinators.boolean(cond)(condPos)
+          (init, test, incr, body) <- (initM, testM, incrM, bodyM)
+          cond <- Combinators.conditional(test)(testPos)
         } yield { (brk: Label, cont: Label) =>
           //an (old) implicit conversion turns incr into a CodeBuilder
           //In the event of None, empty code. Also init.
-          init |+| bool.mkFor(body, incr)(brk, cont) |+| undeclCode
+          init |+| cond.mkFor(body, incr)(brk, cont) |+| undeclCode
         }
       
       case None =>
