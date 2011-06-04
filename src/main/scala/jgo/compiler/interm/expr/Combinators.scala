@@ -9,8 +9,6 @@ import symbol._
 import codeseq._
 
 trait Combinators {
-  def const(e: Expr) (implicit pos: Pos): M[Expr]
-  
   def and(e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr]
   def or (e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr]
   def not(e: Expr) (implicit pos: Pos): M[Expr]
@@ -55,11 +53,14 @@ trait Combinators {
   def decr(e: Expr) (implicit pos: Pos): M[CodeBuilder]
   
   def assign(left: List[Expr], right: List[Expr]) (implicit pos: Pos): M[CodeBuilder]
+  def assign(left: Expr, right: Expr) (implicit pos: Pos): M[CodeBuilder]
   
-  def assignableTo(e: Expr, targetType: Type) (implicit pos: Pos): M[Expr] =
-    if (targetType <<= e.typeOf) Result(e)
-    else Problem("expression not assignable to target type %s", targetType)
+  def assignableTo(e: Expr, targetType: Type) (implicit pos: Pos): M[Expr]
   
+  def convertForAssign(e: Expr, t: Type) (implicit pos: Pos): M[Expr]
+  def convert(e: Expr, t: Type) (implicit pos: Pos): M[Expr]
+  
+  def constant   (e: Expr) (implicit pos: Pos): M[ConstExpr]
   def conditional(e: Expr) (implicit pos: Pos): M[ConditionalExpr]
   
   def fromVariable(v: Variable): Expr = VarLval(v)
@@ -70,9 +71,11 @@ trait Combinators {
 }
 
 object Combinators {
-  private val c = new BasicCombinators with ConditionalCombinators with LvalCombinators with ConstCombinators
-  
-  def const(e: Expr)(pos: Pos): M[Expr] = c.const(e)(pos)
+  private val c = new ConversionCombinators
+                  with BasicCombinators
+                  with ConditionalCombinators
+                  with LvalCombinators
+                  with ConstCombinators
   
   def and(e1: Expr, e2: Expr)(pos: Pos): M[Expr] = c.and(e1, e2)(pos)
   def or (e1: Expr, e2: Expr)(pos: Pos): M[Expr] = c.or(e1, e2)(pos)
@@ -118,7 +121,14 @@ object Combinators {
   def decr(e: Expr)(pos: Pos): M[CodeBuilder] = c.decr(e)(pos)
   
   def assign(left: List[Expr], right: List[Expr])(pos: Pos): M[CodeBuilder] = c.assign(left, right)(pos)
+  def assign(left: Expr, right: Expr) (pos: Pos): M[CodeBuilder] = c.assign(left, right)(pos)
   
+  def assignableTo(e: Expr, t: Type)(pos: Pos): M[Expr] = c.assignableTo(e, t)(pos)
+  
+  def convertForAssign(e: Expr, t: Type)(pos: Pos): M[Expr] = c.convertForAssign(e, t)(pos)
+  def convert(e: Expr, t: Type)(pos: Pos): M[Expr] = c.convert(e, t)(pos)
+  
+  def constant   (e: Expr)(pos: Pos): M[ConstExpr] = c.constant(e)(pos)
   def conditional(e: Expr)(pos: Pos): M[ConditionalExpr] = c.conditional(e)(pos)
   
   def fromVariable(v: Variable): Expr = c.fromVariable(v)

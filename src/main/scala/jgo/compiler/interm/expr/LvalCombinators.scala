@@ -109,7 +109,8 @@ trait LvalCombinators extends Combinators with TypeChecks {
     } yield for {
       l <- lval(e, "%s term of %s".format(ordinal(i + 1), desc))
     } yield l //the implicit conversion Messaged.lsM2mLs lifts that List[M[LvalExpr]] to M[List[..]]
-    
+  
+  
   private def zipAndCheckArity[A](as: List[A], bs: List[Expr]) (implicit pos: Pos): M[List[(A, Expr)]] = {
     var res: List[(A, Expr)] = Nil
     var (curA, curB) = (as, bs)
@@ -130,15 +131,21 @@ trait LvalCombinators extends Combinators with TypeChecks {
     }
     Result(res reverse)
   }
-  private def checkAssignability(pairs: List[(LvalExpr, Expr)]) (implicit pos: Pos): M[Unit] = {
-    for (((l, r), i) <- pairs zipWithIndex)
-      if (!(l.typeOf <<= r.typeOf))
-        return Problem(
+  
+  private def checkAssignability(pairs: List[(Expr, Expr)]) (implicit pos: Pos): M[Unit] = 
+    if (pairs.length == 1) {
+      val (l, r) = pairs(1)
+      if (l.typeOf <<= r.typeOf) Result(())
+      else Problem("right side has type %s not assignable to left side's type %s", l.typeOf, r.typeOf)
+    } else {
+      var res = M(())
+      for (((l, r), i) <- pairs zipWithIndex; if !(l.typeOf <<= r.typeOf))
+        res = res then Problem(
           "%s value on right side of assignment has type %s not assignable to corresponding " +
-          "target type %s", ordinal(i + 1), r.typeOf, l.typeOf
-        )
-    Result(())
-  }
+          "target type %s", ordinal(i + 1), r.typeOf, l.typeOf)
+      res
+    }
+  
   def assign(left0: List[Expr], right: List[Expr]) (implicit pos: Pos): M[CodeBuilder] =
     for {
       left <- lvalues(left0, "left side of assignment")
@@ -151,4 +158,8 @@ trait LvalCombinators extends Combinators with TypeChecks {
       }
       leftCode |+| rightCode
     }
+  
+  def assign(left0: Expr, right: Expr) (implicit pos: Pos): M[CodeBuilder] =
+    for ((left, rightConv) <- (lval(left0, "left side of assignment"), convertForAssign(right, left0.typeOf)))
+    yield left.store(rightConv.eval)
 }

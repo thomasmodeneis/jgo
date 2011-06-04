@@ -41,27 +41,33 @@ trait SimpleStmts extends Expressions with Symbols with GrowablyScoped with Expr
   lazy val incOrDecStmt: Rule[CodeBuilder] =        "increment or decrement statement" $
     ( expression ~ "++"  ^^ convSuffix(Combinators.incr) //Not sure why the conversion isn't being applied implicitly,
     | expression ~ "--"  ^^ convSuffix(Combinators.decr) //but don't have the time to find out right now.
-  //| failure("`++' or `--' expected")         
     )
   
   lazy val assignment: Rule[CodeBuilder] =                      "assignment statement" $
     ( exprList ~ "=" ~ exprList  ^^ Combinators.assign
-  /*| expression ~ "+="  ~ expression
-    | expression ~ "-="  ~ expression
-    | expression ~ "|="  ~ expression
-    | expression ~ "^="  ~ expression
-    | expression ~ "*="  ~ expression
-    | expression ~ "/="  ~ expression
-    | expression ~ "%="  ~ expression
-    | expression ~ "<<=" ~ expression
-    | expression ~ ">>=" ~ expression
-    | expression ~ "&="  ~ expression
-    | expression ~ "&^=" ~ expression*/
+    | expression ~ "+="  ~ expression  ^^ opAssign(Combinators.plus)
+    | expression ~ "-="  ~ expression  ^^ opAssign(Combinators.minus)
+    | expression ~ "|="  ~ expression  ^^ opAssign(Combinators.bitOr)
+    | expression ~ "^="  ~ expression  ^^ opAssign(Combinators.bitXor)
+    | expression ~ "*="  ~ expression  ^^ opAssign(Combinators.times)
+    | expression ~ "/="  ~ expression  ^^ opAssign(Combinators.div)
+    | expression ~ "%="  ~ expression  ^^ opAssign(Combinators.mod)
+    | expression ~ "<<=" ~ expression  ^^ opAssign(Combinators.shiftL)
+    | expression ~ ">>=" ~ expression  ^^ opAssign(Combinators.shiftR)
+    | expression ~ "&="  ~ expression  ^^ opAssign(Combinators.bitAnd)
+    | expression ~ "&^=" ~ expression  ^^ opAssign(Combinators.bitAndNot)
     )
   
   lazy val shortVarDecl: Rule[CodeBuilder] =              "short variable declaration" $
     identPosList ~ ":=" ~ exprList  ^^ declAssign
   
+  
+  private def opAssign(f: (Expr, Expr) => Pos => M[Expr])(leftM: M[Expr], pos: Pos, rightM: M[Expr]) =
+    for {
+      (left, right) <- (leftM, rightM)
+      target <- f(left, right)(pos)
+      result <- Combinators.assign(left, target)(pos)
+    } yield result
   
   private def declAssign(left: List[(String, Pos)], eqPos: Pos, rightM: M[List[Expr]]): M[CodeBuilder] = 
     rightM flatMap { right =>

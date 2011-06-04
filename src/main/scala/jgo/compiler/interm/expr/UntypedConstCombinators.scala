@@ -15,12 +15,6 @@ trait UntypedConstCombinators extends Combinators {
     TypedBoolConst(b, scope.UniverseScope.bool)
   
   
-  def const(e: Expr) (implicit pos: Pos) = e match {
-    case c: ConstExpr => Result(c)
-    case _ => Problem("expression must be constant")
-  }
-  
-  
   abstract override def and(e1: Expr, e2: Expr) (implicit pos: Pos) = (e1, e2) match {
     case (UntypedBoolConst(b1), UntypedBoolConst(b2)) => UntypedBoolConst(b1 && b2)
     case _ => super.and(e1, e2)
