@@ -132,25 +132,27 @@ trait LvalCombinators extends Combinators with TypeChecks {
     Result(res reverse)
   }
   
-  private def checkAssignability(pairs: List[(Expr, Expr)]) (implicit pos: Pos): M[Unit] = 
-    if (pairs.length == 1) {
-      val (l, r) = pairs(1)
-      if (l.typeOf <<= r.typeOf) Result(())
-      else Problem("right side has type %s not assignable to left side's type %s", l.typeOf, r.typeOf)
+  private def checkAssignAndConvert(e: Expr, t: Type) (implicit pos: Pos): M[Expr] =
+    convertForAssign(e, t, "right side") //"right side has type %s not assignable..."
+  
+  private def checkAssignAndConvert(ets: List[(Expr, Type)]) (implicit pos: Pos): M[List[Expr]] = 
+    if (ets.length == 1) {
+      val (e, t) = ets(0) //ets := plural of (e, t), so to speak. That's where the name comes from.
+      checkAssignAndConvert(e, t) map (_ :: Nil)
     } else {
-      var res = M(())
-      for (((l, r), i) <- pairs zipWithIndex; if !(l.typeOf <<= r.typeOf))
-        res = res then Problem(
-          "%s value on right side of assignment has type %s not assignable to corresponding " +
-          "target type %s", ordinal(i + 1), r.typeOf, l.typeOf)
+      val res: M[List[Expr]] = //conversion!
+        for (((e, t), i) <- ets zipWithIndex)
+        yield convertForAssign(e, t, "%s expression on right side" format ordinal(i + 1))
       res
     }
   
-  def assign(left0: List[Expr], right: List[Expr]) (implicit pos: Pos): M[CodeBuilder] =
+  def assign(lefts0: List[Expr], rights0: List[Expr]) (implicit pos: Pos): M[CodeBuilder] =
     for {
-      left <- lvalues(left0, "left side of assignment")
-      pairs <- zipAndCheckArity(left, right)
-      _ <- checkAssignability(pairs)
+      lefts <- lvalues(lefts0, "left side of assignment")
+      rls <- zipAndCheckArity(rights0, lefts)
+      rts = rls map { case (r, l) => (r, l.typeOf) }
+      rights <- checkAssignAndConvert(rts)
+      pairs = lefts zip rights
     } yield {
       val (leftCode, rightCode) = (pairs foldLeft (CodeBuilder.empty, CodeBuilder.empty)) {
         //TODO: Add code that converts r.eval to the appropriate type
@@ -159,7 +161,7 @@ trait LvalCombinators extends Combinators with TypeChecks {
       leftCode |+| rightCode
     }
   
-  def assign(left0: Expr, right: Expr) (implicit pos: Pos): M[CodeBuilder] =
-    for ((left, rightConv) <- (lval(left0, "left side of assignment"), convertForAssign(right, left0.typeOf)))
-    yield left.store(rightConv.eval)
+  def assign(left0: Expr, right0: Expr) (implicit pos: Pos): M[CodeBuilder] =
+    for ((left, right) <- (lval(left0, "left side of assignment"), checkAssignAndConvert(right0, left0.typeOf)))
+    yield left.store(right.eval)
 }

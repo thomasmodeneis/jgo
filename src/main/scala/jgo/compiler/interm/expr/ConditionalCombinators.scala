@@ -28,19 +28,19 @@ trait ConditionalCombinators extends Combinators with TypeChecks {
   
   
   def compEq(e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr] =
-    for (t <- sameType(e1, e2))
+    for ((e1, e2, t) <- sameType(e1, e2))
     yield t.underlying match {
-      case BoolType => BoolEquals(e1, e2)
+      case BoolType        => BoolEquals(e1, e2)
       case nt: NumericType => NumEquals(e1, e2, nt)
-      case _ => ObjEquals(e1, e2)
+      case _               => ObjEquals(e1, e2)
     }
   
   def compNe(e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr] =
-    for (t <- sameType(e1, e2))
+    for ((e1s, e2s, t) <- sameType(e1, e2))
     yield t.underlying match {
-      case BoolType        => BoolNotEquals(e1, e2)
-      case nt: NumericType => NumNotEquals(e1, e2, nt)
-      case _ => ObjNotEquals(e1, e2)
+      case BoolType        => BoolNotEquals(e1s, e2s)
+      case nt: NumericType => NumNotEquals(e1s, e2s, nt)
+      case _               => ObjNotEquals(e1s, e2s)
     }
   
   //TODO:  Add support for comparing strings.  Low priority.

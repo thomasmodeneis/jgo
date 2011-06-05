@@ -14,8 +14,8 @@ trait ConstTypeCheckOverrides extends TypeChecks {
     case _ => super.condExpr(e, desc)
   }
   
-  protected override def same[T <: UnderType](e1: Expr, e2: Expr)
-                                             (f: (Expr, String) => M[T])
+  protected override def same[T <: Type](f: (Expr, String) => M[T])
+                                             (e1: Expr, e2: Expr)
                                              (implicit pos: Pos) =
     (e1, e2) match {
       case (e, u: UntypedConst) =>
@@ -36,6 +36,6 @@ trait ConstTypeCheckOverrides extends TypeChecks {
         for ((eLeft, t) <- (eLeftM, f(e, "right operand")))
         yield (eLeft, e, t)
       
-      case _ => super.same(e1, e2)(f)
+      case _ => super.same(f)(e1, e2)
     }
 }

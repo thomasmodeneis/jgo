@@ -57,7 +57,7 @@ trait Combinators {
   
   def assignableTo(e: Expr, targetType: Type) (implicit pos: Pos): M[Expr]
   
-  def convertForAssign(e: Expr, t: Type) (implicit pos: Pos): M[Expr]
+  protected def convertForAssign(e: Expr, t: Type, desc: String) (implicit pos: Pos): M[Expr]
   def convert(e: Expr, t: Type) (implicit pos: Pos): M[Expr]
   
   def constant   (e: Expr) (implicit pos: Pos): M[ConstExpr]
@@ -125,7 +125,7 @@ object Combinators {
   
   def assignableTo(e: Expr, t: Type)(pos: Pos): M[Expr] = c.assignableTo(e, t)(pos)
   
-  def convertForAssign(e: Expr, t: Type)(pos: Pos): M[Expr] = c.convertForAssign(e, t)(pos)
+  //def convertForAssign(e: Expr, t: Type)(pos: Pos): M[Expr] = c.convertForAssign(e, t)(pos)
   def convert(e: Expr, t: Type)(pos: Pos): M[Expr] = c.convert(e, t)(pos)
   
   def constant   (e: Expr)(pos: Pos): M[ConstExpr] = c.constant(e)(pos)

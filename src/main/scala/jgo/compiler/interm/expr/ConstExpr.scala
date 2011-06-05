@@ -174,7 +174,7 @@ sealed trait UntypedConst extends ConstExpr {
    * if we used a `val` here.
    */
   lazy val typeOf: Type = new UntypedConstType {
-    def canFitIn(t: UnderType) = { println("can fit in"); UntypedConst.this.canFitIn(t) }
+    def canFitIn(t: UnderType) = UntypedConst.this.canFitIn(t)
     def default = defaultType
   }
   

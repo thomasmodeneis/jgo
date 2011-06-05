@@ -26,6 +26,8 @@ trait Type extends Membered {
    * Except for type aliases (named types that are guaranteed never to
    * have any methods of their own), every type has itself as its
    * effective type.
+   * 
+   * @todo make above definition more clear
    */
   def effective: Type
   

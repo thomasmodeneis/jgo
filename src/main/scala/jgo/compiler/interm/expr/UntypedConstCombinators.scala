@@ -11,6 +11,15 @@ trait UntypedConstCombinators extends Combinators {
   //defined in jgo.compiler.package as M
   //private implicit def wrapInResult[T](v: T): M[T] = Result(v)
   
+  protected abstract override def convertForAssign(e: Expr, t: Type, desc: String) (implicit pos: Pos) = e match {
+    case c: UntypedConst => c.withType(t) match {
+      case Some(typedConst) => Result(typedConst)
+      case None => Problem("%s %s is incompatible with target type %s", desc, c.valueString, t)
+    }
+    case _ => super.convertForAssign(e, t, desc)
+  }
+  
+  
   private def boolConst(b: Boolean) =
     TypedBoolConst(b, scope.UniverseScope.bool)
   
