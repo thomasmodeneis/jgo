@@ -8,7 +8,7 @@ import instr.TypeConversions._
 import codeseq._
 
 trait ConstTypeCheckOverrides extends TypeChecks {
-  protected override def condExpr(e: Expr, desc: String) (implicit pos: Pos) = e match {
+  protected override def condExpr(e: Expr, desc: String)(implicit pos: Pos) = e match {
     case TypedBoolConst(b, t) => Result(new CondValueExpr(PushBool(b), t))
     case UntypedBoolConst(b)  => Result(new CondValueExpr(PushBool(b), scope.UniverseScope.bool))
     case _ => super.condExpr(e, desc)
