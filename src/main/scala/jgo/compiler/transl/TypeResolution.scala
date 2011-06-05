@@ -17,6 +17,19 @@ trait TypeResolution {
   implicit def class2asmType(cl: Class[_]) = AsmType.getType(cl)
   implicit def desc2asmType(desc: String)  = AsmType.getType(desc)
   
+  def toAsmType(t: Type): AsmType = t match {
+    case BoolType       => BOOLEAN_TYPE
+    case Int8  | Uint8  => BYTE_TYPE
+    case Int16          => SHORT_TYPE
+    case Uint16         => CHAR_TYPE
+    case Int32 | Uint32 => INT_TYPE
+    case Int64 | Uint64 => LONG_TYPE
+    case Float32        => FLOAT_TYPE
+    case Float64        => DOUBLE_TYPE
+    
+    case StringType => getObjectType("java/lang/String")
+  }
+  
   def toAsmType(t: StackType): AsmType = t match {
     case Bool      => BOOLEAN_TYPE
     case I8  | U8  => BYTE_TYPE

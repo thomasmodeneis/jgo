@@ -15,6 +15,7 @@ import org.objectweb.asm
 import asm.{ClassWriter, ClassVisitor, MethodVisitor, Label => AsmLabel, Type => AsmType}
 import asm.commons.{GeneratorAdapter, InstructionAdapter, Method => AsmMethod}
 import asm.Opcodes._
+import AsmType._
 
 import scala.collection.{mutable => mut}
 
@@ -46,18 +47,30 @@ trait FunctionTranslation extends TypeResolution {
     val lbls: mut.Map[Label, AsmLabel] = mut.Map.empty
     implicit def getLbl(l: Label) = lbls.getOrElseUpdate(l, new AsmLabel)
     
-    import mv._
+    type AsmLocal = Int
+    val locals: mut.Map[LocalVar, AsmLocal] = mut.Map.empty
+    val localStart: mut.Map[LocalVar, AsmLabel] = mut.Map.empty
+    
+    val iv = new InstructionAdapter(mv)
+    import iv.{mv => _, _}
+    
+    def not(t: Integral) {
+      t match {
+        case I64 | U64 => neg(LONG_TYPE);    lconst(-1); sub(LONG_TYPE)
+        case t         => neg(toAsmType(t)); iconst(-1); sub(INT_TYPE)
+      }
+    }
     
     val start, end = new AsmLabel
     mark(start)
     code foreach {
-      case PushStr(s)            => push(s)
-      case PushInt(i, I64 | U64) => push(i.toLong)
-      case PushInt(i, _)         => push(i.toInt)
-      case PushFloat(d, F64)     => push(d.toDouble)
-      case PushFloat(d, F32)     => push(d.toFloat)
-      case PushBool(b)           => push(b)
-      case PushNil               => push(null: String) // I think this works
+      case PushStr(s)            => mv.push(s)
+      case PushInt(i, I64 | U64) => mv.push(i.toLong)
+      case PushInt(i, _)         => mv.push(i.toInt)
+      case PushFloat(d, F64)     => mv.push(d.toDouble)
+      case PushFloat(d, F32)     => mv.push(d.toFloat)
+      case PushBool(b)           => mv.push(b)
+      case PushNil               => mv.push(null: String) // I think this works
       
       case Pop       => pop()
       case Dup       => dup()
@@ -72,20 +85,44 @@ trait FunctionTranslation extends TypeResolution {
           i += 1
         }
       
-      case Lbl(l)  => mark(l)
+      case Lbl(l)  => mv.mark(l)
       case Goto(l) => goTo(l)
       
       case PrintString =>
-        getStatic(classOf[System], "out", classOf[java.io.PrintStream])
+        mv.getStatic(classOf[System], "out", classOf[java.io.PrintStream])
         swap()
-        invokeVirtual(classOf[java.io.PrintStream], new AsmMethod("println", "(Ljava/lang/String;)V"))
+        mv.invokeVirtual(classOf[java.io.PrintStream], new AsmMethod("println", "(Ljava/lang/String;)V"))
       case PrintNumeric(I32) =>
-        getStatic(classOf[System], "out", classOf[java.io.PrintStream])
+        mv.getStatic(classOf[System], "out", classOf[java.io.PrintStream])
         swap()
-        invokeVirtual(classOf[java.io.PrintStream], new AsmMethod("println", "(I)V"))
+        mv.invokeVirtual(classOf[java.io.PrintStream], new AsmMethod("println", "(I)V"))
+      
+      case Decl(v) =>
+        localStart(v) = mv.mark()
+        locals(v) = mv.newLocal(toAsmType(v.typeOf))
+      case Undecl(v) =>
+        val endLbl = mv.mark()
+        mv.visitLocalVariable(v.name, typeDesc(v.typeOf), null, localStart(v), endLbl, locals(v))
+        locals -= v //cause error on invalid ref to v
+      
+      case Add(t) => add(toAsmType(t))
+      case Sub(t) => sub(toAsmType(t))
+      case Mul(t) => mul(toAsmType(t))
+      case Div(t) => div(toAsmType(t))
+      
+      case Mod(t) => rem(toAsmType(t))
+      
+      case Neg(t)          => neg(toAsmType(t))
+      case BitwiseCompl(t) => not(t)
+      
+      case BitwiseAnd(t: Integral)    => and(toAsmType(t))
+      case BitwiseOr(t: Integral)     => or(toAsmType(t))
+      case BitwiseAndNot(t: Integral) => not(t); and(toAsmType(t))
+      case BitwiseXor(t: Integral)    => xor(toAsmType(t))
+      
     }
-    returnValue() //Be sure to refine this to the correct behavior.
-    mark(end)
+    mv.returnValue() //Be sure to refine this to the correct behavior.
+    mv.mark(end)
   }
 }
 
