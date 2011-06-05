@@ -58,11 +58,13 @@ trait Statements extends Expressions
     | failure("not a statement")
     )
   
-  def procPrintStmt(pos: Pos, eM: M[Expr]) =
-    eM flatMap {
-      case s OfType (StringType)     => Result(Combinators.eval(s) |+| PrintString)
-      case n OfType (t: NumericType) => Result(Combinators.eval(n) |+| PrintNumeric(t))
-      case HasType(t) => Problem("not a printable type: %s", t)(pos)
+  /** temporary hack to permit testing of generated programs */
+  private def procPrintStmt(pos: Pos, eErr: Err[Expr]) =
+    eErr flatMap {
+      case s OfType (StringType)     => result(Combinators.eval(s)    |+| PrintString)
+      case n OfType (t: NumericType) => result(Combinators.eval(n)    |+| PrintNumeric(t))
+      case u: UntypedConst           => result(PushStr(u.valueString) |+| PrintString) //hack within a hack!
+      case HasType(t) => problem("not a printable type: %s", t)(pos)
     }
   
   lazy val block: Rule[CodeBuilder] =                                                      "block" $
@@ -78,7 +80,7 @@ trait Statements extends Expressions
       )
     }
   
-  lazy val label: Parser[(String, M[UserLabel])]=                                          "label" $
+  lazy val label: Parser[(String, Err[UserLabel])]=                                          "label" $
     ident ~ ":"  ^^ defLabel 
   
   
@@ -161,49 +163,49 @@ trait Statements extends Expressions
   
   
   lazy val stmtList: Rule[List[CodeBuilder]] =                                    "statement list" $
-    repWithSemi(statement) ^^ { implicitly[List[M[CodeBuilder]] => M[List[CodeBuilder]]] }
+    repWithSemi(statement) ^^ { implicitly[List[Err[CodeBuilder]] => Err[List[CodeBuilder]]] }
   
   
   
-  private def makeBlock(stmtsM: M[List[CodeBuilder]], undeclCode: CodeBuilder) =
-    for (stmts <- stmtsM)
+  private def makeBlock(stmtsErr: Err[List[CodeBuilder]], undeclCode: CodeBuilder) =
+    for (stmts <- stmtsErr)
     yield (stmts foldLeft CodeBuilder()) { _ |+| _ } |+| undeclCode
   
-  private def makeValueReturn(pos: Pos, lsM: M[List[Expr]]): M[CodeBuilder] =
-    lsM flatMap { ls =>
+  private def makeValueReturn(pos: Pos, esErr: Err[List[Expr]]): Err[CodeBuilder] =
+    esErr flatMap { ls =>
       if (ls.length != funcContext.resultTypes.length)
-        return Problem("wrong number of results %d, expected %d", ls.length, funcContext.resultTypes.length)(pos)
+        return problem("wrong number of results %d, expected %d", ls.length, funcContext.resultTypes.length)(pos)
       
       var code = CodeBuilder.empty
       for (((e, t), i) <- ls zip resultTypes zipWithIndex) {
         if (!(t <<= e.typeOf))
-          return Problem("type %s of %s expression not assignable to corresponding result type %s",
+          return problem("type %s of %s expression not assignable to corresponding result type %s",
                          e.typeOf, ordinal(i), t)(pos)
         code = code |+| Combinators.eval(e)
       }
-      code |+| ValueReturn
+      result(code |+| ValueReturn)
     }
   
-  private def makeReturn(pos: Pos): M[CodeBuilder] = {
+  private def makeReturn(pos: Pos): Err[CodeBuilder] = {
     if (funcContext.resultTypes != Nil && !funcContext.hasNamedResults)
-      return Problem("expressionless return illegal, since function isn't void"
+      return problem("expressionless return illegal, since function isn't void"
                      + " and doesn't have named results")(pos)
-    Result(Return)
+    result(Return)
   }
   
   private def makeIfStmt(
-      initUgly:   Option[M[CodeBuilder]],
-      testWPos:   (M[Expr], Pos),
-      bodyM:      M[CodeBuilder],
-      elseUgly:   Option[M[CodeBuilder]],
-      undeclCode: CodeBuilder
-  ): M[CodeBuilder] = {
-    val initM: M[Option[CodeBuilder]] = initUgly
-    val elseM: M[Option[CodeBuilder]] = elseUgly
-    val (testM, testPos) = testWPos
+      initUgly:    Option[Err[CodeBuilder]],
+      testErrWPos: (Err[Expr], Pos),
+      bodyErr:     Err[CodeBuilder],
+      elseUgly:    Option[Err[CodeBuilder]],
+      undeclCode:  CodeBuilder
+  ): Err[CodeBuilder] = {
+    val initErr = Err.liftOpt(initUgly)
+    val elseErr = Err.liftOpt(elseUgly)
+    val (testErr, testPos) = testErrWPos
     
     for {
-      (init, test, body, els) <- (initM, testM, bodyM, elseM)
+      (init, test, body, els) <- (initErr, testErr, bodyErr, elseErr)
       cond <- Combinators.conditional(test)(testPos)
     } yield init |+| (els match {
       case None           => cond.mkIf(body)
@@ -211,33 +213,33 @@ trait Statements extends Expressions
     }) |+| undeclCode
   }
   
-  private def makeInfLoop(bodyM: M[CodeBuilder]) = 
-    for (body <- bodyM)
+  private def makeInfLoop(bodyErr: Err[CodeBuilder]) = 
+    for (body <- bodyErr)
     yield (brk: Label, cont: Label) => Lbl(cont) |+| body |+| Goto(cont) |+| Lbl(brk)
   
-  private def makeWhile(testWPos: (M[Expr], Pos), bodyM: M[CodeBuilder]) = {
-    val (testM, testPos) = testWPos
+  private def makeWhile(testErrWPos: (Err[Expr], Pos), bodyErr: Err[CodeBuilder]) = {
+    val (testErr, testPos) = testErrWPos
     for {
-      (test, body) <- (testM, bodyM)
+      (test, body) <- (testErr, bodyErr)
       cond <- Combinators.conditional(test)(testPos)
     } yield cond.mkWhile(body) _
   }
   
   private def makeFor(
-      initUgly:   Option[M[CodeBuilder]],
-      testWPos:   (Option[M[Expr]], Pos),
-      incrUgly:   Option[M[CodeBuilder]],
-      bodyM:      M[CodeBuilder],
-      undeclCode: CodeBuilder
+      initUgly:     Option[Err[CodeBuilder]],
+      testUglyWPos: (Option[Err[Expr]], Pos),
+      incrUgly:     Option[Err[CodeBuilder]],
+      bodyErr:      Err[CodeBuilder],
+      undeclCode:   CodeBuilder
   ) = {
-    val initM: M[Option[CodeBuilder]] = initUgly
-    val incrM: M[Option[CodeBuilder]] = incrUgly
-    val (testUgly, testPos) = testWPos
+    val initErr = Err.liftOpt(initUgly)
+    val incrErr = Err.liftOpt(incrUgly)
+    val (testUgly, testPos) = testUglyWPos
     
     testUgly match {
-      case Some(testM) =>
+      case Some(testErr) =>
         for {
-          (init, test, incr, body) <- (initM, testM, incrM, bodyM)
+          (init, test, incr, body) <- (initErr, testErr, incrErr, bodyErr)
           cond <- Combinators.conditional(test)(testPos)
         } yield { (brk: Label, cont: Label) =>
           //an (old) implicit conversion turns incr into a CodeBuilder
@@ -246,7 +248,7 @@ trait Statements extends Expressions
         }
       
       case None =>
-        for ((init, incr, body) <- (initM, incrM, bodyM))
+        for ((init, incr, body) <- (initErr, incrErr, bodyErr))
         yield { (brk: Label, cont: Label) =>
           val top  = new Label("top of forever")
           init |+| Lbl(top) |+| body |+| Lbl(cont) |+| incr |+| Goto(top) |+| Lbl(brk) |+| undeclCode

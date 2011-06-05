@@ -8,20 +8,25 @@ import instr.TypeConversions._
 import codeseq._
 
 trait UntypedConstCombinators extends Combinators {
-  //defined in jgo.compiler.package as M
-  //private implicit def wrapInResult[T](v: T): M[T] = Result(v)
-  
-  protected abstract override def convertForAssign(e: Expr, t: Type, desc: String)(pos: Pos) = e match {
-    case c: UntypedConst => c.withType(t) match {
-      case Some(typedConst) => Result(typedConst)
-      case None => Problem("%s %s is incompatible with target type %s", desc, c.valueString, t)(pos)
-    }
-    case _ => super.convertForAssign(e, t, desc)(pos)
-  }
-  
+  private implicit def wrapInResult[T](v: T): Err[T] = result(v)
   
   private def boolConst(b: Boolean) =
     TypedBoolConst(b, scope.UniverseScope.bool)
+  
+  
+  abstract override def eval(e: Expr): CodeBuilder = e match {
+    case c: UntypedConst => CodeBuilder.empty //A statement like "5;" should generate no code.
+    case _ => super.eval(e)
+  }
+  
+  
+  protected abstract override def convertForAssign(e: Expr, t: Type, desc: String)(pos: Pos) = e match {
+    case c: UntypedConst => c.withType(t) match {
+      case Some(typedConst) => result(typedConst)
+      case None => problem("%s %s is incompatible with target type %s", desc, c.valueString, t)(pos)
+    }
+    case _ => super.convertForAssign(e, t, desc)(pos)
+  }
   
   
   abstract override def and(e1: Expr, e2: Expr)(pos: Pos) = (e1, e2) match {
@@ -163,8 +168,8 @@ trait UntypedConstCombinators extends Combinators {
     case _ => super.bitXor(e1, e2)(pos)
   }
   
-  //def shiftL(e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr]
-  //def shiftR(e1: Expr, e2: Expr) (implicit pos: Pos): M[Expr]
+  //def shiftL(e1: Expr, e2: Expr) (implicit pos: Pos): Err[Expr]
+  //def shiftR(e1: Expr, e2: Expr) (implicit pos: Pos): Err[Expr]
   
   abstract override def bitCompl(e: Expr)(pos: Pos) = e match {
     case UntypedIntegralConst(i) => UntypedIntegralConst(i~) //BigInt defines ~ instead of unary_~. Filed a bug report.

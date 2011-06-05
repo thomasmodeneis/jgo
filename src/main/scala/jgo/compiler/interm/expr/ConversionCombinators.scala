@@ -10,17 +10,17 @@ import codeseq._
 
 trait ConversionCombinators extends Combinators with TypeChecks {
   def assignableTo(e: Expr, t: Type)(pos: Pos) =
-    if (t <<= e.typeOf) Result(e)
-    else Problem("expression of type %s not assignable to target type %s", e.typeOf, t)(pos)
+    if (t <<= e.typeOf) result(e)
+    else problem("expression of type %s not assignable to target type %s", e.typeOf, t)(pos)
   
-  protected def convertForAssign(e: Expr, t: Type, desc: String)(pos: Pos): M[Expr] =
+  protected def convertForAssign(e: Expr, t: Type, desc: String)(pos: Pos): Err[Expr] =
     if (t <<= e.typeOf)
       if (t != NilType)
-        Result(UnderlyingExpr(e.evalUnder, t))
+        result(UnderlyingExpr(e.evalUnder, t))
       else
-        Result(EvalExpr(PushNil, t))
+        result(EvalExpr(PushNil, t))
     else
-      Problem("%s of type %s not assignable to target type %s", desc, e.typeOf, t)(pos)
+      problem("%s of type %s not assignable to target type %s", desc, e.typeOf, t)(pos)
   
   def convert(e: Expr, t: Type)(pos: Pos) =
     throw new UnsupportedOperationException

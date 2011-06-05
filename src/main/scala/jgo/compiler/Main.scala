@@ -19,16 +19,16 @@ object Main extends App {
   val scanner = Scanner(file)
   val pkg = Package("package") //add processing of pkg name later
   val comp = new CompilationUnitCompiler(pkg, scanner) with ExceptionTracing
-  val intermM = comp.compile
+  val intermErr = comp.compile
   
-  intermM match {
+  intermErr match {
     case Result(interm) =>
       println("intermediate form:\n" + interm)
       val outputBytes = new PkgTranslator(interm).outputBytes
       //he should be closed properly, but we'll just hope the JVM takes care of it
       new FileOutputStream(args(1)).write(outputBytes)
     
-    case Problem(errs) =>
+    case Problems(errs) =>
       errs foreach { err => println(err.longString); println() }
   }
 }

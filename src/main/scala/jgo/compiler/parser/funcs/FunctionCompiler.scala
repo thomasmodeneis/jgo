@@ -29,13 +29,12 @@ final class FunctionCompiler(funcName: String, sig: Signature, encl: Scope, inAt
   for (result <- sig.namedResults)
     growable.put(result.name, result)
   
-  lazy val compile: M[FunctionInterm] = {
-    val codeBuilderM = parse.block(inAtBrace) match {
-      case Success(codeBuilderM, _) => codeBuilderM
-      case NoSuccess(msg, in) => Problem("syntax error in function %s: %s", funcName, msg)(in.pos)
+  lazy val compile: Err[FunctionInterm] = {
+    val codeBuilderErr = parse.block(inAtBrace) match {
+      case Success(codeBuilderErr, _) => codeBuilderErr
+      case NoSuccess(msg, in) => problem("syntax error in function %s: %s", funcName, msg)(in.pos)
     }
-    
-    for (codeBuilder <- codeBuilderM) yield
+    for (codeBuilder <- codeBuilderErr) yield
       new FunctionInterm(target, sig, codeBuilder.result)
   }
 }

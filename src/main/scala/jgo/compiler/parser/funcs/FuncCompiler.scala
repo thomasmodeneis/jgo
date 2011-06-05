@@ -19,7 +19,7 @@ abstract class FuncCompiler extends FuncContext {
   def target: Func
   def hasNamedResults: Boolean
   
-  def compile: M[FuncInterm]
+  def compile: Err[FuncInterm]
   
   def targetFuncType = target.typeOf
 }

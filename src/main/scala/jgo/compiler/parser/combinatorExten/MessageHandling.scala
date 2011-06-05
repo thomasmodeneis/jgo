@@ -2,16 +2,14 @@ package jgo.compiler
 package parser
 package combinatorExten
 
-import jgo.compiler.interm._
 import jgo.compiler.util._
 
 import scala.collection.mutable.ListBuffer
 import scala.util.parsing.combinator.Parsers
-import scala.util.parsing.input.{Positional, Position, NoPosition}
-import scala.util.control.ControlThrowable
+import scala.util.parsing.input.NoPosition
 
 trait MessageHandling extends Parsers {
-  private var position: Position = NoPosition
+  private var position: Pos = NoPosition
   
   private var errs:  List[ErrorMsg]   = Nil
   private var warns: List[WarningMsg] = Nil
@@ -23,26 +21,26 @@ trait MessageHandling extends Parsers {
       case n: NoteMsg    => nts   ::= n
   }
   
-  def recordErr(msg: String, args: Any*) {
+  def recordErr(msg: String, args: Any*)(pos: Pos) {
     val s = msg.format(args: _*)
-    errs ::= ErrorMsg(s).setPos(position)
+    errs ::= ErrorMsg(s, pos)
   }
   
-  def recordWarn(msg: String, args: Any*) {
+  def recordWarn(msg: String, args: Any*)(pos: Pos) {
     val s = msg.format(args: _*)
-    warns ::= WarningMsg(s).setPos(position)
+    warns ::= WarningMsg(s, pos)
   }
   
-  def recordNote(msg: String, args: Any*) {
+  def recordNote(msg: String, args: Any*)(pos: Pos) {
     val s = msg.format(args: _*)
-    nts ::= NoteMsg(s).setPos(position)
+    nts ::= NoteMsg(s, pos)
   }
   
   def hasErrs: Boolean = !errs.isEmpty
   
-  def errors   = errs  reverse
-  def warnings = warns reverse
-  def notes    = nts   reverse
+  def errors   = errs.reverse
+  def warnings = warns.reverse
+  def notes    = nts.reverse
   
   def messages = errs reverse_::: warns reverse_::: notes.reverse
   
@@ -54,12 +52,4 @@ trait MessageHandling extends Parsers {
         r
       case r => r
     }
-  
-  /*
-  abstract override def Parser[T](f: Input => ParseResult[T]): Parser[T] =
-    super.Parser(wrap(f))
-  
-  abstract override def OnceParser[T](f: Input => ParseResult[T]): OnceParser[T] =
-    super.OnceParser(wrap(f))
-  */
 }

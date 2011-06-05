@@ -4,8 +4,7 @@ import scala.util.parsing.input.{Position, NoPosition}
 import scala.util.parsing.combinator._
 
 package object compiler {
-  type M[+T] = messaged.Messaged[T]
-  type Pos   = Position
+  type Pos = Position
   
   def ordinal(n: Int): String = {
     require(n >= 0)
@@ -35,43 +34,34 @@ package object compiler {
     }
   }
   
+  def result[T](v: T): Err[T] = Result(v)
+  
+  def problem[T](msg: String, args: Any*)(implicit pos: Pos): Err[T] =
+    Problems.one(msg, args)(pos)
   
   /**
    * Wraps the provided value in a Result.
-   * This method has result type M[T] so that
+   * This method has result type Err[T] so that
    * type inference behaves properly in cases like this:
    * {{{
-   * (ls: List[M[Unit]]) => (ls foldLeft M(())) { _ then _ }
+   * (ls: List[Err[Unit]]) => (ls foldLeft M(())) { _ then _ }
    * }}}
    */
-  implicit def M[T](t: T): M[T] = messaged.Result(t)
+  //implicit def Err[T](t: T): Err[T] = messaged.Result(t)
   
-  //val M = messaged.Messaged
-  val Result  = messaged.Result
-  val Problem = messaged.Problem
-  
-  type Result[+T] = messaged.Result[T]
-  type Problem    = messaged.Problem
-  
-  @deprecated("use mTupled2 instead", "early May, 2011")
-  def together2[A, B]   (a: M[A], b: M[B])          = messaged.Messaged.together(a, b)
-  
-  @deprecated("use mTupled3 instead", "early May, 2011")
-  def together3[A, B, C](a: M[A], b: M[B], c: M[C]) = messaged.Messaged.together(a, b, c)
-  
-  implicit def mTupled2[A, B](v: (M[A], M[B])) = v match {
-    case (a, b) => messaged.Messaged.together(a, b)
+  implicit def errTupled2[A, B](v: (Err[A], Err[B])) = v match {
+    case (a, b) => Err.together(a, b)
   }
   
-  implicit def mTupled3[A, B, C](v: (M[A], M[B], M[C])) = v match {
-    case (a, b, c) => messaged.Messaged.together(a, b, c)
+  implicit def errTupled3[A, B, C](v: (Err[A], Err[B], Err[C])) = v match {
+    case (a, b, c) => Err.together(a, b, c)
   }
   
-  implicit def mTupled4[A, B, C, D](v: (M[A], M[B], M[C], M[D])) = v match {
-    case (a, b, c, d) => messaged.Messaged.together(a, b, c, d)
+  implicit def errTupled4[A, B, C, D](v: (Err[A], Err[B], Err[C], Err[D])) = v match {
+    case (a, b, c, d) => Err.together(a, b, c, d)
   }
   
-  implicit def mTupled5[A, B, C, D, E](v: (M[A], M[B], M[C], M[D], M[E])) = v match {
-    case (a, b, c, d, e) => messaged.Messaged.together(a, b, c, d, e)
+  implicit def errTupled5[A, B, C, D, E](v: (Err[A], Err[B], Err[C], Err[D], Err[E])) = v match {
+    case (a, b, c, d, e) => Err.together(a, b, c, d, e)
   }
 }

@@ -18,7 +18,7 @@ trait Symbols extends Base with Scoped {
     ident ^? scope ^? { case v: Function => v }
   
   /*lazy val onlyConstSymbol: Parser[ConstSymbol] =      "const symbol" $
-    ident ^? scope ^? { case c: ConstSymbol =? c } */
+    ident ^? scope ^? { case c: ConstSymbol => c } */
   
   lazy val onlyPkgSymbol:   Parser[Package] =          "package symbol" $
     ident ^? scope ^? { case p: Package => p }
@@ -31,50 +31,50 @@ trait Symbols extends Base with Scoped {
     withPos(ident) ^^ (getSymbol _).tupled //Really, compiler?  Really?
   
   lazy val valueSymbol: Rule[ValueSymbol] =
-     withPos(symbol) ^^ { case (sM, p) =>
-      sM flatMap {
-        case v: ValueSymbol => Result(v)
-        case s              => Problem("not a value: %s", s)(p)
+     withPos(symbol) ^^ { case (sErr, p) =>
+      sErr flatMap {
+        case v: ValueSymbol => result(v)
+        case s              => problem("not a value: %s", s)(p)
       }
     }
   
   lazy val constSymbol: Rule[ConstSymbol] =
-    withPos(symbol) ^^ { case (sM, p) =>
-      sM flatMap {
-        case c: ConstSymbol => Result(c)
-        case s              => Problem("not a constant: %s", s)(p)
+    withPos(symbol) ^^ { case (sErr, p) =>
+      sErr flatMap {
+        case c: ConstSymbol => result(c)
+        case s              => problem("not a constant: %s", s)(p)
       }
     }
   
   lazy val varSymbol: Rule[Variable] =
-    withPos(symbol) ^^ { case (sM, p) =>
-      sM flatMap {
-        case v: Variable => Result(v)
-        case s           => Problem("not a variable: %s", s)(p)
+    withPos(symbol) ^^ { case (sErr, p) =>
+      sErr flatMap {
+        case v: Variable => result(v)
+        case s           => problem("not a variable: %s", s)(p)
       }
     }
   
   lazy val funcSymbol: Rule[Function] =
-    withPos(symbol) ^^ { case (sM, p) =>
-      sM flatMap {
-        case f: Function => Result(f)
-        case s           => Problem("not a global function: %s", s)(p)
+    withPos(symbol) ^^ { case (sErr, p) =>
+      sErr flatMap {
+        case f: Function => result(f)
+        case s           => problem("not a global function: %s", s)(p)
       }
     }
   
   lazy val pkgSymbol: Rule[Package] =
-    withPos(symbol) ^^ { case (sM, p) =>
-      sM flatMap {
-        case pkg: Package => Result(pkg)
-        case s            => Problem("not a package: %s", s)(p)
+    withPos(symbol) ^^ { case (sErr, p) =>
+      sErr flatMap {
+        case pkg: Package => result(pkg)
+        case s            => problem("not a package: %s", s)(p)
       }
     }
   
   lazy val typeSymbol: Rule[TypeSymbol] =
-    withPos(symbol) ^^ { case (sM, p) =>
-      sM flatMap {
-        case t: TypeSymbol => Result(t)
-        case s             => Problem("not a type: %s", s)(p)
+    withPos(symbol) ^^ { case (sErr, p) =>
+      sErr flatMap {
+        case t: TypeSymbol => result(t)
+        case s             => problem("not a type: %s", s)(p)
       }
     }
   
@@ -83,18 +83,16 @@ trait Symbols extends Base with Scoped {
     opt(ident <~ ".") ~ ident
   
   
-  def getSymbol(name: String, p: Pos): M[Symbol] = scope.get(name) match {
-    case Some(s) => Result(s)
-    case None    => Problem("symbol not found: %s", name)(p)
+  def getSymbol(name: String, p: Pos): Err[Symbol] =
+    Err.fromOption(scope.get(name))("symbol not found: %s", name)(p)
+  
+  def getVariable(name: String, p: Pos): Err[Variable] = getSymbol(name, p) flatMap {
+    case v: Variable => result(v)
+    case _           => problem("not a variable: %s", name)(p)
   }
   
-  def getVariable(name: String, p: Pos): M[Variable] = getSymbol(name, p) flatMap {
-    case v: Variable => Result(v)
-    case _           => Problem("not a variable: %s", name)(p)
-  }
-  
-  def getTypeSymbol(name: String, p: Pos): M[TypeSymbol] = getSymbol(name, p) flatMap {
-    case t: TypeSymbol => Result(t)
-    case _             => Problem("not a type: %s", name)(p)
+  def getTypeSymbol(name: String, p: Pos): Err[TypeSymbol] = getSymbol(name, p) flatMap {
+    case t: TypeSymbol => result(t)
+    case _             => problem("not a type: %s", name)(p)
   }
 }

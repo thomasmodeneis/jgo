@@ -13,37 +13,40 @@ trait ExprUtils {
   protected implicit def convTuple[A, R](f: (A, Pos) => R): ((A, Pos)) => R =
     f.tupled
   
-  protected implicit def convPrefix[A, R](f: A => Pos => M[R]): (Pos ~ M[A]) => M[R] = {
-    case p ~ aM => for {
-      a <- aM
-      res <- f(a)(p)
-    } yield res
-  }
-  
-  protected implicit def convSuffix[A, R](f: A => Pos => M[R]): (M[A] ~ Pos) => M[R] = {
-    case aM ~ p => for {
-      a <- aM
-      res <- f(a)(p)
-    } yield res
-  }
-  
-  protected implicit def convBinary[A, B, R](f: (A, B) => Pos => M[R]): (M[A] ~ Pos ~ M[B]) => M[R] = {
-    case aM ~ p ~ bM => for {
-      (a, b) <- (aM, bM)
-      res <- f(a, b)(p)
-    } yield res
-  }
-  
-  protected implicit def convSlice(f: (Expr, Option[Expr], Option[Expr]) => Pos => M[Expr])
-      : (M[Expr] ~ Pos ~ Option[M[Expr]] ~ Option[M[Expr]]) => M[Expr] = {
-    case e1M ~ p ~ e2Ugly ~ e3Ugly =>
-      val e2M: M[Option[Expr]] = e2Ugly
-      val e3M: M[Option[Expr]] = e3Ugly
+  protected implicit def convPrefix[A, R](f: A => Pos => Err[R]): (Pos ~ Err[A]) => Err[R] = {
+    case p ~ aErr =>
       for {
-        (e1, e2, e3) <- (e1M, e2M, e3M)
+        a <- aErr
+        res <- f(a)(p)
+      } yield res
+  }
+  
+  protected implicit def convSuffix[A, R](f: A => Pos => Err[R]): (Err[A] ~ Pos) => Err[R] = {
+    case aErr ~ p =>
+      for {
+        a <- aErr
+        res <- f(a)(p)
+      } yield res
+  }
+  
+  protected implicit def convBinary[A, B, R](f: (A, B) => Pos => Err[R]): (Err[A] ~ Pos ~ Err[B]) => Err[R] = {
+    case aErr ~ p ~ bErr =>
+      for {
+        (a, b) <- (aErr, bErr)
+        res <- f(a, b)(p)
+      } yield res
+  }
+  
+  protected implicit def convSlice(f: (Expr, Option[Expr], Option[Expr]) => Pos => Err[Expr])
+      : (Err[Expr] ~ Pos ~ Option[Err[Expr]] ~ Option[Err[Expr]]) => Err[Expr] = {
+    case e1Err ~ p ~ e2Ugly ~ e3Ugly =>
+      val e2Err = Err.liftOpt(e2Ugly)
+      val e3Err = Err.liftOpt(e3Ugly)
+      for {
+        (e1, e2, e3) <- (e1Err, e2Err, e3Err)
         res <- f(e1, e2, e3)(p)
       } yield res
   }
   
-  protected def map[A, B](f: A => B): M[A] => M[B] = _ map f
+  protected def map[A, B](f: A => B): Err[A] => Err[B] = _ map f
 }

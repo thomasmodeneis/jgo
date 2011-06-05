@@ -29,8 +29,8 @@ trait Types extends Symbols with Signatures {
   //TODO:  This shouldn't be necessary.  Or should it?  In which case, document.
   //Used by FunctionCompiler and its kin.
   lazy val onlyGoType: Rule[Type] =                                                    "only-type" $
-    ( onlyTypeSymbol  ^^ { _.theType } ^^ M
-    | "(" ~> goType <~ ")"
+    ( onlyTypeSymbol  ^^ (_.theType) ^^ result
+    | "(" ~> onlyGoType <~ ")" //June 5: changed goType => onlyGoType. Not sure why it was goType
     | arrayType
     | structType
     | pointerType
@@ -95,40 +95,43 @@ trait Types extends Symbols with Signatures {
   
   
   
-  private def mkArray(eM: M[Expr], pos: Pos, tM: M[Type]) =
-    (eM, tM) flatMap { case (e, t) =>
+  private def mkArray(eErr: Err[Expr], pos: Pos, tErr: Err[Type]) =
+    (eErr, tErr) flatMap { case (e, t) =>
       e match {
         case IntegralConst(len) =>
-          if (!len.isValidInt) Problem("array length must be representable as an int")(pos)
-          else if (len < 0) Problem("array length must be non-negative")(pos)
-          else Result(ArrayType(len.toInt, t))
-        case _ => Problem("array length must be an integral constant")(pos)
+          if (!len.isValidInt)
+            problem("array length must be representable as an int")(pos)
+          else if (len < 0)
+            problem("array length must be non-negative")(pos)
+          else
+            result(ArrayType(len.toInt, t))
+        case _ => problem("array length must be an integral constant")(pos)
       }
     }
   
-  private def mkMap(kM: M[Type], vM: M[Type]) =
-    for ((k, v) <- (kM, vM)) yield
-      MapType(k, v)
+  private def mkMap(kErr: Err[Type], vErr: Err[Type]) =
+    for ((k, v) <- (kErr, vErr))
+    yield MapType(k, v)
   
-  private def mkChan(recv: Boolean, send: Boolean)(elemTM: M[Type]) = elemTM map { elemT =>
+  private def mkChan(recv: Boolean, send: Boolean)(elemTErr: Err[Type]) = elemTErr map { elemT =>
     ChanType(elemT, canRecv = recv, canSend = send)
   }
   
   
-  private def mkStruct(declsUgly: List[M[List[FieldDesc]]]) = {
-    val declsM: M[List[List[FieldDesc]]] = declsUgly
+  private def mkStruct(declsUgly: List[Err[List[FieldDesc]]]) = {
+    val declsErr: Err[List[List[FieldDesc]]] = declsUgly
     for {
-      decls <- declsM
+      decls <- declsErr
       fields = decls.flatten
     } yield StructType(fields)
     //add logic for duplicate field names, etc
   }
   
-  private def regularFieldDecl(ids: List[String], tM: M[Type], tag: Option[String]) =
-    for (t <- tM) yield
-      ids map { id => RegularFieldDesc(id, t, tag) }
+  private def regularFieldDecl(ids: List[String], tErr: Err[Type], tag: Option[String]) =
+    for (t <- tErr)
+    yield ids map { id => RegularFieldDesc(id, t, tag) }
   
-  private def embeddedFieldDecl(isPtr: Boolean)(tM: M[TypeSymbol], tag: Option[String]) =
-    for (tSymb <- tM; t: NamedType = tSymb) yield
-      List(EmbeddedFieldDesc(t.name, t, isPtr,  tag))
+  private def embeddedFieldDecl(isPtr: Boolean)(tErr: Err[TypeSymbol], tag: Option[String]) =
+    for (tSymb <- tErr; t: NamedType = tSymb)
+    yield List(EmbeddedFieldDesc(t.name, t, isPtr,  tag))
 }

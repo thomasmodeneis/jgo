@@ -25,14 +25,14 @@ trait Labels {
   private val unseenDefs = HashMap[String, ListBuffer[Pos]]()
   private val lbls = HashMap[String, UserLabel]()
   
-  def defLabel(name: String, pos: Pos): (String, M[UserLabel]) =
+  def defLabel(name: String, pos: Pos): (String, Err[UserLabel]) =
     if (seenDefs contains name)
-      (name, Problem("label %s already defined", name)(pos))
+      (name, problem("label %s already defined", name)(pos))
     else {
       seenDefs += name
       unseenDefs -= name
       val label = lbls getOrElseUpdate (name, new UserLabel(name))
-      (name, Result(label))
+      (name, result(label))
     }
   
   def useLabel(pos: Pos, name: String): UserLabel = {
@@ -41,14 +41,14 @@ trait Labels {
     lbls getOrElseUpdate (name, new UserLabel(name))
   }
   
-  def procGoto(pos: Pos, name: String): M[CodeBuilder] = {
-    Result(Goto(useLabel(pos, name)))
+  def procGoto(pos: Pos, name: String): Err[CodeBuilder] = {
+    result(Goto(useLabel(pos, name)))
   }
   
-  def checkForUndefedLabels: M[Unit] = {
-    var issues: M[Unit] = Result(())
+  def checkForUndefedLabels: Err[Unit] = {
+    var issues: Err[Unit] = result(())
     for ((lblName, positions) <- unseenDefs; pos <- positions) {
-      issues = issues then Problem("target label not found: %s", lblName)(pos)
+      issues = issues then problem("target label not found: %s", lblName)(pos)
     }
     issues
   }

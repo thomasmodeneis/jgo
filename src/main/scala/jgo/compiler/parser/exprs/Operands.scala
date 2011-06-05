@@ -21,20 +21,20 @@ trait Operands extends CompositeLiterals with ExprUtils /*with FunctionLiterals*
     )
   
   lazy val literal: Rule[Expr] =                 "literal value" $
-    ( intLit       ^^ { i => Result(UntypedIntegralConst(i)) }
-    | floatLit     ^^ { f => Result(UntypedFloatingConst(f)) }
+    ( intLit       ^^ { i => result(UntypedIntegralConst(i)) }
+    | floatLit     ^^ { f => result(UntypedFloatingConst(f)) }
 //  | imaginaryLit
-    | charLit      ^^ { c => Result(UntypedIntegralConst(c)) }
-    | stringLit    ^^ { s => Result(UntypedStringConst(s)) }
+    | charLit      ^^ { c => result(UntypedIntegralConst(c)) }
+    | stringLit    ^^ { s => result(UntypedStringConst(s)) }
 //  | compositeLit //nonterminal
 //  | functionLit  //nonterminal
     )
   
-  protected def procSymbOperand(pos: Pos, symbM: M[Symbol]): M[Expr] =
-    symbM flatMap {
-      case ConstSymbol(c) => Result(c)
-      case v: Variable    => Result(Combinators.fromVariable(v))
-      case f: Function    => Result(Combinators.fromFunction(f))
-      case s => Problem("invalid operand: not a variable, constant, or function: %s", s)(pos)
+  protected def procSymbOperand(pos: Pos, symbErr: Err[Symbol]): Err[Expr] =
+    symbErr flatMap {
+      case ConstSymbol(c) => result(c)
+      case v: Variable    => result(Combinators.fromVariable(v))
+      case f: Function    => result(Combinators.fromFunction(f))
+      case s => problem("invalid operand: not a variable, constant, or function: %s", s)(pos)
     }
 }

@@ -27,27 +27,27 @@ class CompilationUnitCompiler(target: Package = Package("main"), in: Input) exte
     (v, CodeBuilder.empty)
   }
   
-  val initCodeM = extractFromParseResult(parseFile(in)) map {
+  val initCodeErr = extractFromParseResult(parseFile(in)) map {
     _.foldLeft(CodeBuilder.empty)(_ |+| _).result 
   }
   
-  lazy val compile: M[PkgInterm] = {
-    val functionsM = {
+  lazy val compile: Err[PkgInterm] = {
+    val functionsErr = {
       val functionMap = mut.Map[Function, FunctionInterm]()
-      var errors: M[Any] = Result(())
+      var errors: Err[Any] = result(())
       for ((f, fCompl) <- functionCompilers) {
-        val fIntermM = fCompl.compile
-        errors = errors then fIntermM
-        for (fInterm <- fIntermM)
+        val fIntermErr = fCompl.compile
+        errors = errors then fIntermErr
+        for (fInterm <- fIntermErr)
           functionMap.put(f, fInterm)
       }
-      for (_ <- errors) yield
-        functionMap.toMap
+      for (_ <- errors)
+      yield functionMap.toMap
     }
     //initCodeM holds all of the top-level errors, if any;
     //functionsM holds all of the function-level ones
-    for ((initCode, functions) <- (initCodeM, functionsM)) yield
-      PkgInterm(target, globalVars, initCode, functions)
+    for ((initCode, functions) <- (initCodeErr, functionsErr))
+    yield PkgInterm(target, globalVars, initCode, functions)
   }
   
   
@@ -58,8 +58,8 @@ class CompilationUnitCompiler(target: Package = Package("main"), in: Input) exte
     (declaration | function)
   
   private lazy val function: Rule[CodeBuilder] =                "function decl" $
-    "func" ~! ident ~ signature ~ inputAt("{") <~ skipBlock  ^^ { case pos ~ name ~ sigM ~ in =>
-      sigM flatMap { sig =>
+    "func" ~! ident ~ signature ~ inputAt("{") <~ skipBlock  ^^ { case pos ~ name ~ sigErr ~ in =>
+      sigErr flatMap { sig =>
         val funcCompl = new FunctionCompiler(name, sig, scope, in)
         functionCompilers.put(funcCompl.target, funcCompl)
         //add to the scope

@@ -37,7 +37,7 @@ object NilConst extends ConstExpr {
  */
 sealed trait StringConst extends ConstExpr {
   def value: String
-  def valueString = "\"" + value + "\""
+  def valueString = value //removed surrounding quotes so that print statements work properly
 }
 
 /**

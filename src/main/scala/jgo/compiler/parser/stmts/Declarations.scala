@@ -31,32 +31,40 @@ trait Declarations extends Expressions with GrowablyScoped {
     | failure("not a declaration")
     )
   
-  lazy val constDecl: P_ =                                "const declaration" $
+  
+  lazy val constDecl: P_ =                                  "const declaration" $
     "const" ~>! ( constSpec
                 | "(" ~> repWithSemi(constSpec) <~ ")"
                 )
-  lazy val constSpec: P_ =                                  "const decl spec" $
+  
+  lazy val constSpec: P_ =                                    "const decl spec" $
     ( identPosList ~ "=" ~ exprList               //note the first spec in a constDecl may not have form `idList'
     | identPosList ~ goType ~ "=" ~ exprList      //the number of idents must = the number of exprs
     | identPosList                                //don't forget about iota
     )
   
+  
   lazy val typeDecl: Rule[Unit] =                            "type declaration" $
     "type" ~>! ( typeSpec
                | "(" ~> repWithSemi(typeSpec) <~ ")"  ^^ foldUnitsTogether
                )
+  
   lazy val typeSpec: Rule[Unit] =                              "type decl spec" $
     InPos ~ ident ~ goType  ^^ procTypeSpec
+  
   
   lazy val varDecl: Rule[CodeBuilder] =                       "var declaration" $
     "var" ~>! ( varSpec
               | "(" ~> repWithSemi(varSpec) <~ ")"  ^^ foldCodeTogether
               )
+  
   lazy val varSpec: Rule[CodeBuilder] =                         "var decl spec" $
     ( identPosList          ~ pos("=") ~ exprList  ^^ procVarSpecInfer
     | identPosList ~ goType ~ pos("=") ~ exprList  ^^ procVarSpecTypeAndAssign
     | identPosList ~ goType                        ^^ procVarSpecNoAssign
     )
+  
+  
   
   private def iota(): Int = {
     val ret = iotaValue
@@ -68,67 +76,70 @@ trait Declarations extends Expressions with GrowablyScoped {
     iotaValue = 0
   }
   
-  private def noCode = Result(CodeBuilder())
+  private def noCode = result(CodeBuilder())
   
-  private def foldUnitsTogether(ls: List[M[Unit]]): M[Unit] = {
-    var res = M(())
+  private def foldUnitsTogether(ls: List[Err[Unit]]): Err[Unit] = {
+    var res = result(())
     for (action <- ls)
       res = res then action  //Monadic then is awesome!!
     res
   }
   
-  private def foldCodeTogether(ls: List[M[CodeBuilder]]): M[CodeBuilder] =
-    (ls foldLeft M(CodeBuilder.empty)) { (accM, nextM) =>
-      for ((acc, next) <- (accM, nextM))
+  private def foldCodeTogether(ls: List[Err[CodeBuilder]]): Err[CodeBuilder] =
+    (ls foldLeft result(CodeBuilder.empty)) { (accErr, nextErr) =>
+      for ((acc, next) <- (accErr, nextErr))
       yield acc |+| next
     }
   
   
-  private def procTypeSpec(pos: Pos, name: String, targetM: M[Type]) =
-    Result(()) after {
-      for (target <- targetM)
-      yield bind(name, TypeSymbol(new WrappedType(name, target)))(pos)
+  private def procTypeSpec(pos: Pos, name: String, targetErr: Err[Type]) =
+    for (target <- targetErr)
+    yield {
+      //TypeAlias, since we know that a local type never has any methods of its own
+      //TODO: Refine this for structs.
+      bind(name, TypeSymbol(new TypeAlias(name, target)))(pos)
+      ()
     }
   
   
-  private def procVarSpecNoAssign(newVars: List[(String, Pos)], typeOfM: M[Type]): M[CodeBuilder] = 
-    typeOfM flatMap { typeOf =>
+  private def procVarSpecNoAssign(newVars: List[(String, Pos)], typeOfErr: Err[Type]): Err[CodeBuilder] = 
+    typeOfErr flatMap { typeOf =>
       var declCode = CodeBuilder()
-      val decled =
+      val decledUgly =
         for ((name, pos) <- newVars)
         yield {
           val (v, declC) = mkVariable(name, typeOf)
           declCode = declCode |+| declC
           bind(name, v)(pos)
         }
-      decled then declCode //implicitly convert List[M[Variable]] -> M[List[Variable]]
+      Err.liftList(decledUgly) then result(declCode)
     }
   
-  private def procVarSpecInfer(left: List[(String, Pos)], eqPos: Pos, rightM: M[List[Expr]]): M[CodeBuilder] =
-    rightM flatMap { right =>
+  private def procVarSpecInfer(left: List[(String, Pos)], eqPos: Pos, rightErr: Err[List[Expr]]): Err[CodeBuilder] =
+    rightErr flatMap { right =>
       if (left.length != right.length)
-        return Problem("arity (%d) of left side of = unequal to arity (%d) of right side",
+        return problem("arity (%d) of left side of = unequal to arity (%d) of right side",
                        left.length, right.length)(eqPos)
       
       var declCode = CodeBuilder()
-      val leftVarsM: M[List[Variable]] =
+      val leftVarsUgly =
         for (((l, pos), r) <- left zip right)
         yield {
           val (v, declC) = mkVariable(l, r.inferenceType)
           declCode = declCode |+| declC
           bind(l, v)(pos)
-        } //implicit conv
+        }
       for {
-        leftVars <- leftVarsM
+        leftVars <- Err.liftList(leftVarsUgly)
         assignCode <- Combinators.assign(leftVars map Combinators.fromVariable, right)(eqPos)
       } yield declCode |+| assignCode
     }
   
-  //Fix this function next.
-  private def procVarSpecTypeAndAssign(left: List[(String, Pos)], typeOfM: M[Type], eqPos: Pos, rightM: M[List[Expr]]): M[CodeBuilder] = 
-    (typeOfM, rightM) flatMap { case (typeOf, right) =>
+  //Fix this function next. //June 5:  ???
+  private def procVarSpecTypeAndAssign(left: List[(String, Pos)], typeOfErr: Err[Type], eqPos: Pos, rightErr: Err[List[Expr]]): Err[CodeBuilder] = 
+    (typeOfErr, rightErr) flatMap { case (typeOf, right) =>
       var declCode = CodeBuilder()
-      val newVarsM: M[List[Variable]] = //implicit conv
+      val newVarsUgly =
         for ((name, pos) <- left)
         yield {
           val (v, declC) = mkVariable(name, typeOf)
@@ -136,7 +147,7 @@ trait Declarations extends Expressions with GrowablyScoped {
           bind(name, v)(pos)
         }
       for {
-        newVars <- newVarsM
+        newVars <- Err.liftList(newVarsUgly)
         assignCode <- Combinators.assign(newVars map Combinators.fromVariable, right)(eqPos)
       } yield declCode |+| assignCode
     }

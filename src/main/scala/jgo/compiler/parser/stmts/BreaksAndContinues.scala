@@ -32,30 +32,30 @@ trait BreaksAndContinues {
   private var breakStack, continueStack = List[Label]()
   private val validBreaks, validContinues = HashMap[String, Label]()
   
-  def breakable[T](p: Parser[M[Label => T]]): Parser[M[T]] = Parser { in =>
+  def breakable[T](p: Parser[Err[Label => T]]): Parser[Err[T]] = Parser { in =>
     val breakTarget = new Label("break")
     
     breakStack ::= breakTarget
-    val res = p(in) map { fM => fM(breakTarget) }
+    val res = p(in) map { fErr => fErr(breakTarget) }
     breakStack = breakStack.tail
     res
   }
   
-  def loop[T](p: Parser[M[(Label, Label) => T]]): Parser[M[T]] = Parser { in =>
+  def loop[T](p: Parser[Err[(Label, Label) => T]]): Parser[Err[T]] = Parser { in =>
     val g = new LabelGroup
     val breakTarget    = new Label("break", g)
     val continueTarget = new Label("continue", g)
     
     breakStack    ::= breakTarget
     continueStack ::= continueTarget
-    val res = p(in) map { fM => fM(breakTarget, continueTarget) }
+    val res = p(in) map { fErr => fErr(breakTarget, continueTarget) }
     continueStack = continueStack.tail
     breakStack    = breakStack.tail
     res
   }
   
-  def labeledBreakable(p: Parser[M[Label => CodeBuilder]])(tuple: (String, M[UserLabel])): Parser[M[CodeBuilder]] = {
-    val (name, lblM) = tuple
+  def labeledBreakable(p: Parser[Err[Label => CodeBuilder]])(tuple: (String, Err[UserLabel])): Parser[Err[CodeBuilder]] = {
+    val (name, lblErr) = tuple
     
     Parser { in =>
       val g = new LabelGroup(name)
@@ -64,19 +64,19 @@ trait BreaksAndContinues {
       breakStack ::= breakTarget
       validBreaks(name) = breakTarget
       
-      val parseResult = p(in) map { fM => fM(breakTarget) }
+      val parseResult = p(in) map { fErr => fErr(breakTarget) }
       
       validBreaks -= name
       breakStack = breakStack.tail
       
-      for (resultM <- parseResult)
-      yield for ((lbl, result) <- (lblM, resultM))
+      for (resultErr <- parseResult)
+      yield for ((lbl, result) <- (lblErr, resultErr))
       yield Lbl(lbl) |+| result
     }
   }
   
-  def labeledLoop(p: Parser[M[(Label, Label) => CodeBuilder]])(tuple: (String, M[UserLabel])): Parser[M[CodeBuilder]] = {
-    val (name, lblM) = tuple
+  def labeledLoop(p: Parser[Err[(Label, Label) => CodeBuilder]])(tuple: (String, Err[UserLabel])): Parser[Err[CodeBuilder]] = {
+    val (name, lblErr) = tuple
     
     Parser { in =>
       val g = new LabelGroup(name)
@@ -88,36 +88,36 @@ trait BreaksAndContinues {
       validBreaks(name)    = breakTarget
       validContinues(name) = continueTarget
       
-      val parseResult = p(in) map { fM => fM(breakTarget, continueTarget) }
+      val parseResult = p(in) map { fErr => fErr(breakTarget, continueTarget) }
       
       validContinues -= name
       validBreaks    -= name
       continueStack = continueStack.tail
       breakStack    = breakStack.tail
       
-      for (resultM <- parseResult)
-      yield for ((lbl, result) <- (lblM, resultM))
+      for (resultErr <- parseResult)
+      yield for ((lbl, result) <- (lblErr, resultErr))
       yield Lbl(lbl) |+| result
     }
   }
   
-  def procBreak(pos: Pos): M[CodeBuilder] = breakStack.headOption match {
-    case Some(target) => Result(Goto(target))
-    case None => Problem("illegal break; not enclosed by loop, switch, or select")(pos)
+  def procBreak(pos: Pos): Err[CodeBuilder] = breakStack.headOption match {
+    case Some(target) => result(Goto(target))
+    case None => problem("illegal break; not enclosed by loop, switch, or select")(pos)
   }
   
-  def procContinue(pos: Pos): M[CodeBuilder] = continueStack.headOption match {
-    case Some(target) => Result(Goto(target))
-    case None => Problem("illegal continue; not enclosed by loop")(pos)
+  def procContinue(pos: Pos): Err[CodeBuilder] = continueStack.headOption match {
+    case Some(target) => result(Goto(target))
+    case None => problem("illegal continue; not enclosed by loop")(pos)
   }
   
-  def procBreak(pos: Pos, name: String): M[CodeBuilder] = validBreaks get name match {
-    case Some(target) => Result(Goto(target))
-    case None => Problem("illegal break target %s; not an enclosing loop, switch, or select", name)(pos)
+  def procBreak(pos: Pos, name: String): Err[CodeBuilder] = validBreaks get name match {
+    case Some(target) => result(Goto(target))
+    case None => problem("illegal break target %s; not an enclosing loop, switch, or select", name)(pos)
   }
   
-  def procContinue(pos: Pos, name: String): M[CodeBuilder] = validContinues get name match {
-    case Some(target) => Result(Goto(target))
-    case None => Problem("illegal continue target %s; not an enclosing loop", name)(pos)
+  def procContinue(pos: Pos, name: String): Err[CodeBuilder] = validContinues get name match {
+    case Some(target) => result(Goto(target))
+    case None => problem("illegal continue target %s; not an enclosing loop", name)(pos)
   }
 }

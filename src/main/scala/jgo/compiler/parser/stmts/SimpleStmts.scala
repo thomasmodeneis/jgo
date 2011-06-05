@@ -32,7 +32,7 @@ trait SimpleStmts extends Expressions with Symbols with GrowablyScoped with Expr
     | incOrDecStmt
     | sendStmt
     | expression  ^^ map(Combinators.eval)
-    | success(CodeBuilder.empty) //empty stmt
+    | success(result(CodeBuilder.empty)) //empty stmt
     )
   
   lazy val sendStmt: Rule[CodeBuilder] =                              "send statement" $
@@ -62,23 +62,23 @@ trait SimpleStmts extends Expressions with Symbols with GrowablyScoped with Expr
     identPosList ~ ":=" ~ exprList  ^^ declAssign
   
   
-  private def opAssign(f: (Expr, Expr) => Pos => M[Expr])(leftM: M[Expr], pos: Pos, rightM: M[Expr]) =
+  private def opAssign(f: (Expr, Expr) => Pos => Err[Expr])(leftErr: Err[Expr], pos: Pos, rightErr: Err[Expr]) =
     for {
-      (left, right) <- (leftM, rightM)
+      (left, right) <- (leftErr, rightErr)
       target <- f(left, right)(pos)
       result <- Combinators.assign(left, target)(pos)
     } yield result
   
-  private def declAssign(left: List[(String, Pos)], eqPos: Pos, rightM: M[List[Expr]]): M[CodeBuilder] = 
-    rightM flatMap { right =>
+  private def declAssign(left: List[(String, Pos)], eqPos: Pos, rightErr: Err[List[Expr]]): Err[CodeBuilder] = 
+    rightErr flatMap { right =>
       var declCode = CodeBuilder.empty
       var actuallySawDecl = false
       
       if (left.length != right.length)
-        return Problem("arity (%d) of left side of := unequal to arity (%d) of right side",
+        return problem("arity (%d) of left side of := unequal to arity (%d) of right side",
                        left.length, right.length)(eqPos)
       
-      val leftVarsM: M[List[Variable]] = //implicit conv
+      val leftVarsUgly =
         for (((l, pos), r) <- left zip right)
         yield
           if (!growable.alreadyDefined(l)) { //not already defined in innermost scope
@@ -86,17 +86,17 @@ trait SimpleStmts extends Expressions with Symbols with GrowablyScoped with Expr
             val v = new LocalVar(l, r.inferenceType)
             growable.put(l, v)
             declCode = declCode |+| Decl(v)
-            Result(v)
+            result(v)
           }
           else
             getVariable(l, pos)
       
       if (actuallySawDecl)
         for {
-          leftVars <- leftVarsM
+          leftVars <- Err.liftList(leftVarsUgly)
           assignCode <- Combinators.assign(leftVars map Combinators.fromVariable, right)(eqPos)
         } yield declCode |+| assignCode
       else
-        Problem("no new variables on left side of :=")(eqPos)
+        problem("no new variables on left side of :=")(eqPos)
     }
 }

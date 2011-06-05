@@ -11,11 +11,11 @@ trait GrowablyScoped extends Scoped {
   
   protected def growable: GrowableScope
   
-  protected def bind[S <: Symbol](name: String, target: S)(implicit pos: Pos): M[S] =
+  protected def bind[S <: Symbol](name: String, target: S)(implicit pos: Pos): Err[S] =
     if (!growable.alreadyDefined(name)) {
       growable.put(name, target)
-      Result(target)
+      result(target)
     }
     else
-      Problem("symbol `%s' already defined in current scope", name)
+      problem("symbol `%s' already defined in current scope", name)
 }

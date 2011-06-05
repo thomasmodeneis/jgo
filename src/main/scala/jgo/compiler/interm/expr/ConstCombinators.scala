@@ -4,7 +4,7 @@ package expr
 
 trait ConstCombinators extends UntypedConstCombinators with ConstTypeCheckOverrides {
   def constant(e: Expr)(pos: Pos) = e match {
-    case c: ConstExpr => Result(c)
-    case _ => Problem("expression must be constant")(pos)
+    case c: ConstExpr => result(c)
+    case _ => problem("expression must be constant")(pos)
   }
 }

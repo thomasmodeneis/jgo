@@ -20,19 +20,31 @@ trait Signatures extends Base {
   self: Types =>
   
   lazy val signature: Rule[Signature] =
-    ( params ~ parenResults  ^^ { case psM ~ rsM => for (((ps, vari), (rs, namedRes)) <- (psM, rsM)) yield results(ps, rs, vari, namedRes) }
-    | params ~ goType        ^^ { case psM ~ tM  => for (((ps, vari), t) <- (psM, tM)) yield singleResult(ps, t, vari) }
-    | params                 ^^ { psM => for ((ps, vari) <- psM) yield noResults(ps, vari) }
+    ( params ~ parenResults  ^^ procParenResultSig
+    | params ~ goType        ^^ procOneResultSig
+    | params                 ^^ procVoidSig
     )
   
+  private def procParenResultSig(psErr: Err[(List[ParamVar], Boolean)], rsErr: Err[(List[ParamVar], Boolean)]) =
+    for (((ps, vari), (rs, namedRes)) <- (psErr, rsErr))
+    yield results(ps, rs, vari, namedRes)
+  
+  private def procOneResultSig(psErr: Err[(List[ParamVar], Boolean)], tErr: Err[Type]) =
+    for (((ps, vari), t) <- (psErr, tErr))
+    yield singleResult(ps, t, vari)
+  
+  private def procVoidSig(psErr: Err[(List[ParamVar], Boolean)]) =
+    for ((ps, vari) <- psErr)
+    yield noResults(ps, vari)
+  
   private lazy val params: Rule[(List[ParamVar], Boolean)] =
-    ( "(" ~ ")"  ^^^ Result(Nil, false) //shortcut, so to speak
+    ( "(" ~ ")"  ^^^ result(Nil, false) //shortcut, so to speak
     | parenParams
     )
   
   private lazy val namedParams: Rule[(List[LocalVar], Boolean)] =
     "(" ~ repsep(namedParamGroup, ",") <~! ")"  ^^ { case pos ~ ugly =>
-      (ugly: M[List[(List[LocalVar], Boolean)]]) flatMap { ls =>
+      Err.liftList(ugly) flatMap { ls =>
         var variadic, badVariadic = false
         val pss =
           for ((paramGrp, vari) <- ls)
@@ -43,15 +55,15 @@ trait Signatures extends Base {
           }
         val ps = pss.flatten
         if (badVariadic)
-          Problem("... not permitted except on last param type")(pos)
+          problem("... not permitted except on last param type")(pos)
         else
-          Result((ps, variadic))
+          result((ps, variadic))
       }
     }
   
   private lazy val parenParams: Rule[(List[ParamVar], Boolean)] =
     "(" ~ repsep(namedParamGroup | unnamedParamGroup, ",") <~! ")"  ^^ { case pos ~ ugly =>
-      (ugly: M[List[(List[ParamVar], Boolean)]]) flatMap { groups =>
+      Err.liftList(ugly) flatMap { groups =>
         var variadic, badVariadic, sawNamed, sawUnnamed = false
         val pss =
           for ((paramGrp, vari) <- groups)
@@ -66,20 +78,20 @@ trait Signatures extends Base {
           }
         val ps = pss.flatten
         val variErr =
-          if (badVariadic) Problem("... not permitted except on last param type")(pos)
-          else Result(())
+          if (badVariadic) problem("... not permitted except on last param type")(pos)
+          else result(())
         variErr then {
           if (sawNamed && sawUnnamed)
-            Problem("cannot mix named and unnamed parameters")(pos)
+            problem("cannot mix named and unnamed parameters")(pos)
           else
-            Result((ps, variadic))
+            result((ps, variadic))
         }
       }
     }
   
   private lazy val namedParamGroup: Rule[(List[LocalVar], Boolean)] =
-    identList ~ "...".?? ~ goType  ^^ { case ids ~ vari ~ tM =>
-      for (t <- tM)
+    identList ~ "...".?? ~ goType  ^^ { case ids ~ vari ~ tErr =>
+      for (t <- tErr)
       yield
         if (vari)
           (ids.init.map { id => new LocalVar(id, t) } :+ new LocalVar(ids.last, SliceType(t)), true)
@@ -88,8 +100,8 @@ trait Signatures extends Base {
     }
   
   private lazy val unnamedParamGroup: Rule[(List[DummyVar], Boolean)] =
-    "...".?? ~ goType  ^^ { case vari ~ tM =>
-      for (t <- tM)
+    "...".?? ~ goType  ^^ { case vari ~ tErr =>
+      for (t <- tErr)
       yield {
         val dummy =
           if (vari) new DummyVar(SliceType(t))
@@ -100,30 +112,31 @@ trait Signatures extends Base {
   
   private lazy val parenResults: Rule[(List[ParamVar], Boolean)] =
     "(" ~ repsep(namedResultGroup | unnamedResultGroup, ",") <~! ")"  ^^ { case pos ~ ugly =>
-      (ugly: M[List[List[ParamVar]]]) flatMap { rss =>
+      (ugly: Err[List[List[ParamVar]]]) flatMap { rss =>
         var sawNamed, sawUnnamed = false
           for (rs <- rss)
           yield
             if (rs(0).isInstanceOf[LocalVar])
               sawNamed = true
+            else
               sawUnnamed = true
         if (sawNamed && sawUnnamed)
-          Problem("cannot mix named and unnamed parameters")(pos)
+          problem("cannot mix named and unnamed parameters")(pos)
         else
-          (rss.flatten, sawNamed)
+          result((rss.flatten, sawNamed))
       }
     }
   
   private lazy val namedResultGroup: Rule[List[LocalVar]] =
-    identList ~ goType  ^^ { case ids ~ tM =>
-      for (t <- tM)
+    identList ~ goType  ^^ { case ids ~ tErr =>
+      for (t <- tErr)
       yield for (id <- ids)
       yield new LocalVar(id, t)
     }
   
   private lazy val unnamedResultGroup: Rule[List[DummyVar]] =
-    goType ^^ { tM =>
-      for (t <- tM)
+    goType ^^ { tErr =>
+      for (t <- tErr)
       yield List(new DummyVar(t))
     }
 }
