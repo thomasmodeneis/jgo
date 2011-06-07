@@ -37,7 +37,9 @@ package object compiler {
   def result[T](v: T): Err[T] = Result(v)
   
   def problem[T](msg: String, args: Any*)(implicit pos: Pos): Err[T] =
-    Problems.one(msg, args)(pos)
+    Problems.one(msg, args: _*)(pos) //compiler should really emit a warning
+                                     //on missing "_*" in heuristically chosen
+                                     //cases
   
   /**
    * Wraps the provided value in a Result.
