@@ -46,6 +46,8 @@ trait FuncTranslBase extends TypeResolution {
   
   
   
+  def isStatic: Boolean
+  
   /**
    * The method visitor that this translator should write its func to.
    * We call this visitor the ''output visitor'' of this func translator.
@@ -57,8 +59,10 @@ trait FuncTranslBase extends TypeResolution {
    * Note that this field may be used in tandem with `inst`.
    */
   protected val gen = {
-    val desc = methodDesc(
-    new GeneratorAdapter(mv)
+    val acc  = if (isStatic) ACC_STATIC else 0 //GenAdapter uses only static-ness info
+    val name = "~blah~" //GenAdapter doesn't even use the method name.  WTF!?
+    val desc = methodDesc(target)
+    new GeneratorAdapter(mv, acc, name, desc)
   }
   
   /**
@@ -68,16 +72,42 @@ trait FuncTranslBase extends TypeResolution {
   protected val inst = new InstructionAdapter(mv)
   
   
+  private var translated = false
   
   /**
    * Translates this translator's func into bytecode, "writing" (visiting)
    * the output to this translator's output visitor.
    */
   def translate() {
+    if (translated)
+      throw new AlreadyTranslatedException
+    
     begin()
-    interm.code foreach translateInstr
+    translateCode()
     end()
+    mv.visitEnd()
+    translated = true
   }
+  
+  protected def begin() {
+    for ((p, i) <- target.paramTypes.zipWithIndex)
+      if (p.effective.isInstanceOf[UnsignedType])
+        mv.visitParameterAnnotation(i, UnsignedAnnot, true)
+  }
+  
+  protected def translateCode() {
+    mv.visitCode()
+    source.code foreach translateInstr
+    //apparently, we still have to call this,
+    //even though the maxes will be computed for us
+    gen.returnValue() //Be sure to refine this to the correct behavior.
+    mv.visitMaxs(-1, -1)
+  }
+  
+  protected def end() {
+    
+  }
+  
   
   /**
    * Translates the specified instruction.
@@ -89,8 +119,4 @@ trait FuncTranslBase extends TypeResolution {
    */
   protected def translateInstr(i: Instr): Unit =
     throw new UnsupportedInstrException(i)
-  
-  protected def begin() { }
-  
-  protected def end() { }
 }
