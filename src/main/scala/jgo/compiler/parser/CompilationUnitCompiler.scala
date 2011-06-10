@@ -14,8 +14,9 @@ import codeseq._
 
 import scala.collection.{mutable => mut}
 
-class CompilationUnitCompiler(target: Package = Package("main"), in: Input) extends Declarations with GrowablyScoped {
-  def growable = SequentialScope.base(UniverseScope)
+class CompilationUnitCompiler(target: Package, in: Input) extends Declarations with GrowablyScoped {
+  //this was a def for some reason.  WTF!?
+  val growable = SequentialScope.base(UniverseScope)
   def scope = growable
   
   private[this] val functionCompilers: mut.Map[Function, FunctionCompiler] = mut.Map.empty
@@ -58,7 +59,7 @@ class CompilationUnitCompiler(target: Package = Package("main"), in: Input) exte
     (declaration | function)
   
   private lazy val function: Rule[CodeBuilder] =                "function decl" $
-    "func" ~! ident ~ signature ~ inputAt("{") <~ skipBlock  ^^ { case pos ~ name ~ sigErr ~ in =>
+    "func" ~! ident ~ signature ~ inputAt(skipBlock)  ^^ { case pos ~ name ~ sigErr ~ in =>
       sigErr flatMap { sig =>
         val funcCompl = new FunctionCompiler(name, sig, scope, in)
         functionCompilers.put(funcCompl.target, funcCompl)
@@ -75,7 +76,8 @@ class CompilationUnitCompiler(target: Package = Package("main"), in: Input) exte
         level += 1
       else if (cur.first == Keyword("}"))
         level -= 1
+      cur = cur.rest
     } while (level > 0)
-    Success((), cur.rest)
+    Success((), cur)
   }
 }

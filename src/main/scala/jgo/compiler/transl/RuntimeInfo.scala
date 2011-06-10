@@ -11,4 +11,8 @@ object RuntimeInfo {
   val RuntimeLocation = "jgo/runtime/"
   
   val UnsignedAnnot = RuntimeLocation + "Unsigned"
+  val GoTypeAnnot = RuntimeLocation + "GoType"
+  
+  val SliceClass = RuntimeLocation + "Slice"
+  val SliceDesc  = "L%s%s;" format (RuntimeLocation, "Slice")
 }

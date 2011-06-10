@@ -30,7 +30,7 @@ sealed abstract class BranchTest {
 /** A test of arity two. */
 sealed abstract class Comparison extends BranchTest { val arity = 2 }
 /** A test of arity one. */
-sealed abstract class Check      extends BranchTest { val arity = 1 }
+sealed abstract class Check extends BranchTest { val arity = 1 }
 
 case object IsTrue  extends Check { val t = Bool; def name = "is true"  }
 

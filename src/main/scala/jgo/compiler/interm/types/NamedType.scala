@@ -50,11 +50,11 @@ class TypeAlias(val name: String, val referent: Type) extends NamedType {
   def underlying = referent.underlying
   
   /**
-   * The effective type of this type alias is the referent type, since
-   * values of this alias type are represented as values of the referent
-   * type.
+   * The effective type of this type alias is that of the referent type,
+   * since values of this alias type are represented as values of the
+   * referent type.
    */
-  def effective  = referent
+  def effective  = referent.effective
   
   val semantics = underlying.semantics
 }

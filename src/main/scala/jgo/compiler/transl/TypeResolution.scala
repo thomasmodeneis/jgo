@@ -15,9 +15,19 @@ import AsmType._
 
 trait TypeResolution {
   implicit def class2asmType(cl: Class[_]) = AsmType.getType(cl)
-  implicit def desc2asmType(desc: String)  = AsmType.getType(desc)
+  //implicit def desc2asmType(desc: String)  = AsmType.getType(desc)
   
-  def toAsmType(t: Type): AsmType = t match {
+  def stackSize(t: Type): Int = t.effective match {
+    case Int64 | Uint64 | Float64 => 2
+    case _                        => 1
+  }
+  
+  def stackSize(t: StackType): Int = t match {
+    case I64 | U64 | F64 => 2
+    case _               => 1
+  }
+  
+  def toAsmType(t: Type): AsmType = t.effective match {
     case BoolType       => BOOLEAN_TYPE
     case Int8  | Uint8  => BYTE_TYPE
     case Int16          => SHORT_TYPE
@@ -27,7 +37,12 @@ trait TypeResolution {
     case Float32        => FLOAT_TYPE
     case Float64        => DOUBLE_TYPE
     
-    case StringType => getObjectType("java/lang/String")
+    case StringType => AsmType.getObjectType("java/lang/String")
+    
+    case SliceType(t) => AsmType.getObjectType(SliceClass)
+    
+    //not sure why this shouldn't be the rule for everything
+    case tEff => AsmType.getType(typeDesc(tEff))
   }
   
   def toAsmType(t: StackType): AsmType = t match {
@@ -40,7 +55,7 @@ trait TypeResolution {
     case F32       => FLOAT_TYPE
     case F64       => DOUBLE_TYPE
     
-    case Obj => getObjectType("java/lang/Object") //refine? not with StackType
+    case Obj => AsmType.getObjectType("java/lang/Object") //refine? not with StackType
   }
   
   def typeDesc(t: Type): String = t.effective match {
@@ -56,7 +71,9 @@ trait TypeResolution {
     case StringType     => "Ljava/lang/String;"
     
     //note: O(n^2) time, where n is the dimension of the array type
-    case ArrayType(len, t)   => "[" + typeDesc(t)
+    case ArrayType(len, t) => "[" + typeDesc(t)
+    
+    case SliceType(t) => SliceDesc
   }
   
   def typeDesc(t: StackType): String = t match {
@@ -75,16 +92,9 @@ trait TypeResolution {
   def methodDesc(f: Func): String = f.typeOf match {
     case FuncType(params, results, false) =>
       val paramStr = params map typeDesc mkString ("(", "", ")")
-      /*
-      val sb = new StringBuilder
-      sb append "("
-      for (p <- params) sb append typeDesc(p)
-      sb append ")"
-      */
       results match {
-        case Nil          => paramStr + "V"              //sb append "V"
-        case List(result) => paramStr + typeDesc(result) //sb append typeDesc(result)
+        case Nil          => paramStr + "V"
+        case List(result) => paramStr + typeDesc(result)
       }
-      //sb.result
   }
 }

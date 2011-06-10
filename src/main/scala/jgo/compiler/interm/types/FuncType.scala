@@ -11,10 +11,17 @@ case class FuncType(params: List[Type], results: List[Type], isVariadic: Boolean
    */
   val semantics = Reference
   
-  override def toString =
-    if (!isVariadic)
-      "func(" + params.mkString(", ") + ") " + results.mkString(", ")
-    else
-      //ugh...
-      "func(" + params.init.mkString(", ") + ", ..." + params.tail + ") " + results.mkString(", ")
+  override def toString = {
+    val paramStr =
+      if (!isVariadic) "func(" + params.mkString(", ") + ")"
+      else "func(" + params.init.mkString(", ") + ", ..." + params.tail + ")"
+    
+    val resultStr = results match {
+      case List()  => ""
+      case List(r) => " " + r.toString
+      case rs      => rs.mkString(" (", ", ", ")")
+    }
+    
+    paramStr + resultStr
+  }
 }

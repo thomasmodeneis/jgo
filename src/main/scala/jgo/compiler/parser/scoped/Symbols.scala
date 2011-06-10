@@ -17,8 +17,8 @@ trait Symbols extends Base with Scoped {
   lazy val onlyFuncSymbol:  Parser[Function] =             "var symbol" $
     ident ^? scope ^? { case v: Function => v }
   
-  /*lazy val onlyConstSymbol: Parser[ConstSymbol] =      "const symbol" $
-    ident ^? scope ^? { case c: ConstSymbol => c } */
+  lazy val onlyConstSymbol: Parser[ConstSymbol] =        "const symbol" $
+    ident ^? scope ^? { case c: ConstSymbol => c }
   
   lazy val onlyPkgSymbol:   Parser[Package] =          "package symbol" $
     ident ^? scope ^? { case p: Package => p }

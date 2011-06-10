@@ -1,6 +1,8 @@
 package jgo.compiler
 package transl
 
+import func.FunctionTranslator
+
 import interm._
 import codeseq._
 import instr._
@@ -18,7 +20,7 @@ import asm.Opcodes._
 
 import scala.collection.{mutable => mut}
 
-class PkgTranslator(val interm: PkgInterm) extends TypeResolution with FunctionTranslation {
+class PkgTranslator(val interm: PkgInterm) extends TypeResolution {
   val cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES)
   
   cw.visit(V1_6, ACC_PUBLIC, interm.target.name, null, "java/lang/Object", null)
@@ -42,7 +44,17 @@ class PkgTranslator(val interm: PkgInterm) extends TypeResolution with FunctionT
   }*/
   
   interm.functions foreach { case (f, fInterm) =>
-    translateFunction(fInterm, cw)
+    val access =
+      if (f.isPublic || f.name == "main") //this is a really big hack. improve the logic here.
+        ACC_PUBLIC | ACC_STATIC
+      else
+        ACC_STATIC //0 = package private
+    
+    val mv = cw.visitMethod(access, f.name, methodDesc(f), null, null)
+    
+    new FunctionTranslator(fInterm, mv).translate()
+    
+    //translateFunction(fInterm, cw)
   }
   
   cw.visitEnd()

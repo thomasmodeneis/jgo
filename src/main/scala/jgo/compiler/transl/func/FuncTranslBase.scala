@@ -13,10 +13,9 @@ import interm.types.Type
 import RuntimeInfo._
 
 import org.objectweb.asm
-import asm.{ClassWriter, ClassVisitor, MethodVisitor, Label => AsmLabel, Type => AsmType}
+import asm.MethodVisitor
 import asm.commons.{GeneratorAdapter, InstructionAdapter, Method => AsmMethod}
 import asm.Opcodes._
-import AsmType._
 
 /**
  * Base trait for func translators.  A func translator is an object that
@@ -24,7 +23,7 @@ import AsmType._
  * 
  * Not thread-safe.
  */
-trait FuncTranslBase extends TypeResolution {
+trait FuncTranslBase extends TypeResolution with GoSignatures {
   /**
    * The intermediate form that is to be translated by this func translator,
    * which we refer to as the ''source'' of this translator.
@@ -58,18 +57,14 @@ trait FuncTranslBase extends TypeResolution {
    * A GeneratorAdapter to aid in the generation of bytecode.
    * Note that this field may be used in tandem with `inst`.
    */
-  protected val gen = {
-    val acc  = if (isStatic) ACC_STATIC else 0 //GenAdapter uses only static-ness info
-    val name = "~blah~" //GenAdapter doesn't even use the method name.  WTF!?
-    val desc = methodDesc(target)
-    new GeneratorAdapter(mv, acc, name, desc)
-  }
+  protected val gen: GeneratorAdapter =
+    new NonStupidGeneratorAdapter(mv, methodDesc(target), isStatic)
   
   /**
    * An InstructionAdapter to aid in the generation of bytecode.
    * Note that this field may be used in tandem with  `gen`.
    */
-  protected val inst = new InstructionAdapter(mv)
+  protected val inst = new InstructionAdapter(gen)
   
   
   private var translated = false
@@ -82,32 +77,44 @@ trait FuncTranslBase extends TypeResolution {
     if (translated)
       throw new AlreadyTranslatedException
     
-    begin()
+    annotations()
+    paramAnnotations()
     translateCode()
-    end()
     mv.visitEnd()
     translated = true
   }
   
-  protected def begin() {
-    for ((p, i) <- target.paramTypes.zipWithIndex)
-      if (p.effective.isInstanceOf[UnsignedType])
-        mv.visitParameterAnnotation(i, UnsignedAnnot, true)
+  protected def annotations() {
+    val sigAnnot = mv.visitAnnotation(GoTypeAnnot, true)
+    sigAnnot.visit("value", typeSig(target.typeOf))
+    sigAnnot.visitEnd()
   }
   
-  protected def translateCode() {
+  protected def paramAnnotations() {
+    for ((p, i) <- target.paramTypes.zipWithIndex)
+      if (p.effective.isInstanceOf[UnsignedType])
+        mv.visitParameterAnnotation(i, UnsignedAnnot, true).visitEnd()
+  }
+  
+  private def translateCode() {
     mv.visitCode()
-    source.code foreach translateInstr
+    beforeInstrs()
+    source.code foreach { i =>
+      try translateInstr(i)
+      catch {
+        case e: UnsupportedInstrException => throw e
+        case e => e.printStackTrace(); throw AtInstrException(i, e)
+      }
+    }
     //apparently, we still have to call this,
     //even though the maxes will be computed for us
     gen.returnValue() //Be sure to refine this to the correct behavior.
+    afterInstrs()
     mv.visitMaxs(-1, -1)
   }
   
-  protected def end() {
-    
-  }
-  
+  protected def beforeInstrs() { }
+  protected def afterInstrs() { }
   
   /**
    * Translates the specified instruction.

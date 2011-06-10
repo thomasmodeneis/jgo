@@ -97,7 +97,7 @@ object Err {
   
   def fromOption[T](opt: Option[T])(msg: String, args: Any*)(implicit pos: Pos) = opt match {
     case Some(v) => Result(v)
-    case None    => Problems.one(msg, args)(pos)
+    case None    => Problems.one(msg, args: _*)(pos)
   }
   
   implicit def liftList[T](ms: List[Err[T]]): Err[List[T]] =
