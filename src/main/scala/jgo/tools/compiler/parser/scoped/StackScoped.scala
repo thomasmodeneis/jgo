@@ -18,7 +18,7 @@ trait StackScoped extends GrowablyScoped {
   //So curScope would be initialized to SeqScope.base(null)
   protected def initialEnclosing: Scope
   
-  private var curScope: SequentialScope = SequentialScope.base(initialEnclosing)
+  private var curScope: StackScope = StackScope.base(initialEnclosing)
   
   protected def scope = curScope
   protected def growable = curScope
@@ -34,7 +34,7 @@ trait StackScoped extends GrowablyScoped {
   
   
   private def pushScope() {
-    curScope = SequentialScope.frame(curScope)
+    curScope = StackScope.frame(curScope)
   }
   
   private def popScope() {

@@ -15,8 +15,7 @@ import codeseq._
 import scala.collection.{mutable => mut}
 
 class CompilationUnitCompiler(target: Package, in: Input) extends Declarations with GrowablyScoped {
-  //this was a def for some reason.  WTF!?
-  val growable = SequentialScope.base(UniverseScope)
+  val growable = StackScope.base(UniverseScope)
   def scope = growable
   
   private[this] val functionCompilers: mut.Map[Function, FunctionCompiler] = mut.Map.empty

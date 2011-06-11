@@ -10,7 +10,7 @@ import types._
 
 trait Expressions extends PrimaryExprs with ExprUtils {
   lazy val expression: LrRule[Expr] =                       "expression" $
-    catchSyntaxErr(orExpr, "not an expression")
+    catchSyntaxErr("not an expression", orExpr)
   
   lazy val orExpr: LrRule[Expr] =                "or-expression: prec 1" $
     ( orExpr ~ "||" ~ andExpr   ^^ or

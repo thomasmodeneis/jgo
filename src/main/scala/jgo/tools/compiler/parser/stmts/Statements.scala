@@ -40,22 +40,23 @@ trait Statements extends Expressions
   }
   
   lazy val statement: Rule[CodeBuilder] =                                              "statement" $
-    ( block
-    | labeledStmt
-    | ifStmt
-    | loop(forStmt)
-//  | breakable(switchStmt)
-//  | breakable(selectStmt) //not yet supported in grammar
-    | returnStmt
-    | breakStmt
-    | continueStmt
-    | gotoStmt
-//  | goStmt
-//  | deferStmt
-    | declaration
-    | ident("print") ~ expression  ^^ procPrintStmt
-    | simpleStmt  //contains the empty statement, so must come last
-    | failure("not a statement")
+    catchSyntaxErr("not a statement",
+      ( block
+      | labeledStmt
+      | ifStmt
+      | loop(forStmt)
+//    | breakable(switchStmt)
+//    | breakable(selectStmt) //not yet supported in grammar
+      | returnStmt
+      | breakStmt
+      | continueStmt
+      | gotoStmt
+//    | goStmt
+//    | deferStmt
+      | declaration
+      | ident("print") ~ expression  ^^ procPrintStmt
+      | simpleStmt  //contains the empty statement, so must come last
+      )
     )
   
   /** temporary hack to permit testing of generated programs */

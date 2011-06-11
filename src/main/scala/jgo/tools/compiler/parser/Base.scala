@@ -44,7 +44,7 @@ trait Base extends Tokens with PackratParsers with FancyParsers with MessageHand
   final def catchSyntaxErr[T](p: Parser[Err[T]]): Parser[Err[T]] =
     Parser { in => injectSyntaxErr(p(in)) }
   
-  final def catchSyntaxErr[T](p: Parser[Err[T]], msg: String): Parser[Err[T]] =
+  final def catchSyntaxErr[T](msg: String, p: Parser[Err[T]]): Parser[Err[T]] =
     Parser { in => injectSyntaxErr(p(in), msg) }
   
   final def extractFromParseResult[T](vErrR: ParseResult[Err[T]]): Err[T] = vErrR match {
