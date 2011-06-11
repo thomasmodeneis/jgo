@@ -1,4 +1,4 @@
-import jgo.compiler._
+import jgo.tools.compiler._
 import parser.BlockLang
 import parser.combinatorExten._
 import lexer.Scanner

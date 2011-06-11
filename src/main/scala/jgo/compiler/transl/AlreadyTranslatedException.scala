@@ -1,4 +1,0 @@
-package jgo.compiler
-package transl
-
-class AlreadyTranslatedException extends IllegalArgumentException
