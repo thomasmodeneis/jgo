@@ -35,6 +35,8 @@ trait LvalCombinators extends Combinators with TypeChecks {
   
   private def mkIndex(arr: Expr, indx: Expr)(pos: Pos) = {
     @inline def isIntegral = indx.typeOf.underlying.isInstanceOf[IntegralType]
+    @inline def iT = indx.typeOf.underlying.asInstanceOf[IntegralType]
+    
     arr match {
       case HasType(ArrayType(_, elemT)) =>
         if (isIntegral) result(ArrayIndexLval(arr, indx, elemT))
@@ -43,7 +45,7 @@ trait LvalCombinators extends Combinators with TypeChecks {
         if (isIntegral) result(SliceIndexLval(arr, indx, elemT))
         else problem("index type %s is inappropriate for a slice; integral type required", indx.typeOf)(pos)
       case HasType(StringType) =>
-        if (isIntegral) result(EvalExpr(arr.eval |+| indx.evalUnder |+| StrIndex, scope.UniverseScope.byte))
+        if (isIntegral) result(EvalExpr(arr.eval |+| indx.evalUnder |+| StrIndex(iT), scope.UniverseScope.byte))
         else problem("index type %s is inappropriate for a string; integral type required", indx.typeOf)(pos)
       case HasType(MapType(keyT, valT)) =>
         if (keyT <<= indx.typeOf) result(MapIndexLval(arr, indx, valT))

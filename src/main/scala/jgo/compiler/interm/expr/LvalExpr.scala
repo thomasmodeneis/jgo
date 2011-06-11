@@ -67,20 +67,24 @@ private case class FieldLval(obj: Expr, f: Field) extends LvalExpr {
 }
 
 private case class ArrayIndexLval(array: Expr, index: Expr, typeOf: Type) extends LvalExpr {
-  def load                        = array.evalUnder |+| index.evalUnder       |+| ArrayGet(typeOf)
-  def store(v: CodeBuilder)       = array.evalUnder |+| index.evalUnder |+| v |+| ArrayPut(typeOf)
+  val iT = index.typeOf.underlying.asInstanceOf[IntegralType]
+  
+  def load                        = array.evalUnder |+| index.evalUnder       |+| ArrayGet(iT, typeOf)
+  def store(v: CodeBuilder)       = array.evalUnder |+| index.evalUnder |+| v |+| ArrayPut(iT, typeOf)
   def storePrefix(v: CodeBuilder) = array.evalUnder |+| index.evalUnder |+| v
-  def storeSuffix                 =                                               ArrayPut(typeOf)
+  def storeSuffix                 =                                               ArrayPut(iT, typeOf)
   
   override def addressable = array.addressable
   override def mkPtr = EvalExpr(array.eval |+| index.evalUnder |+| MkPtrArray(typeOf), PointerType(typeOf))
 }
 
 private case class SliceIndexLval(slice: Expr, index: Expr, typeOf: Type) extends LvalExpr {
-  def load                        = slice.evalUnder |+| index.evalUnder       |+| SliceGet(typeOf)
-  def store(v: CodeBuilder)       = slice.evalUnder |+| index.evalUnder |+| v |+| SlicePut(typeOf)
+  val iT = index.typeOf.underlying.asInstanceOf[IntegralType]
+  
+  def load                        = slice.evalUnder |+| index.evalUnder       |+| SliceGet(iT, typeOf)
+  def store(v: CodeBuilder)       = slice.evalUnder |+| index.evalUnder |+| v |+| SlicePut(iT, typeOf)
   def storePrefix(v: CodeBuilder) = slice.evalUnder |+| index.evalUnder |+| v
-  def storeSuffix                 =                                               SlicePut(typeOf)
+  def storeSuffix                 =                                               SlicePut(iT, typeOf)
   
   override def addressable = true
   override def mkPtr = EvalExpr(slice.eval |+| index.eval |+| MkPtrSlice(typeOf), PointerType(typeOf))

@@ -64,14 +64,14 @@ case class PtrPut(t: Type) extends Instr
 case class GetField(f: Field, t: Type) extends Instr
 case class PutField(f: Field, t: Type) extends Instr
 
-case object StrIndex              extends Instr
-case class  ArrayGet(elemT: Type) extends Instr
-case class  SliceGet(elemT: Type) extends Instr
-case object MapGet                extends Instr
+case class  StrIndex(i: Integral)              extends Instr
+case class  ArrayGet(i: Integral, elemT: Type) extends Instr
+case class  SliceGet(i: Integral, elemT: Type) extends Instr
+case object MapGet                             extends Instr
 
-case class  ArrayPut(elemT: Type) extends Instr
-case class  SlicePut(elemT: Type) extends Instr
-case object MapPut                extends Instr
+case class  ArrayPut(i: Integral, elemT: Type) extends Instr
+case class  SlicePut(i: Integral, elemT: Type) extends Instr
+case object MapPut                             extends Instr
 
 case object ChanSend extends Instr
 case object ChanRecv extends Instr
