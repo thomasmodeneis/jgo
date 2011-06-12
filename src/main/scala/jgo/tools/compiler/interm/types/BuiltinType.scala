@@ -2,6 +2,19 @@ package jgo.tools.compiler
 package interm
 package types
 
+/**
+ * A fundamental type -- one that cannot be seen as the composition
+ * of other types.  It is a forgone conclusion that such a type is
+ * an under-type.
+ * 
+ * NB:  These types are ''not'' the types declared in the universe block.
+ * The types declared in universe scope are ''aliases to these types''.
+ * 
+ * To avoid confusion between what the spec calls "built-in types" (namely
+ * those declared in the universe block) and what I call "built-in types"
+ * (types that extend `BuiltinType`), I may rename this trait to
+ * `FundamentalType`.  Low priority.
+ */
 sealed trait BuiltinType extends UnderType with ConstableType
 
 sealed trait PrimitiveType extends BuiltinType {
@@ -41,6 +54,12 @@ sealed trait BuiltinRefType extends UnderType with ConstableType {
 case object StringType extends BuiltinRefType //or Primitive...?
                           with AddableType
                           with NilableType  //Spec says not nilable...
+
+/**
+ * A placeholder type for built-in funcs (those declared in the universe block),
+ * which do not have actual types.
+ */
+case object BuiltinFuncType extends BuiltinRefType
 
 case object TopType     extends BuiltinRefType
 case object NilType     extends BuiltinRefType

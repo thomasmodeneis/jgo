@@ -2,6 +2,8 @@ package jgo.tools.compiler
 package interm
 package expr
 
+import combin._
+
 import types._
 import instr._
 import instr.TypeConversions._

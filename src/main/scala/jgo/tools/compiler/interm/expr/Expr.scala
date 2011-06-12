@@ -42,6 +42,7 @@ trait Expr extends Typed {
    */
   private[expr] def addressable = false
   
+  //Also a bad abstraction.  Or is it?
   private[expr] def mkPtr: Expr = throw new UnsupportedOperationException(
     "JGo internal implementation error:  "
     + "calling mkPtr on an unsuitable Expr; "
