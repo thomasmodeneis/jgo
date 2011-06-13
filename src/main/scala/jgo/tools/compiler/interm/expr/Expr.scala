@@ -48,8 +48,4 @@ trait Expr extends Typed {
     + "calling mkPtr on an unsuitable Expr; "
     + "addressable = " + addressable
   )
-  
-  //Bad abstraction.  Improve.
-  private[expr] def mkCall(args: List[Expr], resultT: Type): Expr =
-    EvalExpr((args foldLeft evalUnder) { _ |+| _.eval } |+| InvokeLambda(Lambda(funcType.get)), resultT)
 }

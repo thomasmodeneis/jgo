@@ -107,10 +107,17 @@ trait BasicCombinators extends Combinators with TypeChecks {
     case _ => problem("callee has type %s; function type required", callee.typeOf)(pos)
   }
   
-  def invoke(callee: Expr, args: List[Expr])(pos: Pos): Err[Expr] = for {
-    resultT <- checkCall(callee, args)(pos)
-  } yield callee.mkCall(args, resultT)
+  private def mkCall(callee: Expr, args: List[Expr], resultT: Type) = callee match {
+    case FunctionExpr(f) =>
+      EvalExpr((args foldLeft CodeBuilder()) { _ |+| _.eval } |+| InvokeFunction(f), resultT)
+    
+    case HasType(ft: FuncType) =>
+      EvalExpr((args foldLeft callee.evalUnder) { _ |+| _.eval } |+| InvokeLambda(Lambda(ft)), resultT)
+  }
   
+  def invoke(callee: Expr, args: List[Expr])(pos: Pos): Err[Expr] =
+    for (resultT <- checkCall(callee, args)(pos))
+    yield mkCall(callee, args, resultT)
   
   /** @todo bring in line with spec, which, I believe, permits type asserts only on interface values */
   def typeAssert(e: Expr, t: Type)(pos: Pos): Err[Expr] =

@@ -24,7 +24,4 @@ private case class FunctionExpr(f: Function) extends Expr {
   
   def eval = Function2Lambda(f)
   def evalUnder = eval
-  
-  override def mkCall(args: List[Expr], resultT: Type): Expr =
-    EvalExpr((args foldLeft CodeBuilder()) { _ |+| _.eval } |+| InvokeFunction(f), resultT)
 }

@@ -46,6 +46,8 @@ trait Combinators {
   
   //def select(obj:  Expr, selector: String)(implicit pos: Pos): Err[Expr]
   def invoke(callee: Expr, args: List[Expr])(pos: Pos): Err[Expr]
+  def typeInvoke(callee: Expr, t: Type, args: List[Expr])(pos: Pos): Err[Expr]
+  
   def typeAssert(e: Expr, t: Type)(pos: Pos): Err[Expr]
   
   def index(arr: Expr, indx: Expr)(pos: Pos): Err[Expr]
@@ -71,8 +73,10 @@ trait Combinators {
   def eval(e: Expr): CodeBuilder
 }
 
-object Combinators extends ConversionCombinators
-                      with BasicCombinators
-                      with ConditionalCombinators
-                      with LvalCombinators
-                      with ConstCombinators
+object Combinators
+  extends ConversionCombinators
+  with BasicCombinators
+  with ConditionalCombinators
+  with LvalCombinators
+  with ConstCombinators
+  with BuiltinFuncCombinators
