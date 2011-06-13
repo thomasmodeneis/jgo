@@ -1,10 +1,5 @@
 func main(args [10]string) {
-	msg := "hello, world"
-	print msg
-	
-	for i := 0; i < 10; i++ {
-		print i
-	}
+	print "hello" //empty causes no Code attribute to be generated.  Weird.
 }
 
 //Sort sorts the given list in place.

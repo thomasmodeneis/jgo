@@ -6,6 +6,7 @@ import scala.util.parsing.combinator._
 package object compiler {
   type Pos = Position
   
+  //for error messages
   def ordinal(n: Int): String = {
     require(n >= 0)
     (n: @scala.annotation.switch) match {
@@ -31,6 +32,35 @@ package object compiler {
       case 19 => "nineteenth"
       case 20 => "twentieth"
       case  i => i.toString + "th"
+    }
+  }
+  
+  //also for error messages
+  def cardinal(n: Int): String = {
+    require(n >= 0)
+    (n: @scala.annotation.switch) match {
+      case  0 => "zero"
+      case  1 => "one"
+      case  2 => "two"
+      case  3 => "three"
+      case  4 => "four"
+      case  5 => "five"
+      case  6 => "six"
+      case  7 => "seven"
+      case  8 => "eight"
+      case  9 => "nine"
+      case 10 => "ten"
+      case 11 => "eleven"
+      case 12 => "twelve"
+      case 13 => "thirteen"
+      case 14 => "fourteen"
+      case 15 => "fifteen"
+      case 16 => "sixteen"
+      case 17 => "seventeen"
+      case 18 => "eighteen"
+      case 19 => "nineteen"
+      case 20 => "twenty"
+      case  i => i.toString 
     }
   }
   

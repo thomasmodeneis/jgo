@@ -53,8 +53,6 @@ class PkgTranslator(val interm: PkgInterm) extends TypeResolution {
     val mv = cw.visitMethod(access, f.name, methodDesc(f), null, null)
     
     new FunctionTranslator(fInterm, mv).translate()
-    
-    //translateFunction(fInterm, cw)
   }
   
   cw.visitEnd()

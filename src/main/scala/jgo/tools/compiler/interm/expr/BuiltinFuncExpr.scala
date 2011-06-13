@@ -3,15 +3,13 @@ package interm
 package expr
 
 import types._
-import symbol._
-import instr._
-import instr.TypeConversions._
-import codeseq._
 
 /**
  * An expression referring to a built-in func, like `len` or `make`.
  * Such an item is not actually a func (it doesn't have function type),
- * so we call it a ''bfunc''.
+ * so the term "built-in func" is something of a misnomer.
+ * 
+ * Implementations of built-in funcs are found in `expr.bfunc`.
  */
 trait BuiltinFuncExpr extends Expr {
   final val typeOf = BuiltinFuncType
@@ -23,11 +21,9 @@ trait BuiltinFuncExpr extends Expr {
 }
 
 trait BuiltinRegularFuncExpr extends BuiltinFuncExpr {
-  def canInvoke(args: List[Expr]): Boolean
-  def invoke(args: List[Expr]): Expr
+  def invoke(args: List[Expr])(pos: Pos): Err[Expr]
 }
 
 abstract class BuiltinTypeFuncExpr extends BuiltinFuncExpr {
-  def canTypeInvoke(t: Type, args: List[Expr]): Boolean
-  def typeInvoke(t: Type, args: List[Expr]): Expr
+  def typeInvoke(t: Type, args: List[Expr])(pos: Pos): Err[Expr]
 }

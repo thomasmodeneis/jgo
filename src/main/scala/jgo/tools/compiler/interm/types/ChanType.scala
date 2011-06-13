@@ -2,6 +2,8 @@ package jgo.tools.compiler
 package interm
 package types
 
+import PartialFunction._
+
 object RecvChanType {
   def unapply(t: Type): Option[Type] = t match {
     case ChanType(elemT, true, _) => Some(elemT)
@@ -39,4 +41,10 @@ extends UnderType with NilableType {
     else
       throw new AssertionError("Somehow, a ChanType(_, false, false) slipped through the cracks")
   } + elemType
+}
+
+object AnyChanType {
+  def unapply(t: Type): Option[Type] = condOpt(t) {
+    case ChanType(et, _, _) => et
+  }
 }

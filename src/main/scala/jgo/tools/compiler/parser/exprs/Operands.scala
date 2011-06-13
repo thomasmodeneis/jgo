@@ -32,9 +32,10 @@ trait Operands extends CompositeLiterals with ExprUtils /*with FunctionLiterals*
   
   protected def procSymbOperand(pos: Pos, symbErr: Err[Symbol]): Err[Expr] =
     symbErr flatMap {
-      case ConstSymbol(c) => result(c)
-      case v: Variable    => result(Combinators.fromVariable(v))
-      case f: Function    => result(Combinators.fromFunction(f))
+      case ConstSymbol(c)       => result(c)
+      case v: Variable          => result(Combinators.fromVariable(v))
+      case f: Function          => result(Combinators.fromFunction(f))
+      case BuiltinFuncSymbol(b) => result(b)
       case s => problem("invalid operand: not a variable, constant, or function: %s", s)(pos)
     }
 }

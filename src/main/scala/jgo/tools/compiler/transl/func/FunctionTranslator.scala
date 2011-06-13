@@ -15,7 +15,9 @@ class FunctionTranslator(
     protected val mv: MethodVisitor)
   extends FuncTranslBase
   with Arithmetic
+  with ArraysAndSlices
   with LabelsAndJumps
+  with Returns
   with Locals
   with FuncCalls
   with Prints

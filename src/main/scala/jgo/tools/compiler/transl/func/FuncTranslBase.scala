@@ -100,6 +100,7 @@ trait FuncTranslBase extends TypeResolution with GoSignatures {
     mv.visitCode()
     beforeInstrs()
     source.code foreach { i =>
+      println(i)
       try translateInstr(i)
       catch {
         case e: UnsupportedInstrException => throw e
@@ -108,7 +109,10 @@ trait FuncTranslBase extends TypeResolution with GoSignatures {
     }
     //apparently, we still have to call this,
     //even though the maxes will be computed for us
-    gen.returnValue() //Be sure to refine this to the correct behavior.
+    println()
+    println()
+    if (target.resultTypes == Nil)
+      gen.returnValue() //prevent "falling off code".  HACK!!
     afterInstrs()
     mv.visitMaxs(-1, -1)
   }

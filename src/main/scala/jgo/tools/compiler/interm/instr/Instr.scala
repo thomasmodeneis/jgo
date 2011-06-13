@@ -80,8 +80,16 @@ case class SliceArray(t: Type, bounds: SliceBounds) extends Instr
 case class SliceSlice(t: Type, bounds: SliceBounds) extends Instr
 case class Substring(bounds: SliceBounds)           extends Instr
 
-
 case object StrAdd extends Instr
+
+case object StringLen extends Instr
+case object SliceLen  extends Instr
+case object MapLen    extends Instr
+case object ChanLen   extends Instr
+
+case object SliceCap extends Instr
+case object ChanCap  extends Instr
+
 
 case class Neg(t: Arith) extends Instr
 

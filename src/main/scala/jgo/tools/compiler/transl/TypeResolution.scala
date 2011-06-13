@@ -58,6 +58,17 @@ trait TypeResolution {
     case Obj => AsmType.getObjectType("java/lang/Object") //refine? not with StackType
   }
   
+  def toBoxedAsmType(t: PrimitiveType): AsmType = t.effective match {
+    case BoolType       => classOf[java.lang.Boolean]
+    case Int8  | Uint8  => classOf[java.lang.Byte]
+    case Int16          => classOf[java.lang.Short]
+    case Uint16         => classOf[java.lang.Character]
+    case Int32 | Uint32 => classOf[java.lang.Integer]
+    case Int64 | Uint64 => classOf[java.lang.Long]
+    case Float32        => classOf[java.lang.Float]
+    case Float64        => classOf[java.lang.Double]
+  }
+  
   def typeDesc(t: Type): String = t.effective match {
     case BoolType       => "Z"  //boolean
     case Int8  | Uint8  => "B"  //byte

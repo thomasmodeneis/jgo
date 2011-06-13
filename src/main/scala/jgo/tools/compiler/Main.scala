@@ -23,7 +23,6 @@ object Main extends App {
   
   intermErr match {
     case Result(interm) =>
-      println("intermediate form:\n" + interm)
       val outputBytes = new PkgTranslator(interm).outputBytes
       //he should be closed properly, but we'll just hope the JVM takes care of it
       new FileOutputStream(args(1)).write(outputBytes)

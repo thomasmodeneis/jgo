@@ -24,10 +24,21 @@ trait ArraysAndSlices extends FuncTranslBase {
     case ArrayPut(I32, et) => gen.arrayLoad(toAsmType(et))
     
     case SliceGet(I32, et) =>
-      gen.invokeInterface(SliceAsmType, new AsmMethod("get", "(I)Ljava/lang/object;"))
-      gen.checkCast(toAsmType(et))
+      gen.invokeInterface(SliceAsmType, new AsmMethod("get", "(I)Ljava/lang/Object;"))
+      et.effective match {
+        case pt: PrimitiveType =>
+          println("PRIMITIVE!!!!!!!")
+          val boxedT = toBoxedAsmType(pt)
+          gen.checkCast(boxedT)
+          gen.unbox(boxedT)
+        case _ =>
+          gen.checkCast(toAsmType(et))
+      }
     case SlicePut(I32, et) =>
-      gen.invokeInterface(SliceAsmType, new AsmMethod("set", "(ILjava/lang/object;)V"))
+      gen.invokeInterface(SliceAsmType, new AsmMethod("set", "(ILjava/lang/Object;)V"))
+    
+    case SliceLen =>
+      gen.invokeInterface(SliceAsmType, new AsmMethod("len", "()I"))
     
     case SliceSlice(it, bounds) => bounds match {
       case NoBounds =>
