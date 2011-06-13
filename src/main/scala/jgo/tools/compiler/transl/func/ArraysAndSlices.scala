@@ -27,14 +27,19 @@ trait ArraysAndSlices extends FuncTranslBase {
       gen.invokeInterface(SliceAsmType, new AsmMethod("get", "(I)Ljava/lang/Object;"))
       et.effective match {
         case pt: PrimitiveType =>
-          println("PRIMITIVE!!!!!!!")
-          val boxedT = toBoxedAsmType(pt)
-          gen.checkCast(boxedT)
-          gen.unbox(boxedT)
+          //Contrary to the implication in the javadoc,
+          //unbox takes Type.INT_TYPE, not Type.getObjectType("java/lang/Integer")
+          //also causes a checkcast to be generated, so that's good.
+          gen.unbox(toAsmType(pt))
         case _ =>
           gen.checkCast(toAsmType(et))
       }
+    
     case SlicePut(I32, et) =>
+      et.effective match {
+        case pt: PrimitiveType => gen.box(toAsmType(pt))
+        case _ => 
+      }
       gen.invokeInterface(SliceAsmType, new AsmMethod("set", "(ILjava/lang/Object;)V"))
     
     case SliceLen =>

@@ -28,6 +28,7 @@ func partition(items []int) int {
 		}
 	}
 	swap(items, len(items) - 1, leftPos)
+	return leftPos //need to detect missing return and generate err msg.
 }
 
 func swap(items []int, i1, i2 int) {
