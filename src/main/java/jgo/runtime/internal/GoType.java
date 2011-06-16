@@ -1,4 +1,4 @@
-package jgo.runtime;
+package jgo.runtime.internal;
 
 import java.lang.annotation.*;
 import static java.lang.annotation.ElementType.*;

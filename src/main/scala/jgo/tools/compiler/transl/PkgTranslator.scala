@@ -20,7 +20,7 @@ import asm.Opcodes._
 
 import scala.collection.{mutable => mut}
 
-class PkgTranslator(val interm: PkgInterm) extends TypeResolution {
+class PkgTranslator(val interm: PkgInterm) extends TypeResolution with GoSignatures {
   val cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES)
   
   cw.visit(V1_6, ACC_PUBLIC, interm.target.name, null, "java/lang/Object", null)
@@ -33,7 +33,10 @@ class PkgTranslator(val interm: PkgInterm) extends TypeResolution {
         ACC_STATIC //0 = package private
     val fieldVis = cw.visitField(access, global.name, typeDesc(global.typeOf), null, null)
     if (global.typeOf.effective.isInstanceOf[UnsignedType])
-      fieldVis.visitAnnotation(UnsignedAnnot, true)
+      fieldVis.visitAnnotation(UnsignedAnnot.Class, true)
+    val sigAnnot = fieldVis.visitAnnotation(GoTypeAnnot.Class, true)
+    sigAnnot.visit("value", typeSig(global.typeOf))
+    sigAnnot.visitEnd()
     fieldVis.visitEnd()
   }
   

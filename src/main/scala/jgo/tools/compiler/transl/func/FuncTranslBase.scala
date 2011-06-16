@@ -85,7 +85,7 @@ trait FuncTranslBase extends TypeResolution with GoSignatures {
   }
   
   protected def annotations() {
-    val sigAnnot = mv.visitAnnotation(GoTypeAnnot, true)
+    val sigAnnot = mv.visitAnnotation(GoTypeAnnot.Class, true)
     sigAnnot.visit("value", typeSig(target.typeOf))
     sigAnnot.visitEnd()
   }
@@ -93,7 +93,7 @@ trait FuncTranslBase extends TypeResolution with GoSignatures {
   protected def paramAnnotations() {
     for ((p, i) <- target.paramTypes.zipWithIndex)
       if (p.effective.isInstanceOf[UnsignedType])
-        mv.visitParameterAnnotation(i, UnsignedAnnot, true).visitEnd()
+        mv.visitParameterAnnotation(i, UnsignedAnnot.Class, true).visitEnd()
   }
   
   private def translateCode() {

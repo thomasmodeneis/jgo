@@ -20,7 +20,7 @@ object Len extends BuiltinRegularFuncExpr {
       case HasType(MapType(_, _))     => result(UnderlyingExpr(arg.evalUnder |+| MapLen, int))
       case HasType(AnyChanType(_))    => result(UnderlyingExpr(arg.evalUnder |+| ChanLen, int))
       //TODO: ptr to array.
-      case _ => problem("invalid argument to len; has type %s", arg.typeOf)(pos)
+      case _ => problem("invalid argument to len, type %s", arg.typeOf)(pos)
     }
     
     case _ => problem("len takes exactly one argument; found %s", cardinal(args.length))(pos)

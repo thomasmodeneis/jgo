@@ -91,8 +91,6 @@ case object SliceCap extends Instr
 case object ChanCap  extends Instr
 
 
-case class Neg(t: Arith) extends Instr
-
 case class Add(t: Arith) extends Instr
 case class Sub(t: Arith) extends Instr
 case class Mul(t: Arith) extends Instr
@@ -108,7 +106,12 @@ case class BitwiseOr(t: Integral)     extends Instr
 case class BitwiseAndNot(t: Integral) extends Instr
 case class BitwiseXor(t: Integral)    extends Instr
 
-case class BitwiseCompl(t: Integral)    extends Instr
+case class BitwiseCompl(t: Integral) extends Instr
+case class Neg(t: Arith)             extends Instr
+
+case class MakeComplex(t: Complex) extends Instr
+case class RealPart(t: Complex)    extends Instr
+case class ImagPart(t: Complex)    extends Instr
 
 case class Incr(v: Variable, n: Int, t: Integral)  extends Instr
 case class Decr(v: Variable, n: Int, t: Integral)  extends Instr

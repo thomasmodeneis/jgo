@@ -14,7 +14,7 @@ import RuntimeInfo._
 
 import org.objectweb.asm
 import asm.{ClassWriter, ClassVisitor, MethodVisitor, Label => AsmLabel, Type => AsmType}
-import asm.commons.{GeneratorAdapter, InstructionAdapter, Method => AsmMethod}
+import asm.commons.{Method => AsmMethod}
 import asm.Opcodes._
 import AsmType._
 
@@ -24,7 +24,7 @@ trait ArraysAndSlices extends FuncTranslBase {
     case ArrayPut(I32, et) => gen.arrayLoad(toAsmType(et))
     
     case SliceGet(I32, et) =>
-      gen.invokeInterface(SliceAsmType, new AsmMethod("get", "(I)Ljava/lang/Object;"))
+      gen.invokeInterface(Slice.AsmType, Slice.Methods.Get)
       et.effective match {
         case pt: PrimitiveType =>
           //Contrary to the implication in the javadoc,
@@ -40,42 +40,38 @@ trait ArraysAndSlices extends FuncTranslBase {
         case pt: PrimitiveType => gen.box(toAsmType(pt))
         case _ => 
       }
-      gen.invokeInterface(SliceAsmType, new AsmMethod("set", "(ILjava/lang/Object;)V"))
+      gen.invokeInterface(Slice.AsmType, Slice.Methods.Set)
     
-    case SliceLen =>
-      gen.invokeInterface(SliceAsmType, new AsmMethod("len", "()I"))
+    case SliceLen => gen.invokeInterface(Slice.AsmType, Slice.Methods.Len)
+    case SliceCap => gen.invokeInterface(Slice.AsmType, Slice.Methods.Cap)
     
     case SliceSlice(it, bounds) => bounds match {
-      case NoBounds =>
-        gen.invokeInterface(SliceAsmType, new AsmMethod("slice",     "()Ljgo/runtime/Slice;"))
-      case LowBound =>
-        gen.invokeInterface(SliceAsmType, new AsmMethod("sliceLow",  "(I)Ljgo/runtime/Slice;"))
-      case HighBound =>
-        gen.invokeInterface(SliceAsmType, new AsmMethod("sliceHigh", "(I)Ljgo/runtime/Slice;"))
-      case BothBounds =>
-        gen.invokeInterface(SliceAsmType, new AsmMethod("slice",     "(II)Ljgo/runtime/Slice;"))
+      case NoBounds   => gen.invokeInterface(Slice.AsmType, Slice.Methods.SliceNone)
+      case LowBound   => gen.invokeInterface(Slice.AsmType, Slice.Methods.SliceLow)
+      case HighBound  => gen.invokeInterface(Slice.AsmType, Slice.Methods.SliceHigh)
+      case BothBounds => gen.invokeInterface(Slice.AsmType, Slice.Methods.SliceBoth)
     }
     
     case SliceArray(it, bounds) if it.effective == Int32 || it.effective == Uint32 => bounds match {
       case NoBounds =>
-        gen.invokeStatic(IntSliceAsmType, new AsmMethod("fromArray",     "([I)Ljgo/runtime/IntSlice;"))
+        gen.invokeStatic(IntSlice.AsmType, new AsmMethod("fromArray",     "([I)Ljgo/runtime/IntSlice;"))
       case LowBound =>
-        gen.invokeStatic(IntSliceAsmType, new AsmMethod("fromArrayLow",  "([II)Ljgo/runtime/IntSlice;"))
+        gen.invokeStatic(IntSlice.AsmType, new AsmMethod("fromArrayLow",  "([II)Ljgo/runtime/IntSlice;"))
       case HighBound =>
-        gen.invokeStatic(IntSliceAsmType, new AsmMethod("fromArrayHigh", "([II)Ljgo/runtime/IntSlice;"))
+        gen.invokeStatic(IntSlice.AsmType, new AsmMethod("fromArrayHigh", "([II)Ljgo/runtime/IntSlice;"))
       case BothBounds =>
-        gen.invokeStatic(IntSliceAsmType, new AsmMethod("fromArray",     "([III)Ljgo/runtime/IntSlice;"))
+        gen.invokeStatic(IntSlice.AsmType, new AsmMethod("fromArray",     "([III)Ljgo/runtime/IntSlice;"))
     }
     
     case SliceArray(t, bounds) => bounds match {
       case NoBounds =>
-        gen.invokeStatic(IntSliceAsmType, new AsmMethod("fromArray",     "([Ljava/lang/Object;)Ljgo/runtime/ObjSlice;"))
+        gen.invokeStatic(IntSlice.AsmType, new AsmMethod("fromArray",     "([Ljava/lang/Object;)Ljgo/runtime/ObjSlice;"))
       case LowBound =>
-        gen.invokeStatic(IntSliceAsmType, new AsmMethod("fromArrayLow",  "([Ljava/lang/Object;I)Ljgo/runtime/ObjSlice;"))
+        gen.invokeStatic(IntSlice.AsmType, new AsmMethod("fromArrayLow",  "([Ljava/lang/Object;I)Ljgo/runtime/ObjSlice;"))
       case HighBound =>
-        gen.invokeStatic(IntSliceAsmType, new AsmMethod("fromArrayHigh", "([Ljava/lang/Object;I)Ljgo/runtime/ObjSlice;"))
+        gen.invokeStatic(IntSlice.AsmType, new AsmMethod("fromArrayHigh", "([Ljava/lang/Object;I)Ljgo/runtime/ObjSlice;"))
       case BothBounds =>
-        gen.invokeStatic(IntSliceAsmType, new AsmMethod("fromArray",     "([Ljava/lang/Object;II)Ljgo/runtime/ObjSlice;"))
+        gen.invokeStatic(IntSlice.AsmType, new AsmMethod("fromArray",     "([Ljava/lang/Object;II)Ljgo/runtime/ObjSlice;"))
     }
     
     case _ => super.translateInstr(i)

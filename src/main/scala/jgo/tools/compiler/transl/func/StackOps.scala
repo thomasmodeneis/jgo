@@ -34,6 +34,7 @@ trait StackOps extends FuncTranslBase {
     case Dup_Down2 => inst.dupX2()
     case Swap      => inst.swap()
     
+    //Duplicate(1) is equiv to Dup
     case Duplicate(n) =>
       var i = 0
       while (i < n) {

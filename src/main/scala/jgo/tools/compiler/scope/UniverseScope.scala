@@ -40,6 +40,7 @@ object UniverseScope extends MapScope {
   val nil  = new ConstSymbol(NilConst)
   
   val len = BuiltinFuncSymbol(bfunc.Len)
+  val cap = BuiltinFuncSymbol(bfunc.Cap)
   
   protected val bindings = Map[String, Symbol] (
     "string" -> string,
@@ -72,7 +73,8 @@ object UniverseScope extends MapScope {
     "iota"  -> iota,
     "nil"   -> nil,
     
-    "len" -> len
+    "len" -> len,
+    "cap" -> cap
     
     /*
     "append"

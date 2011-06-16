@@ -14,7 +14,7 @@ import Opcodes._
 import AsmType._
 
 trait TypeResolution {
-  implicit def class2asmType(cl: Class[_]) = AsmType.getType(cl)
+  protected implicit def class2asmType(cl: Class[_]) = AsmType.getType(cl)
   //implicit def desc2asmType(desc: String)  = AsmType.getType(desc)
   
   def stackSize(t: Type): Int = t.effective match {
@@ -39,7 +39,7 @@ trait TypeResolution {
     
     case StringType => AsmType.getObjectType("java/lang/String")
     
-    case SliceType(t) => AsmType.getObjectType(SliceClass)
+    case SliceType(t) => Slice.AsmType
     
     //not sure why this shouldn't be the rule for everything
     case tEff => AsmType.getType(typeDesc(tEff))
@@ -84,7 +84,7 @@ trait TypeResolution {
     //note: O(n^2) time, where n is the dimension of the array type
     case ArrayType(len, t) => "[" + typeDesc(t)
     
-    case SliceType(t) => SliceDesc
+    case SliceType(t) => Slice.Desc
   }
   
   def typeDesc(t: StackType): String = t match {

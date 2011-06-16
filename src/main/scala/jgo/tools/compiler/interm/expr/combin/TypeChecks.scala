@@ -35,6 +35,18 @@ trait TypeChecks {
     case HasType(ut: NumericType) => result(ut)
     case _ => problem("%s has type %s; numeric type required", desc, e.typeOf)
   }
+  protected def complex(e: Expr, desc: String) (implicit pos: Pos): Err[ComplexType] = e match {
+    case HasType(ut: ComplexType) => result(ut)
+    case _ => problem("%s has type %s; complex-number type required", desc, e.typeOf)
+  }
+  protected def real(e: Expr, desc: String) (implicit pos: Pos): Err[RealType] = e match {
+    case HasType(ut: RealType) => result(ut)
+    case _ => problem("%s has type %s; real-number type required", desc, e.typeOf)
+  }
+  protected def floating(e: Expr, desc: String) (implicit pos: Pos): Err[FloatingType] = e match {
+    case HasType(ut: FloatingType) => result(ut)
+    case _ => problem("%s has type %s; floating-point type required", desc, e.typeOf)
+  }
   protected def integral(e: Expr, desc: String) (implicit pos: Pos): Err[IntegralType] = e match {
     case HasType(ut: IntegralType) => result(ut)
     case _ => problem("%s has type %s; integral type required", desc, e.typeOf)
@@ -50,7 +62,7 @@ trait TypeChecks {
   
   
   protected def sameType(e1: Expr, e2: Expr) (implicit pos: Pos): Err[(Expr, Expr, Type)] = {
-    def getType(e: Expr, desc: String): Err[Type] = result(e.typeOf)
+    @inline def getType(e: Expr, desc: String): Err[Type] = result(e.typeOf)
     same(getType)(e1, e2)
   }
   
@@ -61,17 +73,22 @@ trait TypeChecks {
                 else problem("left and right operands have differing types %s and %s", e1.typeOf, e2.typeOf)
     } yield result
   
+  
   protected def sameAddable(e1: Expr, e2: Expr) (implicit pos: Pos): Err[(Expr, Expr, AddableType)] =
     same(addable)(e1, e2)
   
   protected def sameNumeric(e1: Expr, e2: Expr) (implicit pos: Pos): Err[(Expr, Expr, NumericType)] =
     same(numeric)(e1, e2)
   
+  protected def sameFloating(e1: Expr, e2: Expr) (implicit pos: Pos): Err[(Expr, Expr, FloatingType)] =
+    same(floating)(e1, e2)
+  
   protected def sameIntegral(e1: Expr, e2: Expr) (implicit pos: Pos): Err[(Expr, Expr, IntegralType)] =
     same(integral)(e1, e2)
   
   protected def sameUnsigned(e1: Expr, e2: Expr) (implicit pos: Pos): Err[(Expr, Expr, UnsignedType)] =
     same(unsigned)(e1, e2)
+  
   
   protected def sameString(e1: Expr, e2: Expr) (implicit pos: Pos): Err[(Expr, Expr)] =
     for ((s1, s2, _) <- same(string)(e1, e2))
