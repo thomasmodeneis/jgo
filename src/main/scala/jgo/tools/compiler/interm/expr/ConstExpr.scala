@@ -7,7 +7,7 @@ import instr._
 import instr.TypeConversions._
 import codeseq._
 
-import PartialFunction._ //cond is really useful. read the api.
+import PartialFunction._ //cond and condOpt are really useful. read the api.
 
 /**
  * An expression whose value is determined at compile-time.
@@ -41,9 +41,10 @@ sealed trait StringConst extends ConstExpr {
 }
 
 /**
- * A boolean constant.  Important: this trait does not extend,
- * and has nothing to do with, `BoolExpr`.  I plan to rename
- * `BoolExpr` to `ConditionalExpr`, to make this clearer.
+ * A boolean constant.
+ * 
+ * Important: this trait does not extend, and has nothing
+ * explicitly to do with, `ConditionalExpr`.
  */
 sealed trait BoolConst extends ConstExpr {
   def value: Boolean
@@ -63,6 +64,11 @@ sealed trait NumericConst extends ConstExpr {
 }
 
 /**
+ * A complex constant.
+ */
+sealed trait ComplexConst extends NumericConst
+
+/**
  * A constant that is either floating-point or integral.
  */
 sealed trait RealConst extends NumericConst {
@@ -71,6 +77,11 @@ sealed trait RealConst extends NumericConst {
   
   override def valueString = real.toString
 }
+
+/**
+ * A floating-point constant.
+ */
+sealed trait FloatingConst extends RealConst
 
 /**
  * An integral constant.
@@ -83,26 +94,61 @@ sealed trait IntegralConst extends RealConst {
 }
 
 
+
 object StringConst {
   def unapply(e: Expr): Option[String] =
     condOpt(e) { case s: StringConst => s.value }
+  
+  private[expr] def apply(s: String, tOpt: Option[Type]): StringConst = tOpt match {
+    case Some(t) => TypedStringConst(s, t)
+    case None    => UntypedStringConst(s)
+  }
 }
+
 object BoolConst {
   def unapply(e: Expr): Option[Boolean] =
     condOpt(e) { case b: BoolConst => b.value }
+  
+  private[expr] def apply(b: Boolean, tOpt: Option[Type]): BoolConst = tOpt match {
+    case Some(t) => TypedBoolConst(b, t)
+    case None    => UntypedBoolConst(b)
+  }
 }
+
 object NumericConst {
   def unapply(e: Expr): Option[(BigDecimal, BigDecimal)] =
     condOpt(e) { case n: NumericConst => (n.real, n.imag) }
 }
+
+object ComplexConst {
+  private[expr] def apply(r: BigDecimal, i: BigDecimal, tOpt: Option[Type]): ComplexConst = tOpt match {
+    case Some(t) => TypedComplexConst(r, i, t)
+    case None    => UntypedComplexConst(r, i)
+  }
+}
+
 object RealConst {
   def unapply(e: Expr): Option[BigDecimal] =
     condOpt(e) { case r: RealConst => r.real }
 }
+
+object FloatingConst {
+  private[expr] def apply(f: BigDecimal, tOpt: Option[Type]): FloatingConst = tOpt match {
+    case Some(t) => TypedFloatingConst(f, t)
+    case None    => UntypedFloatingConst(f)
+  }
+}
+
 object IntegralConst {
   def unapply(e: Expr): Option[BigInt] =
     condOpt(e) { case i: IntegralConst => i.int }
+  
+  private[expr] def apply(i: BigInt, tOpt: Option[Type]): IntegralConst = tOpt match {
+    case Some(t) => TypedIntegralConst(i, t)
+    case None    => UntypedIntegralConst(i)
+  }
 }
+
 
 
 /**
@@ -133,7 +179,7 @@ private case class TypedBoolConst(value: Boolean, typeOf: Type) extends BoolCons
 /**
  * A complex constant whose type is that specified.
  */
-private case class TypedComplexConst(real: BigDecimal, imag: BigDecimal, typeOf: Type) extends NumericConst with TypedConst {
+private case class TypedComplexConst(real: BigDecimal, imag: BigDecimal, typeOf: Type) extends ComplexConst with TypedConst {
   requireOfUnderlying(_.isInstanceOf[ComplexType])
   def evalUnder = typeOf.underlying match {
     case ct: ComplexType => PushComplex(real, imag, ct)
@@ -143,7 +189,7 @@ private case class TypedComplexConst(real: BigDecimal, imag: BigDecimal, typeOf:
 /**
  * A floating-point constant whose type is that specified.
  */
-private case class TypedFloatingConst(real: BigDecimal, typeOf: Type) extends RealConst with TypedConst {
+private case class TypedFloatingConst(real: BigDecimal, typeOf: Type) extends FloatingConst with TypedConst {
   requireOfUnderlying(_.isInstanceOf[FloatingType])
   def evalUnder = typeOf.underlying match {
     case ft: FloatingType => PushFloat(real, ft)
@@ -159,6 +205,30 @@ private case class TypedIntegralConst(int: BigInt, typeOf: Type) extends Integra
     case it: IntegralType => PushInt(int, it)
   }
 }
+
+/**
+ * Extractor for typed numeric constants; that is, typed constants that are
+ * either complex, floating, or integral.
+ */
+private object TypedNumericConst {
+  def unapply(e: Expr): Option[(BigDecimal, BigDecimal, Type)] = condOpt(e) {
+    case TypedComplexConst(r, i, t) => (r, i, t)
+    case TypedFloatingConst(dec, t) => (dec, 0, t)
+    case TypedIntegralConst(int, t) => (BigDecimal(int), 0, t)
+  }
+}
+
+/**
+ * Extractor for typed real constants; that is, typed constants that are
+ * either floating or integral.
+ */
+private object TypedRealConst {
+  def unapply(e: Expr): Option[(BigDecimal, Type)] = condOpt(e) {
+    case TypedFloatingConst(r, t) => (r, t)
+    case TypedIntegralConst(i, t) => (BigDecimal(i), t)
+  }
+}
+
 
 
 /**
@@ -275,14 +345,14 @@ sealed trait UntypedRealConst extends RealConst with UntypedNumericConst {
 /**
  * An untyped complex constant.
  */
-case class UntypedComplexConst(real: BigDecimal, imag: BigDecimal) extends UntypedNumericConst {
+case class UntypedComplexConst(real: BigDecimal, imag: BigDecimal) extends ComplexConst with UntypedNumericConst {
   def defaultType = scope.UniverseScope.complex128
 }
 
 /**
  * An untyped floating-point constant.
  */
-case class UntypedFloatingConst(real: BigDecimal) extends UntypedRealConst {
+case class UntypedFloatingConst(real: BigDecimal) extends FloatingConst with UntypedRealConst {
   def defaultType = scope.UniverseScope.float64
 }
 

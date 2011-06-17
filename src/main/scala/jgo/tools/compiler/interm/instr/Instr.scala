@@ -45,11 +45,13 @@ case class TypeAssert(t: Type)                extends Instr
 case class  New(t: Type) extends Instr
 case object Copy         extends Instr
 
-case class MakeArray(t: Type, len: Int)             extends Instr
-case class MakeSlice(t: Type, len: Int, cap: Int)   extends Instr
-case class MakeMap(k: Type, v: Type)                extends Instr
-case class MakeMapSize(k: Type, v: Type, size: Int) extends Instr
-case class MakeChan(t: Type)                        extends Instr
+case class MakeArray(et: Type, len: Int) extends Instr
+case class MakeSliceLen   (et: Type)     extends Instr
+case class MakeSliceLenCap(et: Type)     extends Instr
+case class MakeMap    (k: Type, v: Type) extends Instr
+case class MakeMapSize(k: Type, v: Type) extends Instr
+case class MakeChan    (et: Type)        extends Instr
+case class MakeChanSize(et: Type)        extends Instr
 
 case class  MkPtrVar(v: Variable) extends Instr
 case class  MkPtrArray(t: Type)   extends Instr
