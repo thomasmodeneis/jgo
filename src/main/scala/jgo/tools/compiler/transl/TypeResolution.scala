@@ -27,6 +27,19 @@ trait TypeResolution {
     case _               => 1
   }
   
+  def toRuntimeStackType(t: Type): RuntimeStackType = t.effective match {
+    case BoolType       => BoolT
+    case Int8  | Uint8  => ByteT
+    case Int16          => ShortT
+    case Uint16         => CharT
+    case Int32 | Uint32 => IntT
+    case Int64 | Uint64 => LongT
+    case Float32        => FloatT
+    case Float64        => DoubleT
+    
+    case _ => ObjT
+  }
+  
   def toAsmType(t: Type): AsmType = t.effective match {
     case BoolType       => BOOLEAN_TYPE
     case Int8  | Uint8  => BYTE_TYPE

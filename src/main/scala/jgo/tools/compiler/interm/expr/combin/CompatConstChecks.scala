@@ -13,7 +13,7 @@ import PartialFunction.condOpt
 /**
  * Provides extractors for pairs of constants of compatible type.
  */
-trait TypeCompatConstChecks {
+trait CompatConstChecks {
   
   protected object CompatStringConsts {
     def unapply(pair: (Expr, Expr)): Option[(String, String, Option[Type])] = condOpt(pair) {

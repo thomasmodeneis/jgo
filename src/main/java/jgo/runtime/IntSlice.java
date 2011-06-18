@@ -7,7 +7,7 @@ import java.util.*;
  * 
  * @author Harrison Klaperman
  */
-public class IntSlice implements Slice<Integer>, Iterable<Integer> {
+class IntSlice implements Slice<Integer>, Iterable<Integer> {
 	private int[] array;
 	private int offset;
 	private int length;
@@ -21,7 +21,7 @@ public class IntSlice implements Slice<Integer>, Iterable<Integer> {
 	 * 
 	 * @throws NullPointerException if the passed array is null
 	 */
-	public IntSlice(int[] arr) {
+	IntSlice(int[] arr) {
 		this(arr, 0, arr.length);
 	}
 	
@@ -39,7 +39,7 @@ public class IntSlice implements Slice<Integer>, Iterable<Integer> {
 	 * @throws IndexOutOfBoundsException if the passed offset is not a valid
 	 *                                   index into the array
 	 */
-	public IntSlice(int[] arr, int off, int len) {
+	IntSlice(int[] arr, int off, int len) {
 		if (array == null)
 			throw new NullPointerException("array is null");
 		if (len < 0 || off + len > arr.length)
@@ -138,23 +138,5 @@ public class IntSlice implements Slice<Integer>, Iterable<Integer> {
 				throw new UnsupportedOperationException();
 			}
 		};
-	}
-	
-	
-	/* FACTORIES */
-	public static IntSlice fromArray(int[] arr) {
-		return fromArray(arr, 0, arr.length);
-	}
-	
-	public static IntSlice fromArrayLow(int[] arr, int low) {
-		return new IntSlice(arr).slice(low, arr.length);
-	}
-	
-	public static IntSlice fromArrayHigh(int[] arr, int high) {
-		return new IntSlice(arr).slice(0, high);
-	}
-	
-	public static IntSlice fromArray(int[] arr, int low, int high) {
-		return new IntSlice(arr).slice(low, high);
 	}
 }

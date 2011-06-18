@@ -8,7 +8,7 @@ import instr._
 import instr.TypeConversions._
 import codeseq._
 
-trait CompleteConstCombinators extends Combinators with TypeCompatConstChecks {
+trait CompleteConstCombinators extends Combinators with CompatConstChecks {
   private implicit def wrapInResult[T](v: T): Err[T] = result(v)
   
   private def boolConst(b: Boolean) =

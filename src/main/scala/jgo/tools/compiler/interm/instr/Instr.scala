@@ -45,7 +45,7 @@ case class TypeAssert(t: Type)                extends Instr
 case class  New(t: Type) extends Instr
 case object Copy         extends Instr
 
-case class MakeArray(et: Type, len: Int) extends Instr
+case class MakeArray(t: ArrayType)       extends Instr
 case class MakeSliceLen   (et: Type)     extends Instr
 case class MakeSliceLenCap(et: Type)     extends Instr
 case class MakeMap    (k: Type, v: Type) extends Instr

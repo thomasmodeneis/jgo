@@ -37,6 +37,14 @@ trait ExprUtils {
       } yield res
   }
   
+  protected implicit def convTernary[A, B, C, R](f: (A, B, C) => Pos => Err[R]): (Err[A] ~ Pos ~ Err[B] ~ Err[C]) => Err[R] = {
+    case aErr ~ p ~ bErr ~ cErr =>
+      for {
+        (a, b, c) <- (aErr, bErr, cErr)
+        res <- f(a, b, c)(p)
+      } yield res
+  }
+  
   protected implicit def convSlice(f: (Expr, Option[Expr], Option[Expr]) => Pos => Err[Expr])
       : (Err[Expr] ~ Pos ~ Option[Err[Expr]] ~ Option[Err[Expr]]) => Err[Expr] = {
     case e1Err ~ p ~ e2Ugly ~ e3Ugly =>

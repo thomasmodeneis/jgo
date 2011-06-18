@@ -16,6 +16,7 @@ class FunctionTranslator(
   extends FuncTranslBase
   with Arithmetic
   with ArraysAndSlices
+  with Strings
   with LabelsAndJumps
   with Returns
   with Locals

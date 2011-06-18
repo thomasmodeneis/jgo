@@ -19,7 +19,27 @@ import asm.Opcodes._
 import AsmType._
 
 trait ArraysAndSlices extends FuncTranslBase {
+  private def makeMultidimArray(t: ArrayType) = {
+    var curT: Type = t
+    var dim = 0
+    while (curT.isInstanceOf[ArrayType]) {
+      val at = curT.asInstanceOf[ArrayType]
+      gen.push(at.length)
+      dim += 1
+      curT = at.elemType
+    }
+    gen.visitMultiANewArrayInsn(typeDesc(t), dim)
+  }
+  
   protected override def translateInstr(i: Instr): Unit = i match {
+    case MakeArray(t) => t match {
+      case ArrayType(_, _: ArrayType) => makeMultidimArray(t)
+      case ArrayType(len, elemT)      => gen.push(len); gen.newArray(toAsmType(elemT))
+    }
+    
+    case MakeSliceLen(_)    => gen.invokeStatic(Slices.AsmType, Slices.Methods.MakeLen)
+    case MakeSliceLenCap(_) => gen.invokeStatic(Slices.AsmType, Slices.Methods.MakeLenCap)
+    
     case ArrayGet(I32, et) => gen.arrayLoad(toAsmType(et))
     case ArrayPut(I32, et) => gen.arrayLoad(toAsmType(et))
     
@@ -28,8 +48,8 @@ trait ArraysAndSlices extends FuncTranslBase {
       et.effective match {
         case pt: PrimitiveType =>
           //Contrary to the implication in the javadoc,
-          //unbox takes Type.INT_TYPE, not Type.getObjectType("java/lang/Integer")
-          //also causes a checkcast to be generated, so that's good.
+          //unbox takes Type.INT_TYPE, not Type.getObjectType("java/lang/Integer").
+          ///Also, causes a checkcast to be generated, so that's good.
           gen.unbox(toAsmType(pt))
         case _ =>
           gen.checkCast(toAsmType(et))
@@ -52,27 +72,14 @@ trait ArraysAndSlices extends FuncTranslBase {
       case BothBounds => gen.invokeInterface(Slice.AsmType, Slice.Methods.SliceBoth)
     }
     
-    case SliceArray(it, bounds) if it.effective == Int32 || it.effective == Uint32 => bounds match {
-      case NoBounds =>
-        gen.invokeStatic(IntSlice.AsmType, new AsmMethod("fromArray",     "([I)Ljgo/runtime/IntSlice;"))
-      case LowBound =>
-        gen.invokeStatic(IntSlice.AsmType, new AsmMethod("fromArrayLow",  "([II)Ljgo/runtime/IntSlice;"))
-      case HighBound =>
-        gen.invokeStatic(IntSlice.AsmType, new AsmMethod("fromArrayHigh", "([II)Ljgo/runtime/IntSlice;"))
-      case BothBounds =>
-        gen.invokeStatic(IntSlice.AsmType, new AsmMethod("fromArray",     "([III)Ljgo/runtime/IntSlice;"))
-    }
-    
-    case SliceArray(t, bounds) => bounds match {
-      case NoBounds =>
-        gen.invokeStatic(IntSlice.AsmType, new AsmMethod("fromArray",     "([Ljava/lang/Object;)Ljgo/runtime/ObjSlice;"))
-      case LowBound =>
-        gen.invokeStatic(IntSlice.AsmType, new AsmMethod("fromArrayLow",  "([Ljava/lang/Object;I)Ljgo/runtime/ObjSlice;"))
-      case HighBound =>
-        gen.invokeStatic(IntSlice.AsmType, new AsmMethod("fromArrayHigh", "([Ljava/lang/Object;I)Ljgo/runtime/ObjSlice;"))
-      case BothBounds =>
-        gen.invokeStatic(IntSlice.AsmType, new AsmMethod("fromArray",     "([Ljava/lang/Object;II)Ljgo/runtime/ObjSlice;"))
-    }
+    case SliceArray(t, bounds) =>
+      val runtimeT = toRuntimeStackType(t)
+      bounds match {
+        case NoBounds   => gen.invokeStatic(Slices.AsmType, Slices.Methods.fromArrayNone(runtimeT))
+        case LowBound   => gen.invokeStatic(Slices.AsmType, Slices.Methods.fromArrayLow (runtimeT))
+        case HighBound  => gen.invokeStatic(Slices.AsmType, Slices.Methods.fromArrayHigh(runtimeT))
+        case BothBounds => gen.invokeStatic(Slices.AsmType, Slices.Methods.fromArrayBoth(runtimeT))
+      }
     
     case _ => super.translateInstr(i)
   }

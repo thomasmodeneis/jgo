@@ -42,6 +42,12 @@ object UniverseScope extends MapScope {
   val len = BuiltinFuncSymbol(bfunc.Len)
   val cap = BuiltinFuncSymbol(bfunc.Cap)
   
+  val make = BuiltinFuncSymbol(bfunc.Make)
+  
+  val complex = BuiltinFuncSymbol(bfunc.Complex)
+  val real = BuiltinFuncSymbol(bfunc.Real)
+  val imag = BuiltinFuncSymbol(bfunc.Imag)
+  
   protected val bindings = Map[String, Symbol] (
     "string" -> string,
     "bool"   -> bool,
@@ -74,23 +80,23 @@ object UniverseScope extends MapScope {
     "nil"   -> nil,
     
     "len" -> len,
-    "cap" -> cap
+    "cap" -> cap,
+    
+    "make" -> make,
+    
+    "complex" -> complex,
+    "real" -> real,
+    "imag" -> imag
     
     /*
     "append"
-    "cap"
     "close"
     "closed" //this has since been removed from the spec
-    "complex"
     "copy"
-    "imag"
-    "len"
-    "make"
     "new"
     "panic"
     "print"
     "println"
-    "real"
     "recover"
     */
   )

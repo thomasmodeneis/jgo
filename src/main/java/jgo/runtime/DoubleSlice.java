@@ -3,19 +3,17 @@ package jgo.runtime;
 import java.util.*;
 
 /**
- * A mutable slice of some array of objects.
- * 
- * @param <T> the element type of this slice
+ * A mutable slice of some array of doubles.
  * 
  * @author Harrison Klaperman
  */
-class ObjSlice<T> implements Slice<T>, Iterable<T> {
-	private Object[] array;
+class DoubleSlice implements Slice<Double>, Iterable<Double> {
+	private double[] array;
 	private int offset;
 	private int length;
 	
 	/**
-	 * Creates a complete slice of the specified object array.
+	 * Creates a complete slice of the specified double array.
 	 * The resultant slice will be equal in length to the given array
 	 * and will begin at the zeroth element of the array.
 	 * 
@@ -23,12 +21,12 @@ class ObjSlice<T> implements Slice<T>, Iterable<T> {
 	 * 
 	 * @throws NullPointerException if the passed array is null
 	 */
-	ObjSlice(T[] arr) {
+	DoubleSlice(double[] arr) {
 		this(arr, 0, arr.length);
 	}
 	
 	/**
-	 * Creates a slice of the given object array with offset and length
+	 * Creates a slice of the given double array with offset and length
 	 * as specified.
 	 * 
 	 * @param arr the array from which to create this slice
@@ -41,7 +39,7 @@ class ObjSlice<T> implements Slice<T>, Iterable<T> {
 	 * @throws IndexOutOfBoundsException if the passed offset is not a valid
 	 *                                   index into the array
 	 */
-	ObjSlice(T[] arr, int off, int len) {
+	DoubleSlice(double[] arr, int off, int len) {
 		if (array == null)
 			throw new NullPointerException("array is null");
 		if (len < 0 || off + len > arr.length)
@@ -57,49 +55,49 @@ class ObjSlice<T> implements Slice<T>, Iterable<T> {
 	/**
 	 * @inheritDoc
 	 */
-	public ObjSlice<T> slice(int low, int high) {
+	public DoubleSlice slice(int low, int high) {
 		if (low < 0 || length <= low)
 			throw new IndexOutOfBoundsException("lower bound invalid");
 		if (high < 0 || length <= high)
 			throw new IndexOutOfBoundsException("upper bound invalid");
 		
-		return new ObjSlice<T>((T[])array, offset + low, high - low);
+		return new DoubleSlice(array, offset + low, high - low);
 	}
 	
 	/**
 	 * @inheritDoc
 	 */
-	public ObjSlice<T> slice() {
+	public DoubleSlice slice() {
 		return slice(0, len());
 	}
 	
 	/**
 	 * @inheritDoc
 	 */
-	public ObjSlice<T> sliceLow(int low) {
+	public DoubleSlice sliceLow(int low) {
 		return slice(low, len());
 	}
 	
 	/**
 	 * @inheritDoc
 	 */
-	public ObjSlice<T> sliceHigh(int high) {
+	public DoubleSlice sliceHigh(int high) {
 		return slice(0, high);
 	}
 	
 	/**
 	 * Returns the element of this slice at the specified index.
 	 */
-	public T get(int index) {
+	public Double get(int index) {
 		if (index >= length)
 			throw new IndexOutOfBoundsException();
-		return (T)array[offset + index];
+		return array[offset + index];
 	}
 	
 	/**
 	 * Updates the element of this slice at the specified index.
 	 */
-	public void set(int index, T value) {
+	public void set(int index, Double value) {
 		if (index >= length)
 			throw new IndexOutOfBoundsException();
 		array[offset + index] = value;
@@ -122,18 +120,18 @@ class ObjSlice<T> implements Slice<T>, Iterable<T> {
 	/**
 	 * Returns an iterator over the elements of this slice.
 	 */
-	public Iterator<T> iterator() {
-		return new Iterator<T>() {
+	public Iterator<Double> iterator() {
+		return new Iterator<Double>() {
 			private int index = offset;
 			
 			public boolean hasNext() {
 				return index < offset + length;
 			}
 			
-			public T next() {
+			public Double next() {
 				if (!hasNext())
 					throw new NoSuchElementException();
-				return (T)array[index++];
+				return array[index++];
 			}
 			
 			public void remove() {

@@ -18,9 +18,9 @@ trait PrimaryExprs extends Operands with Types {
     | primaryExpr ~ "[" ~ (expression.? <~ ":") ~ expression.? <~ "]"  ^^ slice
 //  | primaryExpr ~ "." ~ ident
     | primaryExpr ~ "." ~ ("(" ~> goType <~ ")")                       ^^ typeAssert
+//  | onlyGoType ~ "(" ~ expression <~ ")"
+    | primaryExpr ~ "(" ~ onlyGoType ~ exprList <~ ")"                 ^^ typeInvoke
     | primaryExpr ~ "(" ~ exprList <~ ")"                              ^^ invoke
-//  | (goType <~ "(") ~ expression <~ ")"                     &@ "unambiguous type conversion"
-//  | specialBuiltinTypeCall //not yet supported
     | operand
     | failure("not a primary expression")
     )

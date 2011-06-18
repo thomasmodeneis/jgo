@@ -43,10 +43,11 @@ object RuntimeInfo {
   object GoTypeAnnot   extends RuntimeAnnot("GoType")
   
   
-  class SliceLike(val Name: String, val ElemName: String) extends RuntimeClass {
-    val Pkg = RuntimePkg
+  object Slice extends RuntimeClass {
+    val Pkg  = RuntimePkg
+    val Name = "Slice"
     
-    val ElemDesc = "Ljava/lang/%s;" format ElemName
+    private val ElemDesc = "Ljava/lang/Object;"
     
     object Methods {
       val Get = new AsmMethod("get", "(I)%s"  format ElemDesc)
@@ -62,16 +63,18 @@ object RuntimeInfo {
     }
   }
   
-  trait SliceImplLike extends RuntimeClass {
-    object Statics {
-      val FromArrayNone = new AsmMethod("fromArray",     "([I)%s"   format Desc)
-      val FromArrayLow  = new AsmMethod("fromArrayLow",  "([II)%s"  format Desc)
-      val FromArrayHigh = new AsmMethod("fromArrayHigh", "([II)%s"  format Desc)
-      val FromArrayBoth = new AsmMethod("fromArray",     "([III)%s" format Desc)
+  object Slices extends RuntimeClass {
+    val Pkg  = RuntimePkg
+    val Name = "Slices"
+    
+    object Methods {
+      val MakeLen    = new AsmMethod("make", "(I)%s"  format Slice.Desc)
+      val MakeLenCap = new AsmMethod("make", "(II)%s" format Slice.Desc)
+      
+      def fromArrayNone(t: RuntimeStackType) = new AsmMethod("fromArray",     "([%s)%s"   format (t.desc, Slice.Desc))
+      def fromArrayLow (t: RuntimeStackType) = new AsmMethod("fromArrayLow",  "([%sI)%s"  format (t.desc, Slice.Desc))
+      def fromArrayHigh(t: RuntimeStackType) = new AsmMethod("fromArrayHigh", "([%sI)%s"  format (t.desc, Slice.Desc))
+      def fromArrayBoth(t: RuntimeStackType) = new AsmMethod("fromArray",     "([%sII)%s" format (t.desc, Slice.Desc))
     }
   }
-  
-  object Slice    extends SliceLike("Slice",    "Object")
-  object IntSlice extends SliceLike("IntSlice", "Integer") with SliceImplLike
-  object ObjSlice extends SliceLike("ObjSlice", "Object")  with SliceImplLike
 }
