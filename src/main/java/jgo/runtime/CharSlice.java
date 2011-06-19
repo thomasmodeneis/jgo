@@ -7,7 +7,7 @@ import java.util.*;
  * 
  * @author Harrison Klaperman
  */
-class CharSlice implements Slice<Character>, Iterable<Character> {
+class CharSlice extends AbstractSlice<Character> implements Slice<Character>, Iterable<Character> {
 	private char[] array;
 	private int offset;
 	private int length;

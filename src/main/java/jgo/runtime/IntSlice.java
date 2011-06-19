@@ -7,7 +7,7 @@ import java.util.*;
  * 
  * @author Harrison Klaperman
  */
-class IntSlice implements Slice<Integer>, Iterable<Integer> {
+class IntSlice extends AbstractSlice<Integer> implements Slice<Integer>, Iterable<Integer> {
 	private int[] array;
 	private int offset;
 	private int length;

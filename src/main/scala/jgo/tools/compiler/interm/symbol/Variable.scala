@@ -24,12 +24,15 @@ class LocalVar(val name: String, val typeOf: Type) extends ParamVar with Freezab
   
   /**
    * Records that this variable has been closed over.
+   * 
    * A variable is said to be <i>closed over</i> if it is referred
    * to (read from or written to) from within the body of a closure
    * and belongs to the lexical (enclosing) scope of that closure.
    * In other words, a variable is closed over if it is declared
    * outside a certain closure but used inside it. Such variables
    * require special handling at runtime.
+   * 
+   * @todo extend abstraction to include "pointed at"
    */
   def setClosedOver() {
     errIfFrozen

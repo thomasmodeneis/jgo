@@ -7,7 +7,7 @@ import java.util.*;
  * 
  * @author Harrison Klaperman
  */
-class DoubleSlice implements Slice<Double>, Iterable<Double> {
+class DoubleSlice extends AbstractSlice<Double> implements Slice<Double>, Iterable<Double> {
 	private double[] array;
 	private int offset;
 	private int length;

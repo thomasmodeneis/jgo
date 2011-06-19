@@ -9,7 +9,7 @@ import java.util.*;
  * 
  * @author Harrison Klaperman
  */
-class ObjSlice<T> implements Slice<T>, Iterable<T> {
+class ObjSlice<T> extends AbstractSlice<T> implements Slice<T>, Iterable<T> {
 	private Object[] array;
 	private int offset;
 	private int length;

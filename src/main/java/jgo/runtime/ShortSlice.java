@@ -7,7 +7,7 @@ import java.util.*;
  * 
  * @author Harrison Klaperman
  */
-class ShortSlice implements Slice<Short>, Iterable<Short> {
+class ShortSlice extends AbstractSlice<Short> implements Slice<Short>, Iterable<Short> {
 	private short[] array;
 	private int offset;
 	private int length;

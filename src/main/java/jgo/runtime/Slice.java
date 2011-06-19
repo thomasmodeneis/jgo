@@ -6,6 +6,8 @@ import java.util.*;
  * A mutable slice of some array, as featured in the Go programming
  * language.
  * 
+ * TODO:  Make this interface extend java.util.List.
+ * 
  * @param <T> the element type of this slice
  * 
  * @author Harrison Klaperman
@@ -26,7 +28,7 @@ public interface Slice<T> extends Iterable<T> {
 	 * @throws IndexOutOfBoundsException if the bounds are not valid
 	 *                                   indices into this slice
 	 */
-	public Slice<T> slice(int low, int high);
+	Slice<T> slice(int low, int high);
 	
 	/**
 	 * Duplicates this slice.
@@ -35,7 +37,7 @@ public interface Slice<T> extends Iterable<T> {
 	 *         at the lower bound (inclusive) and ending at the
 	 *         upper bound (exclusive)
 	 */
-	public Slice<T> slice();
+	Slice<T> slice();
 	
 	/**
 	 * Produces a suffix of this slice
@@ -47,7 +49,7 @@ public interface Slice<T> extends Iterable<T> {
 	 * @throws IndexOutOfBoundsException if the bound is not a valid
 	 *                                   index into this slice
 	 */
-	public Slice<T> sliceLow(int low);
+	Slice<T> sliceLow(int low);
 	
 	/**
 	 * Produces a prefix of this slice
@@ -59,30 +61,36 @@ public interface Slice<T> extends Iterable<T> {
 	 * @throws IndexOutOfBoundsException if the bound is not a valid
 	 *                                   index into this slice
 	 */
-	public Slice<T> sliceHigh(int high);
+	Slice<T> sliceHigh(int high);
 	
 	/**
 	 * Returns the element of this slice at the specified index.
 	 */
-	public T get(int index);
+	T get(int index);
 	
 	/**
 	 * Updates the element of this slice at the specified index.
 	 */
-	public void set(int index, T value);
+	void set(int index, T value);
+	
+	/**
+	 * Returns a pointer to the contents of this slice at the
+	 * specified index.
+	 */
+	Ptr<T> ptrTo(int index);
 	
 	/**
 	 * Returns the length of this slice.
 	 */
-	public int len();
+	int len();
 	
 	/**
 	 * Returns the capacity of this slice.
 	 */
-	public int cap();
+	int cap();
 	
 	/**
 	 * Returns an iterator over the elements of this slice.
 	 */
-	public Iterator<T> iterator();
+	Iterator<T> iterator();
 }

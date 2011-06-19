@@ -7,7 +7,7 @@ import java.util.*;
  * 
  * @author Harrison Klaperman
  */
-class BoolSlice implements Slice<Boolean>, Iterable<Boolean> {
+class BoolSlice extends AbstractSlice<Boolean> implements Slice<Boolean>, Iterable<Boolean> {
 	private boolean[] array;
 	private int offset;
 	private int length;

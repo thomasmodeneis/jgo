@@ -7,7 +7,7 @@ import java.util.*;
  * 
  * @author Harrison Klaperman
  */
-class FloatSlice implements Slice<Float>, Iterable<Float> {
+class FloatSlice extends AbstractSlice<Float> implements Slice<Float>, Iterable<Float> {
 	private float[] array;
 	private int offset;
 	private int length;

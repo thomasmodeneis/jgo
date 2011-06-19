@@ -7,7 +7,7 @@ import java.util.*;
  * 
  * @author Harrison Klaperman
  */
-class LongSlice implements Slice<Long>, Iterable<Long> {
+class LongSlice extends AbstractSlice<Long> implements Slice<Long>, Iterable<Long> {
 	private long[] array;
 	private int offset;
 	private int length;

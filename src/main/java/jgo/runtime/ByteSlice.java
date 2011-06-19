@@ -7,7 +7,7 @@ import java.util.*;
  * 
  * @author Harrison Klaperman
  */
-class ByteSlice implements Slice<Byte>, Iterable<Byte> {
+class ByteSlice extends AbstractSlice<Byte> implements Slice<Byte>, Iterable<Byte> {
 	private byte[] array;
 	private int offset;
 	private int length;
