@@ -41,7 +41,13 @@ private case class VarLval(v: Variable) extends LvalExpr {
   def storeSuffix                  =        StoreVar(v)
   
   override def addressable = true
-  override def mkPtr = EvalExpr(MkPtrVar(v), PointerType(typeOf))
+  override def mkPtr = {
+    v match {
+      case local: LocalVar => local.setPointedAt()
+      case _ =>
+    }
+    EvalExpr(MkPtrVar(v), PointerType(v.typeOf))
+  }
 }
 
 private case class PtrDerefLval(ptr: Expr, typeOf: Type) extends LvalExpr {
