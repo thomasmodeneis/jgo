@@ -7,7 +7,7 @@ import member._
 /**
  * A static type in the Go programming language.
  */
-trait Type extends Membered {
+trait Type {
   
   /**
    * The underlying type of this type.

@@ -6,10 +6,12 @@ import types.Type
 
 import scala.{collection => coll}
 import coll.{mutable => mut}
- 
-trait Membered /*extends PartialFunction[String, Member]*/ {
+
+/**
+ * A set of members.
+ */
+trait MemberSet /*extends PartialFunction[String, Member]*/ {
 //self: Type =>
-  
   val members:    Map[String, Member] //yes, immutable map
   
   def get(name: String):      Option[Member] = members get name
