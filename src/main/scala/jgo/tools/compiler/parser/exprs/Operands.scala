@@ -15,9 +15,16 @@ trait Operands extends CompositeLiterals with ExprUtils /*with FunctionLiterals*
   lazy val operand: Rule[Expr] =                       "operand" $
     ( "(" ~> expression <~ ")"
 //  | methodAsFunc
+    | builtinCall
     | literal
     | InPos ~ symbol  ^^ procSymbOperand //yes, this *must* be last, to prevent preemptive prefix-matching
     | failure("not an operand")
+    )
+  
+  lazy val builtinCall: Rule[Expr] =         "builtin func call" $
+    ( onlyBfuncSymbol ~ "(" ~ onlyGoType ~ success(List[Expr]()) <~ ")" ^^ Combinators.typeInvoke
+    | onlyBfuncSymbol ~ "(" ~ onlyGoType ~     ("," ~> exprList) <~ ")" ^^ Combinators.typeInvoke
+    | onlyBfuncSymbol ~ "(" ~ expr0List <~ ")"                          ^^ Combinators.invoke
     )
   
   lazy val literal: Rule[Expr] =                 "literal value" $
