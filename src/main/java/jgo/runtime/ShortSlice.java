@@ -40,7 +40,7 @@ class ShortSlice extends AbstractSlice<Short> implements Slice<Short>, Iterable<
 	 *                                   index into the array
 	 */
 	ShortSlice(short[] arr, int off, int len) {
-		if (array == null)
+		if (arr == null)
 			throw new NullPointerException("array is null");
 		if (len < 0 || off + len > arr.length)
 			throw new IllegalArgumentException("invalid length");
@@ -56,10 +56,12 @@ class ShortSlice extends AbstractSlice<Short> implements Slice<Short>, Iterable<
 	 * @inheritDoc
 	 */
 	public ShortSlice slice(int low, int high) {
-		if (low < 0 || length <= low)
-			throw new IndexOutOfBoundsException("lower bound invalid");
-		if (high < 0 || length <= high)
-			throw new IndexOutOfBoundsException("upper bound invalid");
+		if (low < 0 || length < low)
+			throw new IndexOutOfBoundsException("lower bound " + low  + " invalid");
+		if (high < 0 || length < high)
+			throw new IndexOutOfBoundsException("upper bound " + high + " invalid");
+		if (low > high)
+			throw new IllegalArgumentException("lower bound " + low + " exceeds upper bound " + high);
 		
 		return new ShortSlice(array, offset + low, high - low);
 	}

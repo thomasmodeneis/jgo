@@ -67,6 +67,7 @@ class CompilationUnitCompiler(target: Package, in: Input) extends Declarations w
       }
     }
   
+  //TODO:  Add EOF detection.
   private lazy val skipBlock = Parser { in =>
     var cur = in
     var level = 0

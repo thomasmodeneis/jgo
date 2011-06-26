@@ -39,7 +39,7 @@ func qsort(items []int) {
 	}
 	pivotIndex := partition(items)
 	qsort(items[:pivotIndex])   //sort the slice from 0 (incl) to pivotIndex (excl)
-	qsort(items[pivotIndex-1:]) //sort the slice from pivotIndex-1 (incl) to len (excl)
+	qsort(items[pivotIndex+1:]) //sort the slice from pivotIndex + 1 (incl) to len (excl)
 }
 
 //partially based on the Wikipedia in-place algorithm
