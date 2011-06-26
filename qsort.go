@@ -1,10 +1,10 @@
 func main(args [10]string) {
 	print "unsorted:" //empty causes no Code attribute to be generated.  Weird.
 	s := mkTestSlice()
-	//printSlice(s)
-	//Sort(s)
-	//print "sorted:"
-	//printSlice(s)
+	printSlice(s)
+	Sort(s)
+	print "sorted:"
+	printSlice(s)
 }
 
 func mkTestSlice() []int {
@@ -22,8 +22,8 @@ func mkTestSlice() []int {
 	return s
 }
 
-func printSlice([]int s) {
-	for (i := 0; i < len(s); i++) {
+func printSlice(s []int) {
+	for i := 0; i < len(s); i++ {
 		print s[i]
 	}
 }
