@@ -2,6 +2,21 @@ func main(args [10]string) {
 	print "hello" //empty causes no Code attribute to be generated.  Weird.
 }
 
+func mkSlice() []int {
+	s := make([]int, 10)
+	s[0] = 7
+	s[1] = 4
+	s[2] = 1
+	s[3] = 3
+	s[4] = 8
+	s[5] = 0
+	s[6] = 9
+	s[7] = 2
+	s[8] = 6
+	s[9] = 6
+	return s
+}
+
 //Sort sorts the given list in place.
 func Sort(items []int) {
 	qsort(items)

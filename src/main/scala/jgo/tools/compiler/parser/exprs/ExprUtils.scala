@@ -45,6 +45,22 @@ trait ExprUtils {
       } yield res
   }
   
+  protected implicit def convBfuncInvoke[A, B, R](f: (A, B) => Pos => Err[R]): (A ~ Pos ~ Err[B]) => Err[R] = {
+    case a ~ p ~ bErr =>
+      for {
+        b <- bErr
+        res <- f(a, b)(p)
+      } yield res
+  }
+  
+  protected implicit def convBfuncTypeInvoke[A, B, C, R](f: (A, B, C) => Pos => Err[R]): (A ~ Pos ~ Err[B] ~ Err[C]) => Err[R] = {
+    case a ~ p ~ bErr ~ cErr =>
+      for {
+        (b, c) <- (bErr, cErr)
+        res <- f(a, b, c)(p)
+      } yield res
+  }
+  
   protected implicit def convSlice(f: (Expr, Option[Expr], Option[Expr]) => Pos => Err[Expr])
       : (Err[Expr] ~ Pos ~ Option[Err[Expr]] ~ Option[Err[Expr]]) => Err[Expr] = {
     case e1Err ~ p ~ e2Ugly ~ e3Ugly =>

@@ -35,7 +35,6 @@ trait Operands extends CompositeLiterals with ExprUtils /*with FunctionLiterals*
       case ConstSymbol(c)       => result(c)
       case v: Variable          => result(Combinators.fromVariable(v))
       case f: Function          => result(Combinators.fromFunction(f))
-      case BuiltinFuncSymbol(b) => result(b)
       case s => problem("invalid operand: not a variable, constant, or function: %s", s)(pos)
     }
 }

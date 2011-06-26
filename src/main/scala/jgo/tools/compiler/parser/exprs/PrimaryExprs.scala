@@ -13,14 +13,14 @@ import codeseq._
 trait PrimaryExprs extends Operands with Types {
   self: Expressions =>
   
+  //Note:  Builtin func calls are parsed in Expressions.atomicExpr.
   lazy val primaryExpr: LrRule[Expr] =                          "primary expression" $
     ( primaryExpr ~ "[" ~ expression <~ "]"                            ^^ index
     | primaryExpr ~ "[" ~ (expression.? <~ ":") ~ expression.? <~ "]"  ^^ slice
 //  | primaryExpr ~ "." ~ ident
     | primaryExpr ~ "." ~ ("(" ~> goType <~ ")")                       ^^ typeAssert
 //  | onlyGoType ~ "(" ~ expression <~ ")"
-    | primaryExpr ~ "(" ~ onlyGoType ~ exprList <~ ")"                 ^^ typeInvoke
-    | primaryExpr ~ "(" ~ exprList <~ ")"                              ^^ invoke
+    | primaryExpr ~ "(" ~ expr0List <~ ")"                             ^^ invoke
     | operand
     | failure("not a primary expression")
     )

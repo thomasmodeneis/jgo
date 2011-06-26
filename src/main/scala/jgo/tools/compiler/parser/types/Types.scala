@@ -14,7 +14,7 @@ trait Types extends Symbols with Signatures {
   self: Expressions =>
   
   lazy val goType: Rule[Type] =                                                             "type" $
-    ( typeSymbol ^^ { _ map { symb => symb.theType } }
+    ( typeSymbol ^^ { _ map (_.theType) }
     | "(" ~> goType <~ ")"
     | arrayType
     | structType
@@ -27,7 +27,7 @@ trait Types extends Symbols with Signatures {
     )
   
   //TODO:  This shouldn't be necessary.  Or should it?  In which case, document.
-  //Used by FunctionCompiler and its kin.
+  //Used by FunctionCompiler and its kin, and for type-calls.
   lazy val onlyGoType: Rule[Type] =                                                    "only-type" $
     ( onlyTypeSymbol  ^^ (_.theType) ^^ result
     | "(" ~> onlyGoType <~ ")" //June 5: changed goType => onlyGoType. Not sure why it was goType
@@ -65,7 +65,7 @@ trait Types extends Symbols with Signatures {
   
   
   lazy val funcType: Rule[FuncType] =                                                  "func type" $
-    "func" ~>! signature  ^^ { _ map { _.typeOf } }
+    "func" ~>! signature  ^^ { _ map (_.typeOf) }
   
   
   /*
