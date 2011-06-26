@@ -15,7 +15,7 @@ trait BuiltinFuncCombinators extends Combinators {
   }
   
   def typeInvoke(callee: Expr, t: Type, args: List[Expr])(pos: Pos): Err[Expr] = callee match {
-    case b: BuiltinTypeFuncExpr => b.typeInvoke(t, args)(pos)
+    case b: BuiltinTypeFuncExpr => println("Yay! A type invoke!"); b.typeInvoke(t, args)(pos)
     case _ => problem("cannot type-invoke a non-built-in func")(pos)
   }
 }

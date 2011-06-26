@@ -1,8 +1,13 @@
 func main(args [10]string) {
-	print "hello" //empty causes no Code attribute to be generated.  Weird.
+	print "unsorted:" //empty causes no Code attribute to be generated.  Weird.
+	s := mkTestSlice()
+	//printSlice(s)
+	//Sort(s)
+	//print "sorted:"
+	//printSlice(s)
 }
 
-func mkSlice() []int {
+func mkTestSlice() []int {
 	s := make([]int, 10)
 	s[0] = 7
 	s[1] = 4
@@ -15,6 +20,12 @@ func mkSlice() []int {
 	s[8] = 6
 	s[9] = 6
 	return s
+}
+
+func printSlice([]int s) {
+	for (i := 0; i < len(s); i++) {
+		print s[i]
+	}
 }
 
 //Sort sorts the given list in place.

@@ -2,7 +2,7 @@ package jgo.tools.compiler
 
 import lexer._
 import parser._
-import parser.combinatorExten.ExceptionTracing
+import parser.combinatorExten._
 import transl._
 import interm.symbol.Package
 

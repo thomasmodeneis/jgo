@@ -33,36 +33,35 @@ trait LvalCombinators extends Combinators with TypeChecks {
   
   //def select(obj: Expr, selector: String)(pos: Pos): Err[Expr]
   
-  
-  private def mkIndex(arr: Expr, indx: Expr)(pos: Pos) = {
-    @inline def isIntegral = indx.typeOf.underlying.isInstanceOf[IntegralType]
-    @inline def iT = indx.typeOf.underlying.asInstanceOf[IntegralType]
-    
-    arr match {
-      case HasType(ArrayType(_, elemT)) =>
-        if (isIntegral) result(ArrayIndexLval(arr, indx, elemT))
-        else problem("index type %s is inappropriate for an array; integral type required", indx.typeOf)(pos)
-      case HasType(SliceType(elemT)) =>
-        if (isIntegral) result(SliceIndexLval(arr, indx, elemT))
-        else problem("index type %s is inappropriate for a slice; integral type required", indx.typeOf)(pos)
-      case HasType(StringType) =>
-        if (isIntegral) result(EvalExpr(arr.eval |+| indx.evalUnder |+| StrIndex(iT), scope.UniverseScope.byte))
-        else problem("index type %s is inappropriate for a string; integral type required", indx.typeOf)(pos)
-      case HasType(MapType(keyT, valT)) =>
-        if (keyT <<= indx.typeOf) result(MapIndexLval(arr, indx, valT))
-        else problem(
-          "index type %s is inappropriate for a map of type %s; must be assignable to key type %s",
-          indx.typeOf, arr.typeOf, keyT)(pos)
-    }
+  @inline
+  private def checkIntegral(indx: Expr, desc: String)(pos: Pos): Err[(Expr, IntegralType)] = indx match {
+    case UntypedIntegralConst(i)     => result(EvalExpr(PushInt(i, Int32), Int32), Int32)
+    case i OfType (iT: IntegralType) => result(i, iT)
+    case _ => problem("index type %s is inappropriate for %s; integral type required",
+                      indx.typeOf, desc)(pos)
   }
   
-  def index(arr: Expr, indx: Expr)(pos: Pos): Err[Expr] =
-    for (result <- mkIndex(arr, indx)(pos))
-    yield result
+  def index(arr: Expr, indx: Expr)(pos: Pos): Err[Expr] = arr match {
+    case HasType(ArrayType(_, elemT)) =>
+      for ((i, iT) <- checkIntegral(indx, "an array")(pos))
+      yield ArrayIndexLval(arr, i, elemT)
+    
+    case HasType(SliceType(elemT)) =>
+      for ((i, iT) <- checkIntegral(indx, "a slice")(pos))
+      yield SliceIndexLval(arr, i, elemT)
+    
+    case HasType(StringType) =>
+      for ((i, iT) <- checkIntegral(indx, "a string")(pos))
+      yield UnderlyingExpr(arr.evalUnder |+| indx.evalUnder |+| StrIndex(iT), scope.UniverseScope.byte)
+    
+    case HasType(MapType(keyT, valT)) =>
+      for (keyExpr <- convertForAssign(indx, keyT, "specified map key")(pos))
+      yield MapIndexLval(arr, keyExpr, valT)
+  }
   
   def slice(arr: Expr, low: Option[Expr], high: Option[Expr])(pos: Pos): Err[Expr] = {
     def isIntegralOpt(eOpt: Option[Expr], desc: String) =
-      Err.liftOpt(for (e <- eOpt) yield integral(e, desc)(pos))
+      Err.liftOpt(for (e <- eOpt) yield checkIntegral(e, desc)(pos))
     
     for {
       _ <- (isIntegralOpt(low,  "lower bound"),
