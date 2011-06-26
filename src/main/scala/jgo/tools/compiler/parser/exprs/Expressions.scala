@@ -59,15 +59,10 @@ trait Expressions extends PrimaryExprs with ExprUtils {
     | "<-" ~ unaryExpr  ^^ chanRecv
     | "&"  ~ unaryExpr  ^^ addrOf
     | "*"  ~ unaryExpr  ^^ deref
-    | atomicExpr
-    )
-  
-  lazy val atomicExpr: Rule[Expr] = "atomic expr: primary or bfunc call" $
-    ( onlyBfuncSymbol ~ "(" ~ onlyGoType ~ expr0List <~ ")" ^^ typeInvoke
-    | onlyBfuncSymbol ~ "(" ~ expr0List <~ ")"              ^^ invoke
     | primaryExpr
     )
-    
+  
+  
   lazy val exprList: Rule[List[Expr]] =                "expression list" $
     rep1sep(expression, ",")
   
