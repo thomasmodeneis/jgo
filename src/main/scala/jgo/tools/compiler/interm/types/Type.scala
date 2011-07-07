@@ -47,6 +47,8 @@ trait Type {
   
   val members: Map[String, Member] = Map()
   
+  //def getMember(name: String)(pos: Pos): Err[Member]
+  
   /**
    * States whether values of this type and values of the specified type are
    * comparable. Two types are said to have comparable values (colloquially,

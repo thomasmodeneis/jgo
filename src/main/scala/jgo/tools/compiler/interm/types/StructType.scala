@@ -11,10 +11,10 @@ case class StructType(fields: List[FieldDesc]) extends UnderType {
     var mbrs: Map[String, Member] = Map()
     for (field <- fields) field match {
       case RegularFieldDesc(n, t, tag) =>
-        mbrs += (n -> Field(n, t, tag))
+        mbrs += (n -> FieldMember(this, n, t))
       case EmbeddedFieldDesc(n, tn, isP, tag) =>
         val t = if (isP) PointerType(tn) else tn
-        mbrs += (n -> Field(n, t, tag))
+        mbrs += (n -> FieldMember(this, n, t))
     }
     mbrs
   }

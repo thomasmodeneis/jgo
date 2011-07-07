@@ -60,13 +60,13 @@ private case class PtrDerefLval(ptr: Expr, typeOf: Type) extends LvalExpr {
   override def mkPtr = EvalExpr(ptr.eval |+| MkPtrPtr(typeOf), PointerType(typeOf))
 }
 
-private case class FieldLval(obj: Expr, f: Field) extends LvalExpr {
+private case class FieldLval(obj: Expr, f: FieldMember) extends LvalExpr {
   val typeOf = f.typeOf
   
-  def load                        = obj.evalUnder       |+| GetField(f, typeOf)
-  def store(v: CodeBuilder)       = obj.evalUnder |+| v |+| PutField(f, typeOf)
+  def load                        = obj.evalUnder       |+| GetField(f)
+  def store(v: CodeBuilder)       = obj.evalUnder |+| v |+| PutField(f)
   def storePrefix(v: CodeBuilder) = obj.evalUnder |+| v
-  def storeSuffix                 =                         PutField(f, typeOf)
+  def storeSuffix                 =                         PutField(f)
   
   override def addressable = obj.addressable
   override def mkPtr = EvalExpr(obj.eval |+| MkPtrField(f), PointerType(typeOf))

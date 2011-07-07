@@ -4,11 +4,26 @@ package member
 
 import types._
 
-sealed abstract class Member extends Typed
+sealed abstract class Member extends Typed {
+  def enclosing: Type
+  def depth: Int
+}
 
-case class Field(name: String, typeOf: Type, tag: Option[String]) extends Member
-//case class Method(name: String, typeOf: Type) extends Member
+sealed abstract class BasicMember extends Member {
+  def depth = 0
+}
 
-case class EmbeddedMember(f: Field, m: Member) extends Member {
+case class FieldMember(enclosing: Type, name: String, typeOf: Type) extends BasicMember
+case class MethodMember(enclosing: Type, name: String, typeOf: FuncType) extends BasicMember 
+
+case class EmbeddedMember(f: FieldMember, m: Member) extends Member {
   val typeOf = m.typeOf
+  def enclosing = f.enclosing
+  val depth = m.depth + 1
+}
+
+case class WrappedMember(wrappedEncl: Type, m: Member) extends Member {
+  val typeOf = m.typeOf
+  def enclosing = wrappedEncl
+  val depth = m.depth
 }
