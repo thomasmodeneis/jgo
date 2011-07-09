@@ -8,7 +8,7 @@ import instr._
 
 import scope.UniverseScope.int
 
-object Cap extends BuiltinRegularFuncExpr {
+object Cap extends BuiltinRegularFunc {
   def name = "cap"
   
   def invoke(args: List[Expr])(pos: Pos) = args match {

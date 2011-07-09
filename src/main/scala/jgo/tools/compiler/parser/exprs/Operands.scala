@@ -6,7 +6,7 @@ import interm._
 import types._
 import symbol._
 import expr._
-import expr.Combinators
+import expr.bfunc._
 
 trait Operands extends CompositeLiterals with ExprUtils /*with FunctionLiterals*/ {
   self: Expressions =>
@@ -46,18 +46,18 @@ trait Operands extends CompositeLiterals with ExprUtils /*with FunctionLiterals*
       case s => problem("invalid operand: not a variable, constant, or function: %s", s)(pos)
     }
   
-  protected def bfuncTypeInvoke(bfunc: BuiltinFuncExpr, pos: Pos, tErr: Err[Type], esErr: Err[List[Expr]]) =
+  protected def bfuncTypeInvoke(bfunc: BuiltinFunc, pos: Pos, tErr: Err[Type], esErr: Err[List[Expr]]) =
     (tErr, esErr) flatMap { case (t, es) =>
       bfunc match {
-        case b: BuiltinTypeFuncExpr => b.typeInvoke(t, es)(pos)
+        case b: BuiltinTypeFunc => b.typeInvoke(t, es)(pos)
         case _ => problem("built-in func %s does not admit type-invocation", bfunc.name)(pos)
       }
     }
   
-  protected def bfuncInvoke(bfunc: BuiltinFuncExpr, pos: Pos, esErr: Err[List[Expr]]) =
+  protected def bfuncInvoke(bfunc: BuiltinFunc, pos: Pos, esErr: Err[List[Expr]]) =
     esErr flatMap { es =>
       bfunc match {
-        case b: BuiltinRegularFuncExpr => b.invoke(es)(pos)
+        case b: BuiltinRegularFunc => b.invoke(es)(pos)
         case _ => problem("missing type argument in invocation of built-in func %s", bfunc.name)(pos)
       }
     }

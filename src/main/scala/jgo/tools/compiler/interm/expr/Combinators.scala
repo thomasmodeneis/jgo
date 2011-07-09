@@ -46,7 +46,6 @@ trait Combinators {
   
   //def select(obj:  Expr, selector: String)(implicit pos: Pos): Err[Expr]
   def invoke(callee: Expr, args: List[Expr])(pos: Pos): Err[Expr]
-  def typeInvoke(callee: Expr, t: Type, args: List[Expr])(pos: Pos): Err[Expr]
   
   def typeAssert(e: Expr, t: Type)(pos: Pos): Err[Expr]
   
@@ -79,4 +78,3 @@ object Combinators
   with ConditionalCombinators
   with LvalCombinators
   with ConstCombinators
-  with BuiltinFuncCombinators

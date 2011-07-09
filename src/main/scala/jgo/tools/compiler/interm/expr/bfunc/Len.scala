@@ -8,7 +8,7 @@ import instr._
 
 import scope.UniverseScope.int
 
-object Len extends BuiltinRegularFuncExpr {
+object Len extends BuiltinRegularFunc {
   def name = "len"
   
   def invoke(args: List[Expr])(pos: Pos) = args match {

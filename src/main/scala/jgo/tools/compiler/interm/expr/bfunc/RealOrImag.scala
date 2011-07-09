@@ -12,7 +12,7 @@ import instr.TypeConversions._
 import scope.{UniverseScope => Univ}
 
 sealed abstract class RealOrImag(getPartInstr: Complex => Instr, val name: String)
-  extends BuiltinRegularFuncExpr
+  extends BuiltinRegularFunc
   with TypeChecks
   with ConstTypeCheckOverrides {
   

@@ -7,7 +7,7 @@ import types._
 import instr._
 import codeseq.CodeBuilder
 
-object Make extends BuiltinTypeFuncExpr {
+object Make extends BuiltinTypeFunc {
   def name = "make"
   
   private def intCode(e: Expr, desc: String)(pos: Pos): Err[CodeBuilder] = e match {

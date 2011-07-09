@@ -11,7 +11,7 @@ import instr.TypeConversions._
 
 import scope.{UniverseScope => Univ}
 
-object Complex extends BuiltinRegularFuncExpr with CompatConstChecks with TypeChecks with ConstTypeCheckOverrides {
+object Complex extends BuiltinRegularFunc with CompatConstChecks with TypeChecks with ConstTypeCheckOverrides {
   def name = "complex"
   
   def invoke(args: List[Expr])(pos: Pos) = args match {

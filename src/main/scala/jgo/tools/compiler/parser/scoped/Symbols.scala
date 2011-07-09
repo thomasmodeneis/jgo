@@ -5,7 +5,7 @@ package scoped
 import scope._
 import interm.symbol._
 import interm.types._
-import interm.expr.BuiltinFuncExpr
+import interm.expr.bfunc.BuiltinFunc
 
 trait Symbols extends Base with Scoped {
   
@@ -27,7 +27,7 @@ trait Symbols extends Base with Scoped {
   lazy val onlyTypeSymbol:  Parser[TypeSymbol] =          "type symbol" $
     ident ^? scope ^? { case t: TypeSymbol => t }
   
-  lazy val onlyBfuncSymbol: Parser[BuiltinFuncExpr] =    "builtin func" $
+  lazy val onlyBfuncSymbol: Parser[BuiltinFunc] =       "built-in func" $
     ident ^? scope ^? { case BuiltinFuncSymbol(b) => b }
   
   
