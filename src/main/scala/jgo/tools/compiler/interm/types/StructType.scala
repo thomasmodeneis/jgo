@@ -2,8 +2,6 @@ package jgo.tools.compiler
 package interm
 package types
 
-import member._
-
 case class StructType(fields: List[FieldDesc]) extends UnderType {
   val semantics = Value
   

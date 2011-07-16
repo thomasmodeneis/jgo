@@ -4,7 +4,6 @@ package instr
 
 import symbol._
 import types._
-import member._
 
 sealed abstract class Instr extends Product {
   override def toString = productIterator.mkString(productPrefix + " ", ", ", "")

@@ -2,8 +2,6 @@ package jgo.tools.compiler
 package interm
 package types
 
-import member._
-
 /**
  * A static type in the Go programming language.
  */

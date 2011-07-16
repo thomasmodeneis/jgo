@@ -2,8 +2,6 @@ package jgo.tools.compiler
 package interm
 package expr
 
-import member._
-
 import types._
 import symbol._
 import instr._

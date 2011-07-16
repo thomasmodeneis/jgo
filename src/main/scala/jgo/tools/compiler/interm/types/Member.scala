@@ -1,6 +1,5 @@
 package jgo.tools.compiler
 package interm
-package member
 
 import types._
 
