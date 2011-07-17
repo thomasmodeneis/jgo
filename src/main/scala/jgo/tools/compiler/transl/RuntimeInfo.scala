@@ -13,8 +13,8 @@ import org.objectweb.asm.commons.{Method => AsmMethod}
 object RuntimeInfo {
   type PkgLoc = String
   
-  val RuntimePkg:         PkgLoc = "jgo/runtime/"
-  val RuntimeInternalPkg: PkgLoc = "jgo/runtime/internal/"
+  val RuntimePkg:      PkgLoc = "jgo/runtime/"
+  val RuntimeAnnotPkg: PkgLoc = "jgo/runtime/annot/"
   
   trait RuntimeClass {
     val Pkg:  PkgLoc
@@ -36,7 +36,7 @@ object RuntimeInfo {
   }
   
   class RuntimeAnnot(val Name: String) extends RuntimeClass {
-    val Pkg = RuntimeInternalPkg
+    val Pkg = RuntimeAnnotPkg
   }
   
   object UnsignedAnnot extends RuntimeAnnot("Unsigned")

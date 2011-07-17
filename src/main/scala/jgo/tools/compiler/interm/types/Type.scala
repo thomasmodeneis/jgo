@@ -31,6 +31,8 @@ trait Type {
   
   /**
    * Indicates whether this type is an interface type or pointer thereto.
+   * 
+   * @todo get rid of this
    */
   def isInterface: Boolean = false //default to false
   
@@ -41,11 +43,14 @@ trait Type {
   def isNilable: Boolean = //overridden by NilableType for "efficiency"
     underlying.isInstanceOf[NilableType]
   
+  /**
+   * An obsolete field I haven't removed yet.
+   * 
+   * @todo get rid of this
+   */
   def semantics: Semantics
   
-  val members: Map[String, Member] = Map()
-  
-  //def getMember(name: String)(pos: Pos): Err[Member]
+  //def selectMember(name: String): Option[Member]
   
   /**
    * States whether values of this type and values of the specified type are
@@ -116,6 +121,9 @@ object Type {
   }
 }
 
+/**
+ * @todo get rid of this
+ */
 sealed abstract class Semantics
   case object Value     extends Semantics
   case object Reference extends Semantics

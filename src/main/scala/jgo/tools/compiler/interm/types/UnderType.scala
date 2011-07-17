@@ -20,7 +20,14 @@ trait UnderType extends Type {
   def underlying: UnderType = this
   
   /**
-   * The effective type of this under-type is this type itself.
+   * The effective type of this under-type, which must be this
+   * type itself.
    */
   def effective: Type = this
+  
+  /**
+   * This method is overridden by StructType and InterfaceType,
+   * the latter of which is as of yet unimplemented. 
+   */
+  def selectMember(name: String): Option[Member] = None;
 }

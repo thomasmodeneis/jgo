@@ -5,7 +5,7 @@ package types
 case class StructType(fields: List[FieldDesc]) extends UnderType {
   val semantics = Value
   
-  override val members = {
+  val members = {
     var mbrs: Map[String, Member] = Map()
     for (field <- fields) field match {
       case RegularFieldDesc(n, t, tag) =>
