@@ -47,6 +47,7 @@ trait StackScoped extends GrowablyScoped {
       case l: LocalVar =>
         l.freeze
         code = code |+| Undecl(l)
+      case _ =>
     }
     code
   }

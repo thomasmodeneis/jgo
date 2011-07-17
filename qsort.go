@@ -1,10 +1,38 @@
+//Tests to check that type decls work:
+type T int
+type Point2D struct {
+	x, y float64
+}
+type TT T
+
+//Var decls:
+var a T
+var b T = 4 //untyped constant
+var c = 4   //has type int
+var p Point2D
+
 func main(args [10]string) {
+	typeDeclTest()
 	print "unsorted:" //empty causes no Code attribute to be generated.  Weird.
 	s := mkTestSlice()
 	printSlice(s)
 	Sort(s)
 	print "sorted:"
 	printSlice(s)
+}
+
+func typeDeclTest() {
+	//Not yet supported in transl / bytecodegen
+	//var x T = 7
+	//y := x + 4
+	//print x
+	//print y
+	
+	type T2 int
+	var x2 T2 = 7
+	y2 := x2 + 4
+	print x2
+	print y2
 }
 
 func mkTestSlice() []int {

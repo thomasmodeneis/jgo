@@ -11,6 +11,9 @@ trait GrowablyScoped extends Scoped {
   
   protected def growable: GrowableScope
   
+  //I may change this to have result type Err[Unit] instead of Err[S]
+  //since the latter is sort of non-cohesive and since it appears that I
+  //always follow a call to bind with a `withResult ()` or equivalent.
   protected def bind[S <: Symbol](name: String, target: S)(implicit pos: Pos): Err[S] =
     if (!growable.alreadyDefined(name)) {
       growable.put(name, target)
