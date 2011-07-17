@@ -56,7 +56,8 @@ class TypeAlias(val name: String, val referent: Type) extends NamedType {
    */
   def effective  = referent.effective
   
-  def selectMember(name: String) = referent.selectMember(name)
+  def selectMember(name: String) =
+    referent.selectMember(name) filterNot(_.isMethod)
   
   val semantics = underlying.semantics
 }
@@ -78,7 +79,8 @@ class WrappedType(val name: String, val referent: Type) extends NamedType {
    */
   def effective  = this
   
-  def selectMember(name: String) = referent.selectMember(name) map (WrappedMember(this, _))
+  def selectMember(name: String) =
+    referent.selectMember(name) filterNot (_.isMethod) map (WrappedMember(this, _))
   
   val semantics = Reference  //!!!
 }
