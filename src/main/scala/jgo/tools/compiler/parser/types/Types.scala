@@ -26,11 +26,14 @@ trait Types extends Symbols with Signatures {
     | channelType
     )
   
-  //TODO:  This shouldn't be necessary.  Or should it?  In which case, document.
-  //Used by FunctionCompiler and its kin, and for type-calls.
+  /**
+   * A parser that admits only types and backtracks on all other input.
+   * Used for type-calls (T must be a type in new(T)) and conversions
+   * (T(x) is a conversion if T is a type, function call otherwise).
+   */
   lazy val onlyGoType: Rule[Type] =                                                    "only-type" $
     ( onlyTypeSymbol  ^^ (_.theType) ^^ result
-    | "(" ~> onlyGoType <~ ")" //June 5: changed goType => onlyGoType. Not sure why it was goType
+    | "(" ~> onlyGoType <~ ")"
     | arrayType
     | structType
     | pointerType

@@ -20,7 +20,9 @@ sealed abstract class Err[+T] {
   def map     [T2] (f: T => T2):      Err[T2]
   def flatMap [T2] (f: T => Err[T2]): Err[T2]
   
-  def then[T2](m: Err[T2]): Err[T2]
+  def then[T2](err: Err[T2]): Err[T2]
+  
+  def withResult[T2] (m: T2): Err[T2] //e.withResult(v) == e map { _ => v }
   
   def filter(p: T => Boolean): Err[T]
   
@@ -61,7 +63,9 @@ case class Result[+T](result: T) extends Err[T] {
   def map    [T2](f: T => T2)      = new Result(f(result))
   def flatMap[T2](f: T => Err[T2]) = f(result)
   
-  def then [T2](m: Err[T2]) = m
+  def then[T2](err: Err[T2]) = err
+  
+  def withResult[T2](v: T2) = new Result(v)
   
   def filter(p: T => Boolean) =
     if (p(result)) this
@@ -87,7 +91,9 @@ class Problems private (val es: List[ErrorMsg]) extends Err[Nothing] {
   def map    [T2](f: Nothing => T2)      = this
   def flatMap[T2](f: Nothing => Err[T2]) = this
   
-  def then[T2](m: Err[T2]) = new Problems(m.es ::: es)
+  def then[T2](err: Err[T2]) = new Problems(err.es ::: es)
+  
+  def withResult[T2](v: T2) = this
   
   def filter(p: Nothing => Boolean) = this
 }
@@ -157,6 +163,7 @@ object Problems {
   def one(msg: String, args: Any*)(implicit pos: Pos) =
     new Problems(List(ErrorMsg(msg.format(args: _*), pos)))
   
+  /** This method is intended to be private to Err, Result, and Problems! */
   def fromBackwardsList(es: List[ErrorMsg]) =
     new Problems(es)
   

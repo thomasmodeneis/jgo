@@ -96,7 +96,6 @@ trait Declarations extends Expressions with GrowablyScoped {
     for (target <- targetErr)
     yield {
       //TypeAlias, since we know that a local type never has any methods of its own
-      //TODO: Refine this for structs.
       bind(name, TypeSymbol(new TypeAlias(name, target)))(pos)
       ()
     }

@@ -14,7 +14,9 @@ import instr._
 import codeseq._
 import symbol._
 
-final class FunctionCompiler(funcName: String, sig: Signature, encl: Scope, inAtBrace: Input) extends FuncCompiler with Statements {
+final class FunctionCompiler(funcName: String, sig: Signature, encl: Scope, inAtBrace: Input)
+extends FuncCompiler
+with Statements {
   //for clarity
   parse: Statements =>
   

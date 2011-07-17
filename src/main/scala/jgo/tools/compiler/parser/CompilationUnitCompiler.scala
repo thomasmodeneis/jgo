@@ -14,24 +14,28 @@ import codeseq._
 
 import scala.collection.{mutable => mut}
 
-class CompilationUnitCompiler(target: Package, in: Input) extends Declarations with GrowablyScoped {
+class CompilationUnitCompiler(target: Package, in: Input) extends TopLevel with GrowablyScoped {
   val growable = StackScope.base(UniverseScope)
   def scope = growable
   
   private[this] val functionCompilers: mut.Map[Function, FunctionCompiler] = mut.Map.empty
   private[this] var globalVars: List[GlobalVar] = Nil
+  private[this] var initCode = CodeBuilder.empty
   
-  protected def mkVariable(name: String, typeOf: Type) = {
-    val v = new GlobalVar(name, typeOf)
+  protected override def registerVarDecl(name: String, v: GlobalVar) {
     globalVars ::= v
-    (v, CodeBuilder.empty)
   }
   
-  val initCodeErr = extractFromParseResult(parseFile(in)) map {
-    _.foldLeft(CodeBuilder.empty)(_ |+| _).result 
+  protected override def addInitCode(code: CodeBuilder) {
+    initCode = initCode |+| code
   }
+  
+  //Be sure execute this only once.
+  private def parseTopLevel(): Err[Unit] = extractFromParseResult(phrase(parseFile)(in)) withResult ()
   
   lazy val compile: Err[PkgInterm] = {
+    val topLevelErrs = parseTopLevel()
+    
     val functionsErr = {
       val functionMap = mut.Map[Function, FunctionInterm]()
       var errors: Err[Any] = result(())
@@ -42,28 +46,29 @@ class CompilationUnitCompiler(target: Package, in: Input) extends Declarations w
           functionMap.put(f, fInterm)
       }
       for (_ <- errors)
-      yield functionMap.toMap
+      yield functionMap.toMap //to immutable map
     }
-    //initCodeM holds all of the top-level errors, if any;
-    //functionsM holds all of the function-level ones
-    for ((initCode, functions) <- (initCodeErr, functionsErr))
-    yield PkgInterm(target, globalVars, initCode, functions)
+    
+    //topLevelErrs holds all of the top-level errors, if any;
+    //functionsErr holds all of the function-level ones
+    for ((_, functions) <- (topLevelErrs, functionsErr))
+    yield PkgInterm(target, globalVars, initCode.result, functions) //CodeBuilder.result: Code
   }
   
   
-  private lazy val parseFile: Rule[List[CodeBuilder]] =                  "file" $
-    repWithSemi(topLevelDecl)
+  private lazy val parseFile: Rule[Unit] =                               "file" $
+    repWithSemi(topLevelDecl)  ^^ { _ withResult () }
   
-  private lazy val topLevelDecl: Rule[CodeBuilder] =    "top level declaration" $
+  private lazy val topLevelDecl: Rule[Unit] =           "top level declaration" $
     (declaration | function)
   
-  private lazy val function: Rule[CodeBuilder] =                "function decl" $
+  private lazy val function: Rule[Unit] =                       "function decl" $
     "func" ~! ident ~ signature ~ inputAt(skipBlock)  ^^ { case pos ~ name ~ sigErr ~ in =>
       sigErr flatMap { sig =>
         val funcCompl = new FunctionCompiler(name, sig, scope, in)
         functionCompilers.put(funcCompl.target, funcCompl)
         //add to the scope
-        bind(name, funcCompl.target)(pos) map { _ => CodeBuilder.empty } //always empty code builder, req'd for compat.
+        bind(name, funcCompl.target)(pos) withResult ()
       }
     }
   
@@ -78,6 +83,6 @@ class CompilationUnitCompiler(target: Package, in: Input) extends Declarations w
         level -= 1
       cur = cur.rest
     } while (level > 0)
-    Success((), cur)
+    Success(Unit, cur)
   }
 }
