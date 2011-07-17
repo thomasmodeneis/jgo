@@ -50,7 +50,7 @@ trait Type {
    */
   def semantics: Semantics
   
-  //def selectMember(name: String): Option[Member]
+  def selectMember(name: String): Option[Member]
   
   /**
    * States whether values of this type and values of the specified type are
