@@ -16,7 +16,7 @@ trait PrimaryExprs extends Operands with Types {
   lazy val primaryExpr: LrRule[Expr] =                          "primary expression" $
     ( primaryExpr ~ "[" ~ expression <~ "]"                            ^^ index
     | primaryExpr ~ "[" ~ (expression.? <~ ":") ~ expression.? <~ "]"  ^^ slice
-//  | primaryExpr ~ "." ~ ident
+    | primaryExpr ~ "." ~ ident                                        ^^ select
     | primaryExpr ~ "." ~ ("(" ~> goType <~ ")")                       ^^ typeAssert
 //  | onlyGoType ~ "(" ~ expression <~ ")"
     | primaryExpr ~ "(" ~ expr0List <~ ")"                             ^^ invoke

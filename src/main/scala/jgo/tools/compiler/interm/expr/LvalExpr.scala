@@ -58,7 +58,7 @@ private case class PtrDerefLval(ptr: Expr, typeOf: Type) extends LvalExpr {
   override def mkPtr = EvalExpr(ptr.eval |+| MkPtrPtr(typeOf), PointerType(typeOf))
 }
 
-private case class FieldLval(obj: Expr, f: FieldMember) extends LvalExpr {
+private case class FieldLval(obj: Expr, f: Member) extends LvalExpr {
   val typeOf = f.typeOf
   
   def load                        = obj.evalUnder       |+| GetField(f)
@@ -70,28 +70,29 @@ private case class FieldLval(obj: Expr, f: FieldMember) extends LvalExpr {
   override def mkPtr = EvalExpr(obj.eval |+| MkPtrField(f), PointerType(typeOf))
 }
 
-private case class ArrayIndexLval(array: Expr, index: Expr, typeOf: Type) extends LvalExpr {
-  val iT = index.typeOf.underlying.asInstanceOf[IntegralType]
+private case class ArrayIndexLval(array: Expr, idx: Expr, typeOf: Type) extends LvalExpr {
+  val iT = idx.typeOf.underlying.asInstanceOf[IntegralType]
   
-  def load                        = array.evalUnder |+| index.evalUnder       |+| ArrayGet(iT, typeOf)
-  def store(v: CodeBuilder)       = array.evalUnder |+| index.evalUnder |+| v |+| ArrayPut(iT, typeOf)
-  def storePrefix(v: CodeBuilder) = array.evalUnder |+| index.evalUnder |+| v
-  def storeSuffix                 =                                               ArrayPut(iT, typeOf)
+  def load                        = array.evalUnder |+| idx.evalUnder       |+| ArrayGet(iT, typeOf)
+  def store(v: CodeBuilder)       = array.evalUnder |+| idx.evalUnder |+| v |+| ArrayPut(iT, typeOf)
+  def storePrefix(v: CodeBuilder) = array.evalUnder |+| idx.evalUnder |+| v
+  def storeSuffix                 =                                             ArrayPut(iT, typeOf)
   
   override def addressable = array.addressable
-  override def mkPtr = EvalExpr(array.eval |+| index.evalUnder |+| MkPtrArray(typeOf), PointerType(typeOf))
+  override def mkPtr =
+    EvalExpr(array.eval |+| idx.evalUnder |+| MkPtrArray(typeOf), PointerType(typeOf))
 }
 
-private case class SliceIndexLval(slice: Expr, index: Expr, typeOf: Type) extends LvalExpr {
-  val iT = index.typeOf.underlying.asInstanceOf[IntegralType]
+private case class SliceIndexLval(slice: Expr, idx: Expr, typeOf: Type) extends LvalExpr {
+  val iT = idx.typeOf.underlying.asInstanceOf[IntegralType]
   
-  def load                        = slice.evalUnder |+| index.evalUnder       |+| SliceGet(iT, typeOf)
-  def store(v: CodeBuilder)       = slice.evalUnder |+| index.evalUnder |+| v |+| SlicePut(iT, typeOf)
-  def storePrefix(v: CodeBuilder) = slice.evalUnder |+| index.evalUnder |+| v
-  def storeSuffix                 =                                               SlicePut(iT, typeOf)
+  def load                        = slice.evalUnder |+| idx.evalUnder       |+| SliceGet(iT, typeOf)
+  def store(v: CodeBuilder)       = slice.evalUnder |+| idx.evalUnder |+| v |+| SlicePut(iT, typeOf)
+  def storePrefix(v: CodeBuilder) = slice.evalUnder |+| idx.evalUnder |+| v
+  def storeSuffix                 =                                             SlicePut(iT, typeOf)
   
   override def addressable = true
-  override def mkPtr = EvalExpr(slice.eval |+| index.eval |+| MkPtrSlice(typeOf), PointerType(typeOf))
+  override def mkPtr = EvalExpr(slice.eval |+| idx.eval |+| MkPtrSlice(typeOf), PointerType(typeOf))
 }
 
 private case class MapIndexLval(map: Expr, index: Expr, typeOf: Type) extends LvalExpr {

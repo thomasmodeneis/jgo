@@ -29,7 +29,8 @@ trait ExprUtils {
       } yield res
   }
   
-  protected implicit def convBinary[A, B, R](f: (A, B) => Pos => Err[R]): (Err[A] ~ Pos ~ Err[B]) => Err[R] = {
+  protected implicit def convBinary[A, B, R](f: (A, B) => Pos => Err[R])
+      : (Err[A] ~ Pos ~ Err[B]) => Err[R] = {
     case aErr ~ p ~ bErr =>
       for {
         (a, b) <- (aErr, bErr)
@@ -37,7 +38,8 @@ trait ExprUtils {
       } yield res
   }
   
-  protected implicit def convTernary[A, B, C, R](f: (A, B, C) => Pos => Err[R]): (Err[A] ~ Pos ~ Err[B] ~ Err[C]) => Err[R] = {
+  protected implicit def convTernary[A, B, C, R](f: (A, B, C) => Pos => Err[R])
+      : (Err[A] ~ Pos ~ Err[B] ~ Err[C]) => Err[R] = {
     case aErr ~ p ~ bErr ~ cErr =>
       for {
         (a, b, c) <- (aErr, bErr, cErr)
@@ -45,7 +47,8 @@ trait ExprUtils {
       } yield res
   }
   
-  protected implicit def convBfuncInvoke[A, B, R](f: (A, B) => Pos => Err[R]): (A ~ Pos ~ Err[B]) => Err[R] = {
+  protected implicit def convBfuncInvoke[A, B, R](f: (A, B) => Pos => Err[R])
+      : (A ~ Pos ~ Err[B]) => Err[R] = {
     case a ~ p ~ bErr =>
       for {
         b <- bErr
@@ -53,11 +56,21 @@ trait ExprUtils {
       } yield res
   }
   
-  protected implicit def convBfuncTypeInvoke[A, B, C, R](f: (A, B, C) => Pos => Err[R]): (A ~ Pos ~ Err[B] ~ Err[C]) => Err[R] = {
+  protected implicit def convBfuncTypeInvoke[A, B, C, R](f: (A, B, C) => Pos => Err[R])
+      : (A ~ Pos ~ Err[B] ~ Err[C]) => Err[R] = {
     case a ~ p ~ bErr ~ cErr =>
       for {
         (b, c) <- (bErr, cErr)
         res <- f(a, b, c)(p)
+      } yield res
+  }
+  
+  protected implicit def convSelect(f: (Expr, String) => Pos => Err[Expr])
+      : (Err[Expr] ~ Pos ~ String) => Err[Expr] = {
+    case eErr ~ p ~ str =>
+      for {
+        e <- eErr
+        res <- f(e, str)(p)
       } yield res
   }
   

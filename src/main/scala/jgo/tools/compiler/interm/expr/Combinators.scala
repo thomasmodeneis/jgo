@@ -44,7 +44,7 @@ trait Combinators {
   def chanRecv(chan: Expr)(pos: Pos): Err[Expr]
   def chanSend(chan: Expr, e: Expr)(pos: Pos): Err[CodeBuilder]
   
-  //def select(obj:  Expr, selector: String)(implicit pos: Pos): Err[Expr]
+  def select(obj: Expr, selector: String)(pos: Pos): Err[Expr]
   def invoke(callee: Expr, args: List[Expr])(pos: Pos): Err[Expr]
   
   def typeAssert(e: Expr, t: Type)(pos: Pos): Err[Expr]

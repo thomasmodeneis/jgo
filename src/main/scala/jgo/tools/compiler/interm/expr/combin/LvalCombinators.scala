@@ -31,8 +31,6 @@ trait LvalCombinators extends Combinators with TypeChecks {
       problem("operand of pointer indirection/dereference has type %s; pointer type required", e.typeOf)(pos)
   }
   
-  //def select(obj: Expr, selector: String)(pos: Pos): Err[Expr]
-  
   @inline
   private def checkIntegral(indx: Expr, desc: String)(pos: Pos): Err[(Expr, IntegralType)] = indx match {
     case UntypedIntegralConst(i)     => result(EvalExpr(PushInt(i, Int32), Int32), Int32)

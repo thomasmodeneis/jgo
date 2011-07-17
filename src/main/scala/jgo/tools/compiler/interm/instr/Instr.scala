@@ -52,12 +52,12 @@ case class MakeMapSize(k: Type, v: Type) extends Instr
 case class MakeChan    (et: Type)        extends Instr
 case class MakeChanSize(et: Type)        extends Instr
 
-case class  MkPtrVar(v: Variable)       extends Instr
-case class  MkPtrArray(t: Type)         extends Instr
-case class  MkPtrSlice(t: Type)         extends Instr
-case class  MkPtrField(f: FieldMember)  extends Instr
-case class  MkPtrPtr(t: Type)           extends Instr //this may be redundant; could I use just MkPtrObj?
-case object MkPtrObj                    extends Instr
+case class  MkPtrVar(v: Variable) extends Instr
+case class  MkPtrArray(t: Type)   extends Instr
+case class  MkPtrSlice(t: Type)   extends Instr
+case class  MkPtrField(f: Member) extends Instr
+case class  MkPtrPtr(t: Type)     extends Instr //this may be redundant; could I just use MkPtrObj?
+case object MkPtrObj              extends Instr
 
 case class PtrGet(t: Type) extends Instr
 case class PtrPut(t: Type) extends Instr

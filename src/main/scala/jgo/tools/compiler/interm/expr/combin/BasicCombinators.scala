@@ -84,14 +84,26 @@ trait BasicCombinators extends Combinators with TypeChecks {
   def chanSend(ch: Expr, e: Expr)(pos: Pos): Err[CodeBuilder] = for {
     elemT <- sendChanT(ch, "left operand of channel send")(pos)
     _ <- if (elemT <<= e.typeOf) result(())
-         else problem("type %s of right operand of channel send not assignable to element type %s of left operand",
+         else problem("type %s of right operand of channel send "
+                      + "not assignable to element type %s of left operand",
                       e.typeOf, elemT)(pos)
   } yield ch.evalUnder |+| e.eval |+| ChanSend //TODO: Add code that converts e to the appropriate type
   
   
+  def select(obj: Expr, selector: String)(pos: Pos): Err[Expr] = {
+    val memberErr = Err.fromOption(obj.typeOf.selectMember(selector))("bad selection")(pos)
+    for (member <- memberErr)
+    yield
+      if (member.isMethod)
+        throw new UnsupportedOperationException("How did a method sneak in??")
+      else
+        FieldLval(obj, member)
+  }
+  
+  
   private def checkCall(callee: Expr, args: List[Expr])(pos: Pos): Err[Type] = callee match {
-    case HasType(FuncType(_, List(res0, res1, _*), _)) => problem("polyadic results not currently supported")(pos)
-    case HasType(FuncType(params, results, true))      => problem("variadic calls not yet supported")(pos)
+    case HasType(FuncType(_, List(res0, res1, _*), _)) => problem("polyadic results unsupported")(pos)
+    case HasType(FuncType(params, results, true))      => problem("variadic calls unsupported")(pos)
     case HasType(FuncType(params, results, false)) =>
       if (params.length != args.length)
         problem("number (%d) of arguments passed unequal to number (%d) required",
