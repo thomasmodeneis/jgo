@@ -19,8 +19,13 @@ class CompilationUnitCompiler(target: Package, in: Input) extends TopLevel with 
   def scope = growable
   
   private[this] val functionCompilers: mut.Map[Function, FunctionCompiler] = mut.Map.empty
+  private[this] val definedTypes: mut.Map[String, WrappedType] = mut.Map.empty
   private[this] var globalVars: List[GlobalVar] = Nil
   private[this] var initCode = CodeBuilder.empty
+  
+  protected override def registerTypeDecl(name: String, t: WrappedType) {
+    definedTypes(name) = t
+  }
   
   protected override def registerVarDecl(name: String, v: GlobalVar) {
     globalVars ::= v
@@ -52,7 +57,7 @@ class CompilationUnitCompiler(target: Package, in: Input) extends TopLevel with 
     //topLevelErrs holds all of the top-level errors, if any;
     //functionsErr holds all of the function-level ones
     for ((_, functions) <- (topLevelErrs, functionsErr))
-    yield PkgInterm(target, globalVars, initCode.result, functions) //CodeBuilder.result: Code
+    yield PkgInterm(target, definedTypes.values.toList, functions, globalVars, initCode.result)
   }
   
   

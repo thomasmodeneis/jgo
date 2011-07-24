@@ -90,6 +90,8 @@ trait TopLevel extends Expressions with GrowablyScoped {
   
   private def procTypeSpec(pos: Pos, name: String, targetErr: Err[Type]) =
     targetErr flatMap { target =>
+      val t = new WrappedType(name, target)
+      registerTypeDecl(name, t)
       //All types declared at top-level must be wrapped types, not type aliases,
       //since we cannot guarantee that they will never have methods.
       //We could make all types that don't have methods type aliases, but then
@@ -97,7 +99,7 @@ trait TopLevel extends Expressions with GrowablyScoped {
       //Besides, the second method is more complicated and yields inappropriate
       //results for structs, since I assume that users would like their top level
       //struct types to correspond to Java classes, whether or not they have methods.
-      bind(name, TypeSymbol(new WrappedType(name, target)))(pos) withResult ()
+      bind(name, TypeSymbol(t))(pos) withResult ()
     }
   
   
@@ -107,6 +109,7 @@ trait TopLevel extends Expressions with GrowablyScoped {
         for ((name, pos) <- newVars)
         yield {
           val v = new GlobalVar(name, typeOf)
+          registerVarDecl(name, v)
           bind(name, v)(pos)
         }
       Err.liftList(decledUgly) withResult ()
@@ -125,6 +128,7 @@ trait TopLevel extends Expressions with GrowablyScoped {
         for (((l, pos), r) <- left zip right)
         yield {
           val v = new GlobalVar(l, r.inferenceType)
+          registerVarDecl(l, v)
           bind(l, v)(pos)
         }
       for {
@@ -143,6 +147,7 @@ trait TopLevel extends Expressions with GrowablyScoped {
         for ((name, pos) <- left)
         yield {
           val v = new GlobalVar(name, typeOf)
+          registerVarDecl(name, v)
           bind(name, v)(pos)
         }
       for {
