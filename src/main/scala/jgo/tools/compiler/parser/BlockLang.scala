@@ -11,6 +11,10 @@ import interm.types._
 import stmts._
 import funcs._
 
+/**
+ * An old class used for testing the parser.
+ * @todo remove this
+ */
 class BlockLang(in: Reader[Token], res: List[Type] = Nil, resNamed: Boolean = false) extends FuncContext with Statements {
   //def, not val.  See comment in StackScoped
   def initialEnclosing = UniverseScope

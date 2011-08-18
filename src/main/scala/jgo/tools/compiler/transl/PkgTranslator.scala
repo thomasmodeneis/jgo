@@ -21,9 +21,10 @@ import asm.Opcodes._
 import scala.collection.{mutable => mut}
 
 class PkgTranslator(val interm: PkgInterm) extends TypeResolution with GoSignatures {
-  val cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES)
+  //ClassWriter for the package's class file.  (package.class)
+  private val cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES)
   
-  cw.visit(V1_6, ACC_PUBLIC, interm.target.name, null, "java/lang/Object", null)
+  cw.visit(V1_6, ACC_PUBLIC, interm.target.name + "/package", null, "java/lang/Object", null)
   
   interm.globals foreach { global =>
     val access =
@@ -48,7 +49,7 @@ class PkgTranslator(val interm: PkgInterm) extends TypeResolution with GoSignatu
   
   interm.functions foreach { case (f, fInterm) =>
     val access =
-      if (f.isPublic || f.name == "main") //this is a really big hack. improve the logic here.
+      if (f.isPublic || f.name == "main") //FIXME: This is a really big hack. Improve the logic here.
         ACC_PUBLIC | ACC_STATIC
       else
         ACC_STATIC //0 = package private

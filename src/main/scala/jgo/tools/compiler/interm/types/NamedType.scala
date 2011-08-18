@@ -2,8 +2,6 @@ package jgo.tools.compiler
 package interm
 package types
 
-//import member._
-
 /**
  * A named type which refers to some other type.
  * 
@@ -81,6 +79,8 @@ class WrappedType(val name: String, val referent: Type) extends NamedType {
   
   def selectMember(name: String) =
     referent.selectMember(name) filterNot (_.isMethod) map (WrappedMember(this, _))
+  
+  def isPublic: Boolean = !name(0).isLower
   
   val semantics = Reference  //!!!
 }
