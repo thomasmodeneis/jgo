@@ -107,13 +107,13 @@ trait FuncTranslBase extends TypeResolution with GoSignatures {
         case e => e.printStackTrace(); throw AtInstrException(i, e)
       }
     }
-    //apparently, we still have to call this,
-    //even though the maxes will be computed for us
     println()
     println()
     if (target.resultTypes == Nil)
       gen.returnValue() //prevent "falling off code".  HACK!!
     afterInstrs()
+    //Apparently, we still have to call this,
+    //even though the maxes will be computed for us.
     mv.visitMaxs(-1, -1)
   }
   

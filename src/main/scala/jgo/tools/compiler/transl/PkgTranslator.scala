@@ -26,6 +26,12 @@ class PkgTranslator(val interm: PkgInterm) extends TypeResolution with GoSignatu
   
   cw.visit(V1_6, ACC_PUBLIC, interm.target.name + "/package", null, "java/lang/Object", null)
   
+  private val classes = mut.Map[WrappedType, Array[Byte]]()
+  
+  interm.definedTypes foreach { t =>
+    classes(t) = (new TypeTranslator(interm.target, t)).outputBytes
+  }
+  
   interm.globals foreach { global =>
     val access =
       if (global.isPublic)

@@ -3,13 +3,12 @@ type T int
 type Point2D struct {
 	x, y float64
 }
-type TT T
 
 //Var decls:
-var a T
-var b T = 4 //untyped constant
-var c = 4   //has type int
-var p Point2D
+//var a T
+//var b T = 4 //untyped constant
+//var c = 4   //has type int
+//var p Point2D
 
 func main(args [10]string) {
 	typeDeclTest()

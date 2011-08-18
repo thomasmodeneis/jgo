@@ -39,7 +39,7 @@ sealed trait NamedType extends Type {
  * 
  * @todo Implement a @GoSignature annotation that encodes requisite type
  *       information in class files (think: the `Signature` attribute),
- *       like Scala does.  High Priority, but deferred.
+ *       like Scala does.  High Priority, but deferred. (I believe I have done this)
  */
 class TypeAlias(val name: String, val referent: Type) extends NamedType {
   /**
@@ -62,6 +62,8 @@ class TypeAlias(val name: String, val referent: Type) extends NamedType {
 
 /**
  * A named type that is reified at runtime.
+ * 
+ * @todo add package info
  */
 class WrappedType(val name: String, val referent: Type) extends NamedType {
   /**
@@ -80,6 +82,7 @@ class WrappedType(val name: String, val referent: Type) extends NamedType {
   def selectMember(name: String) =
     referent.selectMember(name) filterNot (_.isMethod) map (WrappedMember(this, _))
   
+  //TODO: Does this need refinement for unicode?
   def isPublic: Boolean = !name(0).isLower
   
   val semantics = Reference  //!!!

@@ -43,6 +43,9 @@ sealed abstract class FieldDesc {
   val name:   String
   val typeOf: Type
   val tag:    Option[String]
+
+  //TODO: Does this need refinement for unicode?
+  def isPublic: Boolean = !name(0).isLower
 }
 
 case class RegularFieldDesc(
