@@ -27,7 +27,8 @@ class PkgTranslator(val interm: PkgInterm) extends TypeResolution with GoSignatu
   //ClassWriter for the package's class file.  (package.class)
   private val cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES)
   
-  cw.visit(V1_6, ACC_PUBLIC, interm.target.name + "/package", null, "java/lang/Object", null)
+  //Class name hack!
+  cw.visit(V1_6, ACC_PUBLIC, /*interm.target.name + "/package"*/ "package", null, "java/lang/Object", null)
   
   private val classes = mut.Map[WrappedType, Array[Byte]]()
   
