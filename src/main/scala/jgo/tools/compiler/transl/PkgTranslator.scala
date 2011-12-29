@@ -21,6 +21,9 @@ import asm.Opcodes._
 import scala.collection.{mutable => mut}
 
 class PkgTranslator(val interm: PkgInterm) extends TypeResolution with GoSignatures {
+  //For use by TypeResolution
+  val pkgName = interm.target.name
+  
   //ClassWriter for the package's class file.  (package.class)
   private val cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES)
   
@@ -62,7 +65,7 @@ class PkgTranslator(val interm: PkgInterm) extends TypeResolution with GoSignatu
     
     val mv = cw.visitMethod(access, f.name, methodDesc(f), null, null)
     
-    new FunctionTranslator(fInterm, mv).translate()
+    new FunctionTranslator(pkgName, fInterm, mv).translate()
   }
   
   cw.visitEnd()

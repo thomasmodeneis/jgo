@@ -11,7 +11,8 @@ import types._
 import org.objectweb.asm.MethodVisitor
 
 class FunctionTranslator(
-    val source: FunctionInterm,
+    val pkgName:      String,
+    val source:       FunctionInterm,
     protected val mv: MethodVisitor)
   extends FuncTranslBase
   with Arithmetic

@@ -4,7 +4,7 @@ import lexer._
 import parser._
 import parser.combinatorExten._
 import transl._
-import interm.symbol.Package
+import interm.symbol.PackageSymbol
 
 import java.io.{File, FileOutputStream}
 
@@ -17,7 +17,7 @@ object Main extends App {
   val file = new File(fileName)
   
   val scanner = Scanner(file)
-  val pkg = Package("package") //add processing of pkg name later
+  val pkg = PackageSymbol("package") //add processing of pkg name later
   val comp = new CompilationUnitCompiler(pkg, scanner) with ExceptionTracing
   val intermErr = comp.compile
   

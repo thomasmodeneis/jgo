@@ -21,7 +21,10 @@ import asm.Opcodes._
 import scala.collection.{mutable => mut}
 
 //TODO: Package info should be contained in WrappedType
-class TypeTranslator(val pkg: Package, val interm: WrappedType) extends TypeResolution with GoSignatures {
+class TypeTranslator(val pkg: PackageSymbol, val interm: WrappedType) extends TypeResolution with GoSignatures {
+  //for TypeResolution
+  def pkgName = pkg.name
+  
   private val cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES)
   
   private def access(isPublic: Boolean) =

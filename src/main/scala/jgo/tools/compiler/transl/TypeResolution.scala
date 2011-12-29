@@ -14,6 +14,9 @@ import Opcodes._
 import AsmType._
 
 trait TypeResolution {
+  //Temporary hack for pkg name of class types.  Obviously, works only for types in the current package.
+  def pkgName: String
+  
   protected implicit def class2asmType(cl: Class[_]) = AsmType.getType(cl)
   //implicit def desc2asmType(desc: String)  = AsmType.getType(desc)
   
@@ -27,17 +30,17 @@ trait TypeResolution {
     case _               => 1
   }
   
-  def toRuntimeStackType(t: Type): RuntimeStackType = t.effective match {
-    case BoolType       => BoolT
-    case Int8  | Uint8  => ByteT
-    case Int16          => ShortT
-    case Uint16         => CharT
-    case Int32 | Uint32 => IntT
-    case Int64 | Uint64 => LongT
-    case Float32        => FloatT
-    case Float64        => DoubleT
+  def toRuntimeStackType(t: Type): RuntimeType = t.effective match {
+    case BoolType       => RuntimeBool
+    case Int8  | Uint8  => RuntimeByte
+    case Int16          => RuntimeShort
+    case Uint16         => RuntimeChar
+    case Int32 | Uint32 => RuntimeInt
+    case Int64 | Uint64 => RuntimeLong
+    case Float32        => RuntimeFloat
+    case Float64        => RuntimeDouble
     
-    case _ => ObjT
+    case w: WrappedType => RuntimeClass(pkgName + "/" + w.name)
   }
   
   def toAsmType(t: Type): AsmType = t.effective match {

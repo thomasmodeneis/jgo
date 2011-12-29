@@ -63,6 +63,8 @@ class TypeAlias(val name: String, val referent: Type) extends NamedType {
 /**
  * A named type that is reified at runtime.
  * 
+ * Dec 29:  Why did I avoid making this a case class??
+ * 
  * @todo add package info
  */
 class WrappedType(val name: String, val referent: Type) extends NamedType {

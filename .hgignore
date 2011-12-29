@@ -11,5 +11,7 @@ syntax: regexp
 ^project/plugins/lib_managed/
 ^project/plugins/src_managed/
 ^jgo.tmproj
+^jgo.sublime-project
+^jgo.sublime-workspace
 
 .DS_Store

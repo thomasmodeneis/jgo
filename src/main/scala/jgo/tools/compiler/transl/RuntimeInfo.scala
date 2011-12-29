@@ -71,10 +71,10 @@ object RuntimeInfo {
       val MakeLen    = new AsmMethod("make", "(I)%s"  format Slice.Desc)
       val MakeLenCap = new AsmMethod("make", "(II)%s" format Slice.Desc)
       
-      def fromArrayNone(t: RuntimeStackType) = new AsmMethod("fromArray",     "([%s)%s"   format (t.desc, Slice.Desc))
-      def fromArrayLow (t: RuntimeStackType) = new AsmMethod("fromArrayLow",  "([%sI)%s"  format (t.desc, Slice.Desc))
-      def fromArrayHigh(t: RuntimeStackType) = new AsmMethod("fromArrayHigh", "([%sI)%s"  format (t.desc, Slice.Desc))
-      def fromArrayBoth(t: RuntimeStackType) = new AsmMethod("fromArray",     "([%sII)%s" format (t.desc, Slice.Desc))
+      def fromArrayNone(t: RuntimeType) = new AsmMethod("fromArray",     "([%s)%s"   format (t.desc, Slice.Desc))
+      def fromArrayLow (t: RuntimeType) = new AsmMethod("fromArrayLow",  "([%sI)%s"  format (t.desc, Slice.Desc))
+      def fromArrayHigh(t: RuntimeType) = new AsmMethod("fromArrayHigh", "([%sI)%s"  format (t.desc, Slice.Desc))
+      def fromArrayBoth(t: RuntimeType) = new AsmMethod("fromArray",     "([%sII)%s" format (t.desc, Slice.Desc))
     }
   }
 }

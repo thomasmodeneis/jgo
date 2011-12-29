@@ -14,7 +14,7 @@ import codeseq._
 
 import scala.collection.{mutable => mut}
 
-class CompilationUnitCompiler(target: Package, in: Input) extends TopLevel with GrowablyScoped {
+class CompilationUnitCompiler(target: PackageSymbol, in: Input) extends TopLevel with GrowablyScoped {
   val growable = StackScope.base(UniverseScope)
   def scope = growable
   
