@@ -26,6 +26,13 @@ object Main extends App {
       val outputBytes = new PkgTranslator(interm).outputBytes
       //he should be closed properly, but we'll just hope the JVM takes care of it
       new FileOutputStream(args(1)).write(outputBytes)
+      
+      //Let the record show that this is the single piece of code my friend Aaron has
+      //committed to the project, and not only does Aaron fail to close his file;
+      //he also anthropomorphizes it! I'd fix this now, but it's not really worth
+      //it given that I'm going to have to replace this whole thing anyway with
+      //something that does multiple files. In the meantime, may the gods of IO,
+      //low latency be upon them, have mercy on my neural configuration.
     
     case Problems(errs) =>
       errs foreach { err => println(err.longString); println() }
