@@ -164,7 +164,14 @@ Undecl <msg: string>
 
 License
 =======
+
+
+GNU 3
+-----
+
 GNU General Public License, version 3.
+
+
 Project migrated from https://code.google.com/p/jgo/ by  Harrison Klaperman.
 
 
