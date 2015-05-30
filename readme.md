@@ -1,10 +1,8 @@
-
 Description
 ===========
 
 The JGo Project aims to provide a complete compiler and runtime environment for the Go programming language to/on the Java Virtual Machine. 
 The jgoc compiler is written in Scala and the runtime in Java.
-
 
 
 Why the JVM?
@@ -36,8 +34,6 @@ Currently, these include:
 * Closures (sub-feature of lambda expressions);
 * Concurrency;
 * defer, panic, and recover; and Switch statements.
-
-
 
 
 Contribute
@@ -88,15 +84,11 @@ Initial Startup
 
 To bring up the Puppet Sandbox environment, issue the following command:
 
-```
-    $ vagrant up
-```
+```vagrant up```
 
 Puppet will install Git and OpenJDK 8.
 
-``
-$ vagrant ssh
-```
+```vagrant ssh```
 
 Run SBT
 -------
@@ -104,13 +96,13 @@ Run SBT
 When the shell command for vagrant is ready run sbt
 
 ```
-vagrant@jgo:~$ cd /opt/jgo/
-vagrant@jgo:/opt/jgo$ sbt
+$ cd /opt/jgo/
+$ sbt
 Getting org.scala-sbt sbt 0.13.8 ...
-downloading https://repo.typesafe.com/typesafe/ivy-releases/org.scala-sbt/sbt/0.13.8/jars/sbt.jar ...
-[SUCCESSFUL ] org.scala-sbt#sbt;0.13.8!sbt.jar (5007ms)   
-(...)
 [info] Set current project to jgo (in build file:/opt/jgo/)
+```
+
+```
 > run hello.go package.class
 [info] Updating {file:/opt/jgo/}jgo...
 [info] Resolving org.fusesource.jansi#jansi;1.4 ...
@@ -126,7 +118,6 @@ This will compile and execute the following go code into the JDK8:
 func say(msg string) {
 	print msg
 }
-
 func main(args [4]string) {
 	msg := "hello, world"
 	say(msg)
@@ -147,8 +138,7 @@ Output:
 (...)
 [info] Running jgo.tools.compiler.Main hello.go package.class
 LoadVar <msg: string>
-PrintString 
-
+PrintString
 Decl <msg: string>
 PushStr "hello, world"
 StoreVar <msg: string>
