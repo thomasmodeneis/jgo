@@ -1,8 +1,11 @@
 Description
 ===========
 
+
 The JGo Project aims to provide a complete compiler and runtime environment for the Go programming language to/on the Java Virtual Machine. 
 The jgoc compiler is written in Scala and the runtime in Java.
+
+![JGO](https://thomasmodeneis.files.wordpress.com/2015/05/jgo.png)
 
 
 Why the JVM?
@@ -24,6 +27,7 @@ Status of the Project
 
 JGo is a work in progress. 
 Many features of the Go programming language are not yet fully supported. 
+
 Currently, these include:
 
 * Structs; (nearing completion)
