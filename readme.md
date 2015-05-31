@@ -37,6 +37,11 @@ Currently, these include:
 * Concurrency;
 * defer, panic, and recover; and Switch statements.
 
+DOCS
+=====
+
+[JGO-DOCS](http://jgo.herokuapp.com/api/)
+
 
 Contribute
 ==========
