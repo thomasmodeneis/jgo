@@ -1,11 +1,8 @@
 Description
 ===========
 
-
-The [JGo Project](http://jgo.herokuapp.com/) aims to provide a complete compiler and runtime environment for the Go programming language to/on the Java Virtual Machine. 
+![JGO](http://jgo.herokuapp.com/images/jgo3.png) The [JGo Project](http://jgo.herokuapp.com/) aims to provide a complete compiler and runtime environment for the Go programming language to/on the Java Virtual Machine. 
 The jgoc compiler is written in Scala and the runtime in Java.
-
-![JGO](https://thomasmodeneis.files.wordpress.com/2015/05/jgo.png)
 
 
 Why the JVM?
@@ -21,6 +18,7 @@ A lot of excellent libraries are written for the JVM.
 Furthermore, many groups have large codebases written in Java, Scala, and other JVM languages. 
 [JGo](http://jgo.herokuapp.com/) is an attempt to bring these groups into the fold, group and expose them.
 
+![JGO](http://jgo.herokuapp.com/images/banner_jgo.png)
 
 Status of the Project
 =====================
@@ -70,7 +68,13 @@ This project contains a Ubuntu 12.04 Sandbox, a vagrant [Vagrant](http://vagrant
 development environment used for running and testing JGo with the OpenJDK 8 modules.
 
 
+
+OpenJDK
+========
+
 ![OpenJDK](https://soujavablog.files.wordpress.com/2015/05/openjdk.jpg)
+JGO Uses OpenJDK 8.
+
 
 Requirements
 ============
