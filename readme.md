@@ -2,7 +2,7 @@ Description
 ===========
 
 
-The (JGo Project)[http://jgo.herokuapp.com/] aims to provide a complete compiler and runtime environment for the Go programming language to/on the Java Virtual Machine. 
+The [JGo Project](http://jgo.herokuapp.com/) aims to provide a complete compiler and runtime environment for the Go programming language to/on the Java Virtual Machine. 
 The jgoc compiler is written in Scala and the runtime in Java.
 
 ![JGO](https://thomasmodeneis.files.wordpress.com/2015/05/jgo.png)
@@ -17,9 +17,9 @@ Compatibility & JVM debug/profiling
 ------------------------------------
 
 A lot of excellent libraries are written for the JVM. 
-(JGo)[http://jgo.herokuapp.com/] hopes to make existing Go users more productive by enabling them to use these. 
+[JGo](http://jgo.herokuapp.com/) hopes to make existing Go users more productive by enabling them to use these. 
 Furthermore, many groups have large codebases written in Java, Scala, and other JVM languages. 
-(JGo)[http://jgo.herokuapp.com/] is an attempt to bring these groups into the fold, group and expose them.
+[JGo](http://jgo.herokuapp.com/) is an attempt to bring these groups into the fold, group and expose them.
 
 
 Status of the Project
