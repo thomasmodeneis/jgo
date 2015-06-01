@@ -1,8 +1,14 @@
 Description
 ===========
 
-![JGO](http://jgo.herokuapp.com/images/jgo3.png) The [JGo Project](http://jgo.herokuapp.com/) aims to provide a complete compiler and runtime environment for the Go programming language to/on the Java Virtual Machine. 
+![JGO](http://jgo.herokuapp.com/images/jgo3.png) The [JGo Project](http://jgo.herokuapp.com/) aims to provide a complete compiler and runtime environment for the Go programming language to/on the Java Virtual Machine.
 The jgoc compiler is written in Scala and the runtime in Java.
+
+
+Drone.io continuous integration service
+---------------------------------------
+
+[![Build Status](https://drone.io/github.com/thomasmodeneis/jgo/status.png)](https://drone.io/github.com/thomasmodeneis/jgo/latest)
 
 
 Why the JVM?
